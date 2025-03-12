@@ -14,6 +14,27 @@
     --foreground: #ededed;
   }
 }
+@font-face {
+  font-family: 'Devil1';
+  src: url('/fonts/Devil1.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Devil2';
+  src: url('/fonts/Devil2.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Devil3';
+  src: url('/fonts/Devil3.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 
 body {
   color: var(--foreground);

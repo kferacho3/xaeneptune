@@ -9,14 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@react-three/drei": "^10.0.0",
-    "@react-three/fiber": "^9.0.2",
+    "@andersonmancini/lens-flare": "^1.0.1",
+    "@react-three/cannon": "^6.6.0",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^9.0.4",
+    "@react-three/postprocessing": "^3.0.4",
+    "axios": "^1.8.2",
     "framer-motion": "^12.4.5",
-    "next": "15.1.7",
+    "leva": "^0.10.0",
+    "mobile-device-detect": "^0.4.3",
+    "next": "^15.2.1",
+    "postprocessing": "^6.37.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
-    "three": "^0.173.0"
+    "three": "^0.172.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

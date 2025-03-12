@@ -4,6 +4,9 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
+  images: {
+    domains: ['i.scdn.co'],
+  },
   // any other config options
 }
 
