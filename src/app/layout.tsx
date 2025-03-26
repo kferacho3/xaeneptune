@@ -1,4 +1,5 @@
 // src/app/layout.tsx
+import { VisualizerProvider } from "@/context/VisualizerContext";
 import type { Metadata } from "next";
 import "../../styles/globals.css";
 
@@ -20,7 +21,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <VisualizerProvider>
+          {children}
+        </VisualizerProvider>
+      </body>
     </html>
   );
 }

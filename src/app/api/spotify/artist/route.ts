@@ -10,9 +10,14 @@ export async function GET(request: Request) {
     const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!response.ok) {
+      console.error(`Error fetching artist data for ID ${artistId}: ${response.status} ${await response.text()}`);
+      return NextResponse.json({ error: 'Failed to fetch artist data' }, { status: response.status });
+    }
     const artistData = await response.json();
     return NextResponse.json(artistData);
-  } catch {
+  } catch (error) {
+    console.error('Error in /api/spotify/artist:', error);
     return NextResponse.json({ error: 'Failed to fetch artist data' }, { status: 500 });
   }
 }

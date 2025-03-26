@@ -1,7 +1,6 @@
 // /src/components/pages/Connect.tsx
 'use client';
 
-import { Html } from '@react-three/drei';
 import { useState } from 'react';
 
 export default function Connect() {
@@ -19,7 +18,7 @@ export default function Connect() {
   };
 
   return (
-    <Html fullscreen>
+    <>
       <div className="min-h-screen text-tertiary p-4 relative flex items-center justify-center">
         {/* Blurred overlay */}
         <div className="absolute inset-0 bg-black opacity-30 backdrop-blur-sm z-0"></div>
@@ -65,6 +64,6 @@ export default function Connect() {
           </form>
         </div>
       </div>
-    </Html>
+    </>
   );
 }

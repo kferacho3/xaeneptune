@@ -1,7 +1,6 @@
 // /src/components/pages/AlbumDetail.tsx
 'use client';
 
-import { Html } from '@react-three/drei';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
@@ -48,22 +47,22 @@ export default function AlbumDetail() {
 
   if (loading) {
     return (
-      <Html fullscreen>
+      <>
         <div>Loading album details...</div>
-      </Html>
+      </>
     );
   }
 
   if (!album) {
     return (
-      <Html fullscreen>
+      <>
         <div>Album not found</div>
-      </Html>
+      </>
     );
   }
 
   return (
-    <Html fullscreen>
+    <>
       <div className="min-h-screen bg-primary text-tertiary p-4">
         <button onClick={() => router.back()} className="mb-4 text-blue-500">
           ← Back
@@ -91,6 +90,6 @@ export default function AlbumDetail() {
           </ul>
         </div>
       </div>
-    </Html>
+    </>
   );
 }

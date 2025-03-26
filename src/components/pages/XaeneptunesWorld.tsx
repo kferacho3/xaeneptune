@@ -1,11 +1,10 @@
 'use client';
 
-import { Html } from '@react-three/drei';
 
 export default function XaeneptunesWorld() {
   return (
-    <Html fullscreen>
-      <div className="min-h-screen text-tertiary p-8 relative">
+    <>
+      <div className="min-h-screen mt-20  text-tertiary p-8 relative z-10">
         {/* Blurred overlay */}
         <div className="absolute inset-0 bg-black opacity-30 backdrop-blur-sm z-0"></div>
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -53,6 +52,6 @@ export default function XaeneptunesWorld() {
           </section>
         </div>
       </div>
-    </Html>
+    </>
   );
 }

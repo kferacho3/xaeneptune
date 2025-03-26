@@ -109,7 +109,7 @@ export default function NavigationMenu({ onSelectRoute, occluder }: NavigationMe
   }[] = [
     { name: 'MUSIC', route: 'music', icon: FaMusic, position: [15, 0, 0] },
     { name: 'ARTIST', route: 'artist', icon: FaUser, position: [-15, 0, 0] },
-    { name: 'BEATS AVAILABLE', route: 'beats', icon: FaHeadphones, position: [0, 15, 0] },
+    { name: 'BEATS FOR SALE', route: 'beats', icon: FaHeadphones, position: [0, 15, 0] },
     { name: 'ALBUMS', route: 'albums', icon: FaCompactDisc, position: [0, -15, 0] },
     { name: 'CONNECT', route: 'connect', icon: FaEnvelope, position: [0, 0, 15] },
     { name: "XAENEPTUNE'S WORLD", route: 'xaeneptunesworld', icon: GiPlanetCore, position: [0, 0, -15] },

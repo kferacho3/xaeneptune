@@ -15,7 +15,7 @@ export default function GoBackButton({ onClick }: GoBackButtonProps) {
       className="flex items-center px-4 py-2 bg-white border border-white text-black font-futuristic rounded-full shadow-lg"
     >
       <IoMdArrowBack className="mr-2" />
-      <span>Go Back</span>
+      <span>HOME</span>
     </motion.button>
   );
 }

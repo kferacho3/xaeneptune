@@ -11,9 +11,14 @@ export async function GET(request: Request) {
       `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single&market=US&limit=50`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
+    if (!response.ok) {
+      console.error(`Error fetching artist albums for ID ${artistId}: ${response.status} ${await response.text()}`);
+      return NextResponse.json({ error: 'Failed to fetch albums data' }, { status: response.status });
+    }
     const albumsData = await response.json();
     return NextResponse.json(albumsData);
-  } catch {
+  } catch (error) {
+    console.error('Error in /api/spotify/artist-albums:', error);
     return NextResponse.json({ error: 'Failed to fetch albums data' }, { status: 500 });
   }
 }
