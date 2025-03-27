@@ -1,14 +1,7 @@
 import { create } from 'zustand';
 
-export type Route =
-  | 'home'
-  | 'music'
-  | 'artist'
-  | 'beats'
-  | 'beats-visualizer'
-  | 'albums'
-  | 'connect'
-  | 'xaeneptunesworld';
+export type Route = "home" | "music" | "artist" | "beats" | "beats-visualizer" | "albums" | "xaeneptunesworld" | "connect";
+
 
 interface RouteStore {
   activeRoute: Route;

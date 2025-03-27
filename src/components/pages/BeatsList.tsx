@@ -17,7 +17,7 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
   const [beatsPerPage, setBeatsPerPage] = useState<number | 'all'>(15);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Advanced filtering of beatsData based on filter states
+  // Advanced filtering: we only filter metadata (no heavy audio is fetched here)
   const filteredBeats = useMemo(() => {
     return beatsData.filter((beat: BeatData) => {
       const matchName = beat.beatName.toLowerCase().includes(filterBeatName.toLowerCase());
@@ -153,6 +153,7 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
           <div
             key={index}
             className="beat-item bg-gray-900 bg-opacity-75 p-4 rounded flex items-center space-x-4 hover:shadow-lg transition-all cursor-pointer"
+            // Note: on clicking, only the beat URL is passed. The audio file isn’t loaded until the visualizer mounts.
             onClick={() => onBeatSelect(beat.audioFile)}
           >
             {getBeatIcon(beat)}

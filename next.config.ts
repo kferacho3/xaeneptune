@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     appDir: true,
   },
   images: {
-    domains: ['i.scdn.co', 'i1.sndcdn.com', 'open.spotify.com'],
+    domains: ['i.scdn.co', 'via.placeholder.com', 'i1.sndcdn.com', 'open.spotify.com', 'is1-ssl.mzstatic.com'],
   },
   webpack(config) {
     config.module.rules.push({

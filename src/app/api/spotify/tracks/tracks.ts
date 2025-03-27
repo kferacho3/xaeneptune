@@ -1,6 +1,6 @@
 // /src/app/api/spotify/albums/[albumId]/tracks/route.ts
 import { NextResponse } from 'next/server';
-import { getSpotifyToken } from '../../_getToken';
+import { getSpotifyToken } from '../_getToken';
 
 export async function GET(
   request: Request,

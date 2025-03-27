@@ -35,7 +35,13 @@ interface MarkerProps {
   occluder: React.RefObject<THREE.Object3D | null>;
 }
 
-function Marker({ children, position = [0, 0, 0], onClick, rotation = [0, 0, 0], occluder }: MarkerProps) {
+function Marker({
+  children,
+  position = [0, 0, 0],
+  onClick,
+  rotation = [0, 0, 0],
+  occluder,
+}: MarkerProps) {
   const ref = useRef<THREE.Group>(null);
   // Local occlusion state
   const [isOccluded, setOccluded] = useState(false);
@@ -47,6 +53,12 @@ function Marker({ children, position = [0, 0, 0], onClick, rotation = [0, 0, 0],
   // For hover and click effects.
   const [hovered, setHovered] = useState(false);
   const [selected, setSelected] = useState(false);
+
+  // Base sizes in pixels for the marker. Adjust these values as needed.
+  const baseSize = 70;
+  const hoveredSize = 80;
+  const selectedSize = 85;
+  const markerSize = selected ? selectedSize : hovered ? hoveredSize : baseSize;
 
   useFrame((state) => {
     if (ref.current) {
@@ -66,22 +78,24 @@ function Marker({ children, position = [0, 0, 0], onClick, rotation = [0, 0, 0],
   return (
     <group ref={ref} position={position} rotation={rotation}>
       <Html
-        transform
+        // Removed the transform prop to prevent flickering
         occlude={[occluder]}
         onOcclude={setOccluded}
         style={{
           pointerEvents: 'auto',
-          transition: 'all 0.3s ease-out',
+          transition: 'opacity 0.3s ease-out',
           opacity: isVisible ? 1 : 0,
-          transform: `scale(${selected ? 3.3 : hovered ? 3.5 : 3})`,
         }}
       >
         <div
           onClick={handleClick}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
-          className="w-[70px] h-[70px] rounded-full bg-[#ECEFF1] border flex flex-col items-center justify-center text-black font-futuristic shadow transition-all duration-300 cursor-pointer"
+          className="rounded-full bg-[#ECEFF1] border flex flex-col items-center justify-center text-black font-futuristic shadow transition-all duration-300 cursor-pointer"
           style={{
+            width: `${markerSize}px`,
+            height: `${markerSize}px`,
+            // Adjust the border width based on hover state
             border: hovered ? '3px solid lightblue' : '1px solid white',
             boxShadow: '0 0 15px rgba(173,216,230,0.8)',
           }}
@@ -95,7 +109,10 @@ function Marker({ children, position = [0, 0, 0], onClick, rotation = [0, 0, 0],
 
 Marker.displayName = 'Marker';
 
-export default function NavigationMenu({ onSelectRoute, occluder }: NavigationMenuProps) {
+export default function NavigationMenu({
+  onSelectRoute,
+  occluder,
+}: NavigationMenuProps) {
   interface IconComponentProps {
     className?: string;
   }

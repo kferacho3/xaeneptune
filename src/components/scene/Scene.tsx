@@ -1,4 +1,3 @@
-// src/components/scene/Scene.tsx
 'use client';
 import AntiHeroLogo from '@/components/models/AntiHeroMain';
 import { GalaxyModel } from '@/components/models/Galaxy';
@@ -12,10 +11,14 @@ import { OrbitControls, Reflector, Sparkles } from '@react-three/drei';
 import { ThreeElements, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+// Import react-spring for smooth animations in three.js
+import { a, useSpring } from '@react-spring/three';
 
-// Use ThreeElements for material props.
+// Define an animated group so that the "group" element is correctly typed.
+const AnimatedGroup = a('group');
+
 type MeshPhysicalMaterialProps = ThreeElements['meshPhysicalMaterial'];
 
 type SceneProps = {
@@ -24,7 +27,6 @@ type SceneProps = {
   onSelectRoute: (route: Route) => void;
   specialEffect?: boolean;
   activeRoute: Route;
-  /** New property to control visualizer rendering (optional) */
   visualizerMode?: boolean;
   onBeatGoBack?: () => void;
   onBeatShuffle?: () => void;
@@ -77,14 +79,12 @@ function NeptuneModelAnimated(props: Omit<React.ComponentProps<typeof NeptuneMod
   );
 }
 
-// Existing TransmissiveSphere component.
 type TransmissiveSphereProps = {
   sphereRef: React.MutableRefObject<THREE.Mesh | null>;
 };
 
 function TransmissiveSphere({ sphereRef }: TransmissiveSphereProps) {
   const groupRef = useRef<THREE.Group>(null);
-  // Make the sphere float slightly up and down.
   useFrame((state) => {
     if (groupRef.current) {
       groupRef.current.position.y = 80 + Math.sin(state.clock.elapsedTime) * 2;
@@ -122,17 +122,11 @@ function TransmissiveSphere({ sphereRef }: TransmissiveSphereProps) {
   );
 }
 
-// New: CrescentMoonTransmissive component
-// This component creates a crescent moon (using a masking effect via shader modification)
-// without removing the original TransmissiveSphere. Here we use a custom onBeforeCompile hook
-// to discard fragments based on the fragment normal, simulating the illuminated crescent.
-// --- Added changes: accept an optional ref (moonRef) so that the GodRays effect can target this mesh.
 type CrescentMoonTransmissiveProps = {
   moonRef?: React.MutableRefObject<THREE.Mesh | null>;
 };
 
 function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {}) {
-  // Create a MeshPhysicalMaterial without a texture.
   const material = new THREE.MeshPhysicalMaterial({
     emissive: '#4b0082',
     emissiveIntensity: 2,
@@ -144,15 +138,14 @@ function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {
     opacity: 0.8,
   });
 
-  // Modify the shader so that only fragments whose normals are facing the light direction (simulated sun)
-  // remain visible. This creates a crescent shape.
   material.onBeforeCompile = (shader) => {
     shader.uniforms.lightDir = { value: new THREE.Vector3(1, 0, 0) };
     shader.uniforms.threshold = { value: 0.3 };
-    shader.fragmentShader = `
+    shader.fragmentShader =
+      `
       uniform vec3 lightDir;
       uniform float threshold;
-    ` + shader.fragmentShader;
+      ` + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <dithering_fragment>`,
       `
@@ -172,7 +165,6 @@ function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {
         <primitive object={material} attach="material" />
       </mesh>
       <pointLight intensity={3} distance={100} color="#4b0082" />
-      {/* Layered spheres for a volumetric glow */}
       {[...Array(3)].map((_, i) => (
         <mesh key={i}>
           <sphereGeometry args={[10 + (i + 1) * 2, 64, 64]} />
@@ -212,19 +204,47 @@ export default function Scene({
   const { camera, scene } = useThree();
   const { isBeatVisualizer } = useVisualizer();
   const audioUrlForBeat = useRouteStore((state) => state.audioUrlForBeat);
-  // Combine the prop and the global value for flexibility:
   const showVisualizer = visualizerMode || isBeatVisualizer;
   const animationFinishedRef = useRef(false);
   const elapsedTimeRef = useRef(0);
   const [markersVisible, setMarkersVisible] = useState(false);
-  // Ref for the transmissive sphere (used for godrays)
   const sphereRef = useRef<THREE.Mesh | null>(null);
-  // New ref for the crescent moon component
   const crescentMoonRef = useRef<THREE.Mesh | null>(null);
 
+  // Replace the instantaneous scale state with a spring-based scale for smooth transitions.
+  const [scaleFactor, setScaleFactor] = useState(1);
+  const { scale } = useSpring({
+    scale: scaleFactor,
+    config: { tension: 170, friction: 26 },
+  });
+
+  // Debounced resize handler to reduce flickering
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        const width = window.innerWidth;
+        if (width < 768) {
+          setScaleFactor(0.65);
+        } else if (width < 1024) {
+          setScaleFactor(0.85);
+        } else {
+          setScaleFactor(1);
+        }
+      }, 100);
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   const initialCameraPosition = new THREE.Vector3(-100, -50, 100);
-  const targetCameraPosition = new THREE.Vector3(-10, 10, 30);
-  const animationDuration = 1.25; // seconds
+  const targetCameraPosition = new THREE.Vector3(-5, 0, 40);
+  const animationDuration = 1.25;
 
   useEffect(() => {
     if (!showVisualizer) {
@@ -267,17 +287,15 @@ export default function Scene({
 
   return (
     <group>
-      {/* Original transmissive sphere */}
-      <TransmissiveSphere sphereRef={sphereRef} />
+      {/* Wrap models that need responsive scaling in an animated group */}
+      <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
+        <TransmissiveSphere sphereRef={sphereRef} />
+        <CrescentMoonTransmissive moonRef={crescentMoonRef} />
+      </AnimatedGroup>
 
-      {/* New Crescent Moon Transmissive Sphere on the opposite end, now passing a ref */}
-      <CrescentMoonTransmissive moonRef={crescentMoonRef} />
-
-      {/* Shared environment and lighting */}
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
 
-      {/* Surround the environment with colored particles */}
       <group position={[0, 100, 0]}>
         <EnvironmentParticles />
       </group>
@@ -290,33 +308,38 @@ export default function Scene({
         />
       ) : (
         <>
-          {activeRoute === 'xaeneptunesworld' && (
+          {activeRoute === 'xaeneptunesworld' ? (
             <group>
               <FadingGalaxySkybox specialEffect={specialEffect} />
               <AnimatedScale visible={activeRoute === 'xaeneptunesworld'}>
-                <NeptuneModelAnimated onSelectRoute={onSelectRoute} />
+                <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
+                  <NeptuneModelAnimated onSelectRoute={onSelectRoute} />
+                </AnimatedGroup>
               </AnimatedScale>
               <AnimatedScale visible={activeRoute === 'xaeneptunesworld'}>
-                <GalaxyModel />
+                <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
+                  <GalaxyModel />
+                </AnimatedGroup>
               </AnimatedScale>
             </group>
+          ) : (
+            <AnimatedScale visible={activeRoute === 'home'}>
+              <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
+                <group rotation={[0, Math.PI, 0]}>
+                  <AntiHeroLogo showMarkers={markersVisible} onSelectRoute={onSelectRoute} />
+                </group>
+                <AntiHero3D
+                  config={antiHeroConfig}
+                  showMarkers={markersVisible}
+                  specialEffect={specialEffect}
+                  onSelectRoute={onSelectRoute}
+                  position={[0, -8, 0]}
+                />
+                <directionalLight intensity={0.8} position={[50, 50, 50]} color="#aaaaff" />
+                <ambientLight intensity={0.4} color="#5555aa" />
+              </AnimatedGroup>
+            </AnimatedScale>
           )}
-          <AnimatedScale visible={activeRoute !== 'xaeneptunesworld'}>
-            <group>
-              <group rotation={[0, Math.PI, 0]}>
-                <AntiHeroLogo showMarkers={markersVisible} onSelectRoute={onSelectRoute} />
-              </group>
-              <AntiHero3D
-                config={antiHeroConfig}
-                showMarkers={markersVisible}
-                specialEffect={specialEffect}
-                onSelectRoute={onSelectRoute}
-                position={[0, -8, 0]}
-              />
-              <directionalLight intensity={0.8} position={[50, 50, 50]} color="#aaaaff" />
-              <ambientLight intensity={0.4} color="#5555aa" />
-            </group>
-          </AnimatedScale>
         </>
       )}
 
@@ -329,41 +352,38 @@ export default function Scene({
         maxPolarAngle={Math.PI / 2}
       />
 
-{(sphereRef.current || crescentMoonRef.current) && (
-  <EffectComposer>
-    {sphereRef.current ? (
-      <GodRays
-        key="sphere"
-        sun={sphereRef.current}
-        blendFunction={BlendFunction.SCREEN}
-        samples={120}
-        density={1.25}
-        decay={0.93}
-        weight={0.8}
-        exposure={0.2}
-      />
-    ) : (
-      <></>
-    )}
-    {crescentMoonRef.current ? (
-      <GodRays
-        key="crescentMoon"
-        sun={crescentMoonRef.current}
-        blendFunction={BlendFunction.SCREEN}
-        samples={120}
-        density={2.25}
-        decay={0.93}
-        weight={0.8}  // less prominent effect for the crescent moon
-        exposure={0.1}
-      />
-    ) : (
-      <></>
-    )}
-  </EffectComposer>
-)}
-
-
-
+      {(sphereRef.current || crescentMoonRef.current) && (
+        <EffectComposer>
+          {sphereRef.current ? (
+            <GodRays
+              key="sphere"
+              sun={sphereRef.current}
+              blendFunction={BlendFunction.SCREEN}
+              samples={120}
+              density={1.25}
+              decay={0.93}
+              weight={0.8}
+              exposure={0.2}
+            />
+          ) : (
+            <></>
+          )}
+          {crescentMoonRef.current ? (
+            <GodRays
+              key="crescentMoon"
+              sun={crescentMoonRef.current}
+              blendFunction={BlendFunction.SCREEN}
+              samples={120}
+              density={2.25}
+              decay={0.93}
+              weight={0.8}  // less prominent effect for the crescent moon
+              exposure={0.1}
+            />
+          ) : (
+            <></>
+          )}
+        </EffectComposer>
+      )}
 
       <Reflector
         blur={[512, 512]}
@@ -386,3 +406,4 @@ export default function Scene({
     </group>
   );
 }
+ 
