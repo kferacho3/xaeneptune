@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
 
   eslint: {
     // Only run ESLint on files in the 'src' directory.
-    dirs: ['src'],
+    dirs: ["src"],
   },
   webpack(config) {
     config.module.rules.push({

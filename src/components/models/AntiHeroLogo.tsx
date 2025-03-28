@@ -18,9 +18,10 @@ type AntiHeroLogoProps = ThreeElements["group"];
 export default function AntiHeroLogo(props: AntiHeroLogoProps) {
   const group = useRef<THREE.Group>(null);
   const { mouse } = useThree();
+  // Cast the result from useGLTF first to unknown and then to GLTFResult.
   const { nodes, materials } = useGLTF(
     "https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHero.glb",
-  ) as GLTFResult;
+  ) as unknown as GLTFResult;
 
   // For flicking behavior.
   const velocity = useRef(new THREE.Vector2(0, 0));

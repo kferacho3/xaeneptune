@@ -82,16 +82,20 @@ export default function AntiHero3D({
       uMin: { value: new THREE.Vector3(0, 0, 0) },
       uMax: { value: new THREE.Vector3(0, 0, 0) },
     }),
-    [config.uTwistSpeed, config.uRotateSpeed, config.uTwists, config.uRadius]
+    [config.uTwistSpeed, config.uRotateSpeed, config.uTwists, config.uRadius],
   );
 
   // Update uniforms when config changes.
   useEffect(() => {
     if (refMaterial.current?.userData.shader) {
-      refMaterial.current.userData.shader.uniforms.uRadius.value = config.uRadius;
-      refMaterial.current.userData.shader.uniforms.uTwists.value = config.uTwists;
-      refMaterial.current.userData.shader.uniforms.uTwistSpeed.value = config.uTwistSpeed;
-      refMaterial.current.userData.shader.uniforms.uRotateSpeed.value = config.uRotateSpeed;
+      refMaterial.current.userData.shader.uniforms.uRadius.value =
+        config.uRadius;
+      refMaterial.current.userData.shader.uniforms.uTwists.value =
+        config.uTwists;
+      refMaterial.current.userData.shader.uniforms.uTwistSpeed.value =
+        config.uTwistSpeed;
+      refMaterial.current.userData.shader.uniforms.uRotateSpeed.value =
+        config.uRotateSpeed;
     }
   }, [config]);
 

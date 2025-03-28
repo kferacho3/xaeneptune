@@ -105,7 +105,7 @@ function FractalShader({
           1,
           3,
           new THREE.Vector2(-0.8, 0.1565),
-          0.1
+          0.1,
         );
       case "pythagorasTree":
         return createPythagorasTree3DCubesGeometry(7, 5, 0.1);
@@ -145,7 +145,7 @@ function FractalShader({
         wireframe: true,
         side: THREE.DoubleSide,
       }),
-    []
+    [],
   );
   const solidMaterial = useMemo(
     () =>
@@ -154,7 +154,7 @@ function FractalShader({
         flatShading: true,
         side: THREE.DoubleSide,
       }),
-    []
+    [],
   );
   const transparentMaterial = useMemo(
     () =>
@@ -164,7 +164,7 @@ function FractalShader({
         opacity: 0.5,
         side: THREE.DoubleSide,
       }),
-    []
+    [],
   );
 
   // Wrap getMaterial in a useCallback so that it is stable across renders.
@@ -190,20 +190,24 @@ function FractalShader({
             ? audioData.reduce((sum, val) => sum + val, 0) / audioData.length
             : 128;
         return new THREE.MeshPhongMaterial({
-          color: new THREE.Color(avgFrequency / 255, 1 - avgFrequency / 255, 0.5),
+          color: new THREE.Color(
+            avgFrequency / 255,
+            1 - avgFrequency / 255,
+            0.5,
+          ),
           flatShading: true,
           side: THREE.DoubleSide,
         });
       }
       return solidMaterial;
     },
-    [wireframeMaterial, transparentMaterial, solidMaterial, audioData]
+    [wireframeMaterial, transparentMaterial, solidMaterial, audioData],
   );
 
   const dynamicMaterial = useMemo(
-        () => getMaterial(renderingMode, colorMode),
-        [renderingMode, colorMode, getMaterial]
-     );
+    () => getMaterial(renderingMode, colorMode),
+    [renderingMode, colorMode, getMaterial],
+  );
 
   useEffect(() => {
     const group = groupRef.current;
@@ -417,13 +421,13 @@ export default function VisualizerTwo({
 }) {
   // Parent already provides a Canvas.
   const [currentFractalType, setCurrentFractalType] = useState<FractalType>(
-    propFractalType ?? "mandelbox"
+    propFractalType ?? "mandelbox",
   );
   const [localRenderingMode, setLocalRenderingMode] = useState<RenderingMode>(
-    propRenderingMode ?? "transparent"
+    propRenderingMode ?? "transparent",
   );
   const [localColorMode, setLocalColorMode] = useState<ColorMode>(
-    propColorMode ?? "frequencyBased"
+    propColorMode ?? "frequencyBased",
   );
   const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(0));
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -483,7 +487,7 @@ export default function VisualizerTwo({
       sharedAudioElement
         .play()
         .catch((err) =>
-          console.warn("Audio play interrupted or blocked:", err)
+          console.warn("Audio play interrupted or blocked:", err),
         );
     } else {
       sharedAudioElement.pause();

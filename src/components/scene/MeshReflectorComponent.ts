@@ -91,7 +91,7 @@ ${shader.vertexShader}
       "#include <project_vertex>",
       `#include <project_vertex>
 my_vUv = textureMatrix * vec4( position, 1.0 );
-gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );`
+gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );`,
     );
 
     // Add uniforms to the fragment shader code
@@ -181,7 +181,7 @@ newMerge.g = (merge.g - 0.5) * mixContrast + 0.5;
 newMerge.b = (merge.b - 0.5) * mixContrast + 0.5;
 
 diffuseColor.rgb = diffuseColor.rgb * ((1.0 - min(1.0, mirror)) + newMerge.rgb * mixStrength);
-`
+`,
     );
   }
 

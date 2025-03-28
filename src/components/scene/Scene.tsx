@@ -45,7 +45,11 @@ function AnimatedScale({
   const groupRef = useRef<THREE.Group>(null);
   useEffect(() => {
     if (groupRef.current) {
-      groupRef.current.scale.set(visible ? 0 : 1, visible ? 0 : 1, visible ? 0 : 1);
+      groupRef.current.scale.set(
+        visible ? 0 : 1,
+        visible ? 0 : 1,
+        visible ? 0 : 1,
+      );
     }
   }, [visible]);
   useFrame((_, delta) => {
@@ -81,7 +85,7 @@ function FadingGalaxySkybox({ specialEffect }: { specialEffect?: boolean }) {
 }
 
 function NeptuneModelAnimated(
-  props: Omit<React.ComponentProps<typeof NeptuneModel>, "scale">
+  props: Omit<React.ComponentProps<typeof NeptuneModel>, "scale">,
 ) {
   return (
     <group>
@@ -167,7 +171,7 @@ function CrescentMoonTransmissive({
           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
         }
         #include <dithering_fragment>
-      `
+      `,
     );
   };
 
@@ -282,12 +286,9 @@ export default function Scene({
   // Memoize camera positions so their references remain constant across renders
   const initialCameraPosition = useMemo(
     () => new THREE.Vector3(-100, -50, 100),
-    []
+    [],
   );
-  const targetCameraPosition = useMemo(
-    () => new THREE.Vector3(-5, 0, 40),
-    []
-  );
+  const targetCameraPosition = useMemo(() => new THREE.Vector3(-5, 0, 40), []);
   const animationDuration = 1.25;
 
   useEffect(() => {
@@ -311,7 +312,7 @@ export default function Scene({
         camera.position.lerpVectors(
           initialCameraPosition,
           targetCameraPosition,
-          t
+          t,
         );
         camera.lookAt(0, 0, 0);
       }

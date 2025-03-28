@@ -8,23 +8,23 @@ import React, { useEffect, useState } from "react";
 // Dynamically import visualizer components with SSR disabled.
 const VisualizerOne = dynamic(
   () => import("@/components/visualizers/VisualizerOne"),
-  { ssr: false }
+  { ssr: false },
 );
 const VisualizerTwo = dynamic(
   () => import("@/components/visualizers/VisualizerTwo"),
-  { ssr: false }
+  { ssr: false },
 );
 const VisualizerThree = dynamic(
   () => import("@/components/visualizers/VisualizerThree"),
-  { ssr: false }
+  { ssr: false },
 );
 const VisualizerFour = dynamic(
   () => import("@/components/visualizers/VisualizerFour"),
-  { ssr: false }
+  { ssr: false },
 );
 const SupershapeVisualizer = dynamic(
   () => import("@/components/visualizers/SupershapeVisualizer"),
-  { ssr: false }
+  { ssr: false },
 );
 
 export type BeatAudioVisualizerSceneProps = {

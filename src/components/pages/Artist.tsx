@@ -446,43 +446,47 @@ export default function Artist() {
   // Main Artist is Xae Neptune
   const mainArtistId = "7iysPipkcsfGFVEgUMDzHQ";
 
-
   // Associated IDs wrapped in useMemo:
-  const associatedArtistIds = useMemo(() => [
-    "4ihlULofncvxd3Cz7ewTNV", // Jyse
-    "3uwUJ78bwdDBLo3O04xlnL", // Kartier
-    "4nRgpdGBG8DPYMHikqUp3w", // Bigbulwayne
-    "6mFKPMFGbulPhOnj3UvzAF", // Vxin
-    "0z3M3HSEsrgi5YmwY5e9fB",
-    "2pZnyv4zLqnSDktBqXQlZz",
-    "0zRLHcRfGiz3GCHk852mIL",
-    "6cPZNDrHphEZ3ok4t8K7ZT",
-    "5bNFzNn84AoUqClYZJKan5",
-    "1IwJ9sVzmn5hBSe02HsLnM",
-    "5pVOuKzA3hhsdScwg2k4o",
-    "3k8lBDenIm90lWaSpAYQeH",
-    "4O0urd9sL16UmRnmdHienf",
-    "05eq9g0p6jze8k6Wva5BUz",
-    "2pZnyv4zLqnSDktBqXQlZz",
-    "0z3M3HSEsrgi5YmwY5e9fB",
-    "4wtNgDt8QcZCPfx64NiBGi",
-    "6E9lvijZw6hhoNiEaZ765i",
-  ], []);
-  
-  // XO June artist wrapped in useMemo:
-  const xoJuneArtist: SpotifyArtist = useMemo(() => ({
-    id: "xo-june",
-    name: "XO June",
-    images: [
-      {
-        url: "https://i1.sndcdn.com/avatars-WTj6LWMHQK0o1lDw-Vz5D1A-t500x500.jpg",
-      },
+  const associatedArtistIds = useMemo(
+    () => [
+      "4ihlULofncvxd3Cz7ewTNV", // Jyse
+      "3uwUJ78bwdDBLo3O04xlnL", // Kartier
+      "4nRgpdGBG8DPYMHikqUp3w", // Bigbulwayne
+      "6mFKPMFGbulPhOnj3UvzAF", // Vxin
+      "0z3M3HSEsrgi5YmwY5e9fB",
+      "2pZnyv4zLqnSDktBqXQlZz",
+      "0zRLHcRfGiz3GCHk852mIL",
+      "6cPZNDrHphEZ3ok4t8K7ZT",
+      "5bNFzNn84AoUqClYZJKan5",
+      "1IwJ9sVzmn5hBSe02HsLnM",
+      "5pVOuKzA3hhsdScwg2k4o",
+      "3k8lBDenIm90lWaSpAYQeH",
+      "4O0urd9sL16UmRnmdHienf",
+      "05eq9g0p6jze8k6Wva5BUz",
+      "2pZnyv4zLqnSDktBqXQlZz",
+      "0z3M3HSEsrgi5YmwY5e9fB",
+      "4wtNgDt8QcZCPfx64NiBGi",
+      "6E9lvijZw6hhoNiEaZ765i",
     ],
-    followers: { total: 0 },
-    genres: [],
-    external_urls: { spotify: "https://soundcloud.com/xojune" },
-  }), []);
-  
+    [],
+  );
+
+  // XO June artist wrapped in useMemo:
+  const xoJuneArtist: SpotifyArtist = useMemo(
+    () => ({
+      id: "xo-june",
+      name: "XO June",
+      images: [
+        {
+          url: "https://i1.sndcdn.com/avatars-WTj6LWMHQK0o1lDw-Vz5D1A-t500x500.jpg",
+        },
+      ],
+      followers: { total: 0 },
+      genres: [],
+      external_urls: { spotify: "https://soundcloud.com/xojune" },
+    }),
+    [],
+  );
 
   // ----------------
   // Fetch main artist (Xae Neptune)
@@ -505,29 +509,28 @@ export default function Artist() {
   // ----------------
   // Fetch associated artists in parallel
   // ----------------
-// ----------------
-// Fetch associated artists in parallel
-// ----------------
-useEffect(() => {
-  const fetchAssociatedArtists = async () => {
-    try {
-      const promises = associatedArtistIds.map((id) =>
-        fetch(`/api/spotify/artist?artistId=${id}`).then((res) => res.json())
-      );
-      const artistsData = await Promise.all(promises);
+  // ----------------
+  // Fetch associated artists in parallel
+  // ----------------
+  useEffect(() => {
+    const fetchAssociatedArtists = async () => {
+      try {
+        const promises = associatedArtistIds.map((id) =>
+          fetch(`/api/spotify/artist?artistId=${id}`).then((res) => res.json()),
+        );
+        const artistsData = await Promise.all(promises);
 
-      // Add XO June
-      const allArtists = [...artistsData, xoJuneArtist];
-      setAssociatedArtists(allArtists);
-    } catch (error) {
-      console.error("Error fetching associated artists:", error);
-    } finally {
-      setLoadingAssociated(false);
-    }
-  };
-  fetchAssociatedArtists();
-}, [associatedArtistIds, xoJuneArtist]);
-
+        // Add XO June
+        const allArtists = [...artistsData, xoJuneArtist];
+        setAssociatedArtists(allArtists);
+      } catch (error) {
+        console.error("Error fetching associated artists:", error);
+      } finally {
+        setLoadingAssociated(false);
+      }
+    };
+    fetchAssociatedArtists();
+  }, [associatedArtistIds, xoJuneArtist]);
 
   // ----------------
   // When user selects an artist, fetch top tracks & discography
