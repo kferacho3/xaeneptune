@@ -75,18 +75,22 @@ function Marker({
     setTimeout(() => setSelected(false), 300);
   };
 
+  const occluderArray: React.RefObject<THREE.Object3D>[] =
+  occluder.current ? ([occluder] as React.RefObject<THREE.Object3D>[]) : [];
+
   return (
     <group ref={ref} position={position} rotation={rotation}>
-      <Html
-        // Removed the transform prop to prevent flickering
-        occlude={[occluder]}
-        onOcclude={setOccluded}
-        style={{
-          pointerEvents: "auto",
-          transition: "opacity 0.3s ease-out",
-          opacity: isVisible ? 1 : 0,
-        }}
-      >
+<Html
+  occlude={occluderArray}
+  onOcclude={setOccluded}
+  style={{
+    pointerEvents: "auto",
+    transition: "opacity 0.3s ease-out",
+    opacity: isVisible ? 1 : 0,
+  }}
+>
+
+
         <div
           onClick={handleClick}
           onMouseEnter={() => setHovered(true)}
