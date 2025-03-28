@@ -1,4 +1,5 @@
 'use client';
+
 import AntiHeroLogo from '@/components/models/AntiHeroMain';
 import { GalaxyModel } from '@/components/models/Galaxy';
 import { GalaxySkyboxModel } from '@/components/models/GalaxySkybox';
@@ -7,7 +8,7 @@ import AntiHero3D from '@/components/models/text3D/AntiHero3D';
 import BeatAudioVisualizerScene from '@/components/scene/BeatAudioVisualizerScene';
 import { useVisualizer } from '@/context/VisualizerContext';
 import { Route, useRouteStore } from '@/store/useRouteStore';
-import { OrbitControls, Reflector, Sparkles } from '@react-three/drei';
+import { MeshReflectorMaterial, OrbitControls, Sparkles } from '@react-three/drei';
 import { ThreeElements, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
@@ -385,24 +386,23 @@ export default function Scene({
         </EffectComposer>
       )}
 
-      <Reflector
-        blur={[512, 512]}
-        mixBlur={0.75}
-        mixStrength={0.25}
-        resolution={1024}
-        args={[10000, 10000]}
-        rotation={[-Math.PI * 0.5, 0, 0]}
-        position={[0, -70, 0]}
-        mirror={0.05}
-        minDepthThreshold={0.25}
-        maxDepthThreshold={1}
-        depthScale={50}
-        recursion={2}
-      >
-        {(Material: React.ComponentType<MeshPhysicalMaterialProps>, props: MeshPhysicalMaterialProps): React.ReactElement => (
-          <Material metalness={0.99} roughness={0.2} {...props} />
-        )}
-      </Reflector>
+ {/* Instead of using Reflector, use a mesh with MeshReflectorMaterial */}
+ <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -70, 0]}>
+        <planeGeometry args={[10000, 10000]} />
+        <MeshReflectorMaterial
+          blur={[512, 512]}
+          mixBlur={0.75}
+          mixStrength={0.25}
+          resolution={1024}
+          mirror={0.05}
+          minDepthThreshold={0.25}
+          maxDepthThreshold={1}
+          depthScale={50}
+          //recursion={2}
+          metalness={0.99}
+          roughness={0.2}
+        />
+      </mesh>
     </group>
   );
 }

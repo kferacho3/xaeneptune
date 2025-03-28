@@ -10,9 +10,10 @@
   },
   "dependencies": {
     "@radix-ui/react-arrow": "^1.1.2",
+    "@react-spring/three": "^9.7.5",
     "@react-three/cannon": "^6.6.0",
-    "@react-three/drei": "^9.122.0",
-    "@react-three/fiber": "^9.0.4",
+    "@react-three/drei": "^10.0.5",
+    "@react-three/fiber": "^9.1.0",
     "@react-three/postprocessing": "^3.0.4",
     "axios": "^1.8.2",
     "framer-motion": "^12.4.5",
