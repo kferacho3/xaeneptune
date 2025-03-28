@@ -2,28 +2,29 @@
 import { useRouteStore } from "@/store/useRouteStore";
 import { Html } from "@react-three/drei";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 // Dynamically import visualizer components with SSR disabled.
 const VisualizerOne = dynamic(
   () => import("@/components/visualizers/VisualizerOne"),
-  { ssr: false },
+  { ssr: false }
 );
 const VisualizerTwo = dynamic(
   () => import("@/components/visualizers/VisualizerTwo"),
-  { ssr: false },
+  { ssr: false }
 );
 const VisualizerThree = dynamic(
   () => import("@/components/visualizers/VisualizerThree"),
-  { ssr: false },
+  { ssr: false }
 );
 const VisualizerFour = dynamic(
   () => import("@/components/visualizers/VisualizerFour"),
-  { ssr: false },
+  { ssr: false }
 );
 const SupershapeVisualizer = dynamic(
   () => import("@/components/visualizers/SupershapeVisualizer"),
-  { ssr: false },
+  { ssr: false }
 );
 
 export type BeatAudioVisualizerSceneProps = {
@@ -181,9 +182,11 @@ export default function BeatAudioVisualizerScene({
               onClick={() => switchVisualizer("one")}
               className="flex flex-col items-center"
             >
-              <img
+              <Image
                 src="/visualizerIcons/neptuneNoise.svg"
                 alt="Noise Visualizer"
+                width={32}
+                height={32}
                 className="w-8 h-8"
               />
               <span className="text-white mt-1">Noise Visualizer</span>
@@ -192,9 +195,11 @@ export default function BeatAudioVisualizerScene({
               onClick={() => switchVisualizer("two")}
               className="flex flex-col items-center"
             >
-              <img
+              <Image
                 src="/visualizerIcons/neptuneFractals.svg"
                 alt="Fractal Visualizer"
+                width={32}
+                height={32}
                 className="w-8 h-8"
               />
               <span className="text-white mt-1">Fractal Visualizer</span>
@@ -203,9 +208,11 @@ export default function BeatAudioVisualizerScene({
               onClick={() => switchVisualizer("three")}
               className="flex flex-col items-center"
             >
-              <img
+              <Image
                 src="/visualizerIcons/neptuneSand.svg"
                 alt="Sand Visualizer"
+                width={32}
+                height={32}
                 className="w-8 h-8"
               />
               <span className="text-white mt-1">Sand Visualizer</span>
@@ -214,9 +221,11 @@ export default function BeatAudioVisualizerScene({
               onClick={() => switchVisualizer("four")}
               className="flex flex-col items-center"
             >
-              <img
+              <Image
                 src="/visualizerIcons/neptuneCellular.svg"
                 alt="Cellular Visualizer"
+                width={32}
+                height={32}
                 className="w-8 h-8"
               />
               <span className="text-white mt-1">Cellular Visualizer</span>
@@ -225,12 +234,14 @@ export default function BeatAudioVisualizerScene({
               onClick={() => switchVisualizer("supershape")}
               className="flex flex-col items-center"
             >
-              <img
+              <Image
                 src="/visualizerIcons/neptuneSupershapes.svg"
                 alt="Supershape Visualizer"
+                width={32}
+                height={32}
                 className="w-8 h-8"
               />
-              <span className="text-white  mt-1">Supershape Visualizer</span>
+              <span className="text-white mt-1">Supershape Visualizer</span>
             </button>
           </div>
 

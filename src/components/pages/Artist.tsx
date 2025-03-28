@@ -504,25 +504,29 @@ export default function Artist() {
   // ----------------
   // Fetch associated artists in parallel
   // ----------------
-  useEffect(() => {
-    const fetchAssociatedArtists = async () => {
-      try {
-        const promises = associatedArtistIds.map((id) =>
-          fetch(`/api/spotify/artist?artistId=${id}`).then((res) => res.json()),
-        );
-        const artistsData = await Promise.all(promises);
+// ----------------
+// Fetch associated artists in parallel
+// ----------------
+useEffect(() => {
+  const fetchAssociatedArtists = async () => {
+    try {
+      const promises = associatedArtistIds.map((id) =>
+        fetch(`/api/spotify/artist?artistId=${id}`).then((res) => res.json())
+      );
+      const artistsData = await Promise.all(promises);
 
-        // Add XO June
-        const allArtists = [...artistsData, xoJuneArtist];
-        setAssociatedArtists(allArtists);
-      } catch (error) {
-        console.error("Error fetching associated artists:", error);
-      } finally {
-        setLoadingAssociated(false);
-      }
-    };
-    fetchAssociatedArtists();
-  }, []);
+      // Add XO June
+      const allArtists = [...artistsData, xoJuneArtist];
+      setAssociatedArtists(allArtists);
+    } catch (error) {
+      console.error("Error fetching associated artists:", error);
+    } finally {
+      setLoadingAssociated(false);
+    }
+  };
+  fetchAssociatedArtists();
+}, [associatedArtistIds, xoJuneArtist]);
+
 
   // ----------------
   // When user selects an artist, fetch top tracks & discography

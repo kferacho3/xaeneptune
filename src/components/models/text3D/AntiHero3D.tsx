@@ -1,6 +1,6 @@
 import { Route } from "@/components/layout/NavigationMenu";
 import { extend, useFrame, useLoader } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
@@ -67,28 +67,27 @@ export default function AntiHero3D({
   geo.center();
   geo.computeBoundingBox();
 
-  // Define common shader uniforms.
-  const refUniforms = {
-    uTime: { value: 0 },
-    uTwistSpeed: { value: config.uTwistSpeed },
-    uRotateSpeed: { value: config.uRotateSpeed },
-    uTwists: { value: config.uTwists },
-    uRadius: { value: config.uRadius },
-    uMin: { value: new THREE.Vector3(0, 0, 0) },
-    uMax: { value: new THREE.Vector3(0, 0, 0) },
-  };
+  // Define common shader uniforms using useMemo for stability.
+  const refUniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uTwistSpeed: { value: config.uTwistSpeed },
+      uRotateSpeed: { value: config.uRotateSpeed },
+      uTwists: { value: config.uTwists },
+      uRadius: { value: config.uRadius },
+      uMin: { value: new THREE.Vector3(0, 0, 0) },
+      uMax: { value: new THREE.Vector3(0, 0, 0) },
+    }),
+    [config.uTwistSpeed, config.uRotateSpeed, config.uTwists, config.uRadius, config.fontSize]
+  );
 
   // Update uniforms when config changes.
   useEffect(() => {
     if (refMaterial.current?.userData.shader) {
-      refMaterial.current.userData.shader.uniforms.uRadius.value =
-        config.uRadius;
-      refMaterial.current.userData.shader.uniforms.uTwists.value =
-        config.uTwists;
-      refMaterial.current.userData.shader.uniforms.uTwistSpeed.value =
-        config.uTwistSpeed;
-      refMaterial.current.userData.shader.uniforms.uRotateSpeed.value =
-        config.uRotateSpeed;
+      refMaterial.current.userData.shader.uniforms.uRadius.value = config.uRadius;
+      refMaterial.current.userData.shader.uniforms.uTwists.value = config.uTwists;
+      refMaterial.current.userData.shader.uniforms.uTwistSpeed.value = config.uTwistSpeed;
+      refMaterial.current.userData.shader.uniforms.uRotateSpeed.value = config.uRotateSpeed;
     }
   }, [config]);
 
@@ -113,7 +112,7 @@ export default function AntiHero3D({
         refMaterial.current.userData.shader.uniforms.uMax.value.copy(max);
       }
     }
-  }, [geo, config]);
+  }, [geo, config, refUniforms.uMin.value, refUniforms.uMax.value]);
 
   // onBeforeCompile for the main text – inject twist/rotate code and a gradient in the fragment shader.
   const onBeforeCompileMain = (shader: CustomShader) => {

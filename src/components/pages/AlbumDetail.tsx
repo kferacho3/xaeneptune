@@ -1,5 +1,6 @@
 // /src/components/pages/AlbumDetail.tsx
 "use client";
+import Image from "next/image";
 
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -68,13 +69,16 @@ export default function AlbumDetail() {
           ← Back
         </button>
         <div className="bg-black bg-opacity-75 p-6 rounded">
-          {album.images && album.images[0] && (
-            <img
-              src={album.images[0].url}
-              alt={album.name}
-              className="w-full h-auto mb-4 rounded"
-            />
-          )}
+        {album.images && album.images[0] && (
+  <Image
+    src={album.images[0].url}
+    alt={album.name}
+    width={500} // adjust to your desired width
+    height={500} // adjust to your desired height
+    className="w-full h-auto mb-4 rounded"
+  />
+)}
+
           <h1 className="text-4xl font-bold mb-2">{album.name}</h1>
           <p className="mb-4">Released: {album.release_date}</p>
           <h2 className="text-2xl font-semibold mb-2">Tracklist</h2>

@@ -1,7 +1,7 @@
 "use client";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 // Import only the necessary fractal geometry functions.
 import {
@@ -82,6 +82,7 @@ function FractalShader({
   setLocalColorMode,
 }: FractalShaderProps) {
   const groupRef = useRef<THREE.Group>(null);
+
   const fractalGeometry = useMemo<THREE.BufferGeometry>(() => {
     switch (fractalType) {
       case "mandelbulb":
@@ -104,7 +105,7 @@ function FractalShader({
           1,
           3,
           new THREE.Vector2(-0.8, 0.1565),
-          0.1,
+          0.1
         );
       case "pythagorasTree":
         return createPythagorasTree3DCubesGeometry(7, 5, 0.1);
@@ -144,7 +145,7 @@ function FractalShader({
         wireframe: true,
         side: THREE.DoubleSide,
       }),
-    [],
+    []
   );
   const solidMaterial = useMemo(
     () =>
@@ -153,7 +154,7 @@ function FractalShader({
         flatShading: true,
         side: THREE.DoubleSide,
       }),
-    [],
+    []
   );
   const transparentMaterial = useMemo(
     () =>
@@ -163,47 +164,51 @@ function FractalShader({
         opacity: 0.5,
         side: THREE.DoubleSide,
       }),
-    [],
+    []
   );
-  const getMaterial = (
-    mode: RenderingMode,
-    color: ColorMode,
-  ): THREE.Material => {
-    if (mode === "wireframe") return wireframeMaterial;
-    if (mode === "transparent") return transparentMaterial;
-    if (color === "audioAmplitude") {
-      const amp =
-        audioData.length > 0
-          ? audioData.reduce((sum, val) => sum + val, 0) /
-            (audioData.length * 255)
-          : 0;
-      return new THREE.MeshPhongMaterial({
-        color: new THREE.Color(amp, amp, amp),
-        flatShading: true,
-        side: THREE.DoubleSide,
-      });
-    }
-    if (color === "frequencyBased") {
-      const avgFrequency =
-        audioData.length > 0
-          ? audioData.reduce((sum, val) => sum + val, 0) / audioData.length
-          : 128;
-      return new THREE.MeshPhongMaterial({
-        color: new THREE.Color(avgFrequency / 255, 1 - avgFrequency / 255, 0.5),
-        flatShading: true,
-        side: THREE.DoubleSide,
-      });
-    }
-    return solidMaterial;
-  };
+
+  // Wrap getMaterial in a useCallback so that it is stable across renders.
+  const getMaterial = useCallback(
+    (mode: RenderingMode, color: ColorMode): THREE.Material => {
+      if (mode === "wireframe") return wireframeMaterial;
+      if (mode === "transparent") return transparentMaterial;
+      if (color === "audioAmplitude") {
+        const amp =
+          audioData.length > 0
+            ? audioData.reduce((sum, val) => sum + val, 0) /
+              (audioData.length * 255)
+            : 0;
+        return new THREE.MeshPhongMaterial({
+          color: new THREE.Color(amp, amp, amp),
+          flatShading: true,
+          side: THREE.DoubleSide,
+        });
+      }
+      if (color === "frequencyBased") {
+        const avgFrequency =
+          audioData.length > 0
+            ? audioData.reduce((sum, val) => sum + val, 0) / audioData.length
+            : 128;
+        return new THREE.MeshPhongMaterial({
+          color: new THREE.Color(avgFrequency / 255, 1 - avgFrequency / 255, 0.5),
+          flatShading: true,
+          side: THREE.DoubleSide,
+        });
+      }
+      return solidMaterial;
+    },
+    [wireframeMaterial, transparentMaterial, solidMaterial, audioData]
+  );
+
   const dynamicMaterial = useMemo(
     () => getMaterial(renderingMode, colorMode),
-    [renderingMode, colorMode, audioData],
+    [renderingMode, colorMode, audioData, getMaterial]
   );
 
   useEffect(() => {
-    if (!groupRef.current) return;
-    groupRef.current.children.forEach((child) => {
+    const group = groupRef.current;
+    if (!group) return;
+    group.children.forEach((child) => {
       const mesh = child as THREE.Mesh;
       if (mesh.geometry) mesh.geometry.dispose();
       const mat = mesh.material;
@@ -215,16 +220,18 @@ function FractalShader({
         mat.dispose();
       }
     });
-    groupRef.current.clear();
+    group.clear();
     if (dynamicMaterial instanceof THREE.PointsMaterial) {
       const pointsMesh = new THREE.Points(fractalGeometry, dynamicMaterial);
-      groupRef.current.add(pointsMesh);
+      group.add(pointsMesh);
     } else {
       const mesh = new THREE.Mesh(fractalGeometry, dynamicMaterial);
-      groupRef.current.add(mesh);
+      group.add(mesh);
     }
     return () => {
-      groupRef.current?.children.forEach((child) => {
+      // Capture the group in a local variable for cleanup.
+      const currentGroup = group;
+      currentGroup.children.forEach((child) => {
         const mesh = child as THREE.Mesh;
         if (mesh.geometry) mesh.geometry.dispose();
         const mat = mesh.material;
@@ -236,7 +243,7 @@ function FractalShader({
           mat.dispose();
         }
       });
-      groupRef.current?.clear();
+      currentGroup.clear();
     };
   }, [fractalGeometry, dynamicMaterial]);
 
@@ -410,13 +417,13 @@ export default function VisualizerTwo({
 }) {
   // Parent already provides a Canvas.
   const [currentFractalType, setCurrentFractalType] = useState<FractalType>(
-    propFractalType ?? "mandelbox",
+    propFractalType ?? "mandelbox"
   );
   const [localRenderingMode, setLocalRenderingMode] = useState<RenderingMode>(
-    propRenderingMode ?? "transparent",
+    propRenderingMode ?? "transparent"
   );
   const [localColorMode, setLocalColorMode] = useState<ColorMode>(
-    propColorMode ?? "frequencyBased",
+    propColorMode ?? "frequencyBased"
   );
   const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(0));
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -476,7 +483,7 @@ export default function VisualizerTwo({
       sharedAudioElement
         .play()
         .catch((err) =>
-          console.warn("Audio play interrupted or blocked:", err),
+          console.warn("Audio play interrupted or blocked:", err)
         );
     } else {
       sharedAudioElement.pause();

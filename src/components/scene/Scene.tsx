@@ -16,7 +16,7 @@ import {
 import { useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, GodRays } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 // Import react-spring for smooth animations in three.js
 import { a, useSpring } from "@react-spring/three";
@@ -45,11 +45,7 @@ function AnimatedScale({
   const groupRef = useRef<THREE.Group>(null);
   useEffect(() => {
     if (groupRef.current) {
-      groupRef.current.scale.set(
-        visible ? 0 : 1,
-        visible ? 0 : 1,
-        visible ? 0 : 1,
-      );
+      groupRef.current.scale.set(visible ? 0 : 1, visible ? 0 : 1, visible ? 0 : 1);
     }
   }, [visible]);
   useFrame((_, delta) => {
@@ -85,7 +81,7 @@ function FadingGalaxySkybox({ specialEffect }: { specialEffect?: boolean }) {
 }
 
 function NeptuneModelAnimated(
-  props: Omit<React.ComponentProps<typeof NeptuneModel>, "scale">,
+  props: Omit<React.ComponentProps<typeof NeptuneModel>, "scale">
 ) {
   return (
     <group>
@@ -171,7 +167,7 @@ function CrescentMoonTransmissive({
           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
         }
         #include <dithering_fragment>
-      `,
+      `
     );
   };
 
@@ -283,8 +279,15 @@ export default function Scene({
     };
   }, []);
 
-  const initialCameraPosition = new THREE.Vector3(-100, -50, 100);
-  const targetCameraPosition = new THREE.Vector3(-5, 0, 40);
+  // Memoize camera positions so their references remain constant across renders
+  const initialCameraPosition = useMemo(
+    () => new THREE.Vector3(-100, -50, 100),
+    []
+  );
+  const targetCameraPosition = useMemo(
+    () => new THREE.Vector3(-5, 0, 40),
+    []
+  );
   const animationDuration = 1.25;
 
   useEffect(() => {
@@ -292,7 +295,7 @@ export default function Scene({
       camera.position.copy(initialCameraPosition);
       camera.lookAt(0, 0, 0);
     }
-  }, [camera, showVisualizer]);
+  }, [camera, showVisualizer, initialCameraPosition]);
 
   useFrame((_, delta) => {
     if (!showVisualizer && !animationFinishedRef.current) {
@@ -308,7 +311,7 @@ export default function Scene({
         camera.position.lerpVectors(
           initialCameraPosition,
           targetCameraPosition,
-          t,
+          t
         );
         camera.lookAt(0, 0, 0);
       }
@@ -403,7 +406,6 @@ export default function Scene({
         minPolarAngle={0}
         maxPolarAngle={Math.PI / 2}
       />
-
       {(sphereRef.current || crescentMoonRef.current) && (
         <EffectComposer>
           {sphereRef.current ? (
