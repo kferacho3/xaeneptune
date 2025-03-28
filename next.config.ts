@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
       "is1-ssl.mzstatic.com",
     ],
   },
+
+  eslint: {
+    // Only run ESLint on files in the 'src' directory.
+    dirs: ['src'],
+  },
   webpack(config) {
     config.module.rules.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
