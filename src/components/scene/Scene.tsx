@@ -9,7 +9,7 @@ import BeatAudioVisualizerScene from '@/components/scene/BeatAudioVisualizerScen
 import { useVisualizer } from '@/context/VisualizerContext';
 import { Route, useRouteStore } from '@/store/useRouteStore';
 import { MeshReflectorMaterial, OrbitControls, Sparkles } from '@react-three/drei';
-import { ThreeElements, useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, GodRays } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import React, { useEffect, useRef, useState } from 'react';
@@ -20,7 +20,6 @@ import { a, useSpring } from '@react-spring/three';
 // Define an animated group so that the "group" element is correctly typed.
 const AnimatedGroup = a('group');
 
-type MeshPhysicalMaterialProps = ThreeElements['meshPhysicalMaterial'];
 
 type SceneProps = {
   onLoaded?: () => void;
