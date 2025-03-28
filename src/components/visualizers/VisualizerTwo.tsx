@@ -201,9 +201,9 @@ function FractalShader({
   );
 
   const dynamicMaterial = useMemo(
-    () => getMaterial(renderingMode, colorMode),
-    [renderingMode, colorMode, audioData, getMaterial]
-  );
+        () => getMaterial(renderingMode, colorMode),
+        [renderingMode, colorMode, getMaterial]
+     );
 
   useEffect(() => {
     const group = groupRef.current;

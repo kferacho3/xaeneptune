@@ -56,18 +56,22 @@ export default function AntiHero3D({
   // Load the font.
   const font = useLoader(FontLoader, "/fonts/Devil2.json");
 
-  // Create the text geometry.
-  const geo = new TextGeometry(config.text, {
-    font,
-    size: config.fontSize,
-    height: config.fontDepth,
-    curveSegments: 100,
-    bevelEnabled: false,
-  });
-  geo.center();
-  geo.computeBoundingBox();
+  // Create the text geometry using useMemo to ensure stability.
+  const geo = useMemo(() => {
+    const geometry = new TextGeometry(config.text, {
+      font,
+      size: config.fontSize,
+      height: config.fontDepth,
+      curveSegments: 100,
+      bevelEnabled: false,
+    });
+    geometry.center();
+    geometry.computeBoundingBox();
+    return geometry;
+  }, [config.text, config.fontSize, config.fontDepth, font]);
 
-  // Define common shader uniforms using useMemo for stability.
+  // Define common shader uniforms using useMemo.
+  // Removed config.fontSize from dependencies because it isn't used here.
   const refUniforms = useMemo(
     () => ({
       uTime: { value: 0 },
@@ -78,7 +82,7 @@ export default function AntiHero3D({
       uMin: { value: new THREE.Vector3(0, 0, 0) },
       uMax: { value: new THREE.Vector3(0, 0, 0) },
     }),
-    [config.uTwistSpeed, config.uRotateSpeed, config.uTwists, config.uRadius, config.fontSize]
+    [config.uTwistSpeed, config.uRotateSpeed, config.uTwists, config.uRadius]
   );
 
   // Update uniforms when config changes.
@@ -112,7 +116,7 @@ export default function AntiHero3D({
         refMaterial.current.userData.shader.uniforms.uMax.value.copy(max);
       }
     }
-  }, [geo, config, refUniforms.uMin.value, refUniforms.uMax.value]);
+  }, [geo, config, refUniforms]);
 
   // onBeforeCompile for the main text – inject twist/rotate code and a gradient in the fragment shader.
   const onBeforeCompileMain = (shader: CustomShader) => {

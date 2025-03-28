@@ -2,8 +2,7 @@
 
 import { hardcodedAlbums } from "@/data/artistsData";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 // ---------------------
 // INTERFACES
 // ---------------------
@@ -447,8 +446,9 @@ export default function Artist() {
   // Main Artist is Xae Neptune
   const mainArtistId = "7iysPipkcsfGFVEgUMDzHQ";
 
-  // Associated IDs
-  const associatedArtistIds = [
+
+  // Associated IDs wrapped in useMemo:
+  const associatedArtistIds = useMemo(() => [
     "4ihlULofncvxd3Cz7ewTNV", // Jyse
     "3uwUJ78bwdDBLo3O04xlnL", // Kartier
     "4nRgpdGBG8DPYMHikqUp3w", // Bigbulwayne
@@ -467,10 +467,10 @@ export default function Artist() {
     "0z3M3HSEsrgi5YmwY5e9fB",
     "4wtNgDt8QcZCPfx64NiBGi",
     "6E9lvijZw6hhoNiEaZ765i",
-  ];
-
-  // Hardcoded XO June
-  const xoJuneArtist: SpotifyArtist = {
+  ], []);
+  
+  // XO June artist wrapped in useMemo:
+  const xoJuneArtist: SpotifyArtist = useMemo(() => ({
     id: "xo-june",
     name: "XO June",
     images: [
@@ -481,7 +481,8 @@ export default function Artist() {
     followers: { total: 0 },
     genres: [],
     external_urls: { spotify: "https://soundcloud.com/xojune" },
-  };
+  }), []);
+  
 
   // ----------------
   // Fetch main artist (Xae Neptune)
