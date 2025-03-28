@@ -1,11 +1,11 @@
-import { Text, useGLTF } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import type { JSX } from 'react';
-import { useRef } from 'react';
-import * as THREE from 'three';
-import { GLTF } from 'three-stdlib';
-import { Route } from '../layout/NavigationMenu'; // adjust as needed
-import { OrbitingShapes } from './OrbitingShapes';
+import { Text, useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import type { JSX } from "react";
+import { useRef } from "react";
+import * as THREE from "three";
+import { GLTF } from "three-stdlib";
+import { Route } from "../layout/NavigationMenu"; // adjust as needed
+import { OrbitingShapes } from "./OrbitingShapes";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -18,7 +18,7 @@ type GLTFResult = GLTF & {
   };
 };
 
-type NeptuneModelProps = JSX.IntrinsicElements['group'] & {
+type NeptuneModelProps = JSX.IntrinsicElements["group"] & {
   specialEffect?: boolean;
   onSelectRoute: (route: Route) => void;
 };
@@ -26,7 +26,7 @@ type NeptuneModelProps = JSX.IntrinsicElements['group'] & {
 export function NeptuneModel({ specialEffect, ...props }: NeptuneModelProps) {
   const group = useRef<THREE.Group>(null);
   const { nodes, materials } = useGLTF(
-    'https://xaeneptune.s3.us-east-2.amazonaws.com/glb/neptune.glb'
+    "https://xaeneptune.s3.us-east-2.amazonaws.com/glb/neptune.glb",
   ) as unknown as GLTFResult;
 
   return (
@@ -64,7 +64,7 @@ function OrbitingText({ text, radius }: { text: string; radius: number }) {
       groupRef.current.rotation.y += delta * 0.5;
     }
   });
-  const letters = text.split('');
+  const letters = text.split("");
   const angleStep = (2 * Math.PI) / letters.length;
   return (
     <group ref={groupRef}>
@@ -88,4 +88,6 @@ function OrbitingText({ text, radius }: { text: string; radius: number }) {
   );
 }
 
-useGLTF.preload('https://xaeneptune.s3.us-east-2.amazonaws.com/glb/neptune.glb');
+useGLTF.preload(
+  "https://xaeneptune.s3.us-east-2.amazonaws.com/glb/neptune.glb",
+);

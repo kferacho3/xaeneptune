@@ -1,11 +1,11 @@
 // src/components/background/BackgroundGradient.tsx
-'use client';
+"use client";
 
-import { ScreenQuad, shaderMaterial } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import React, { useEffect, useMemo, useRef } from 'react';
-import * as THREE from 'three';
-import NoiseShader from './NoiseShader';
+import { ScreenQuad, shaderMaterial } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import React, { useEffect, useMemo, useRef } from "react";
+import * as THREE from "three";
+import NoiseShader from "./NoiseShader";
 
 export type BackgroundUniforms = {
   uTime: number;
@@ -39,7 +39,7 @@ const INITIAL_UNIFORMS: BackgroundUniforms = {
 const NoiseMaterial = shaderMaterial(
   INITIAL_UNIFORMS,
   NoiseShader.vertexShader,
-  NoiseShader.fragmentShader
+  NoiseShader.fragmentShader,
 );
 
 export type NoiseMaterialType = THREE.ShaderMaterial & BackgroundUniforms;

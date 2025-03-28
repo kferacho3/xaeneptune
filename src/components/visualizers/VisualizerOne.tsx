@@ -26,20 +26,31 @@ let sharedAnalyser: AnalyserNode | null = null;
 function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
   console.log("VisualizerOne active");
   const groupRef = useRef<THREE.Group>(null);
-  const ballRef = useRef<THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>>(null);
-  const plane1Ref = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
-  const plane2Ref = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
+  const ballRef =
+    useRef<THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>>(
+      null,
+    );
+  const plane1Ref =
+    useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
+  const plane2Ref =
+    useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sceneRef = useRef<THREE.Scene>(new THREE.Scene());
   const cameraRef = useRef<THREE.PerspectiveCamera>(
-    new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
+    new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000,
+    ),
   );
   const rendererRef = useRef<THREE.WebGLRenderer>(
-    new THREE.WebGLRenderer({ alpha: true, antialias: true })
+    new THREE.WebGLRenderer({ alpha: true, antialias: true }),
   );
-  const [renderingMode, setRenderingMode] = useState<RenderingMode>("wireframe");
+  const [renderingMode, setRenderingMode] =
+    useState<RenderingMode>("wireframe");
   const [colorMode, setColorMode] = useState<ColorMode>("default");
 
   useEffect(() => {
@@ -50,7 +61,8 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
       sharedAudioElement.crossOrigin = "anonymous";
       sharedAudioElement.loop = true;
       sharedAudioContext = new AudioContext();
-      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
+      const src =
+        sharedAudioContext.createMediaElementSource(sharedAudioElement);
       sharedAnalyser = sharedAudioContext.createAnalyser();
       sharedAnalyser.fftSize = 512;
       src.connect(sharedAnalyser);
@@ -171,7 +183,7 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
   const makeRoughBall = (
     mesh: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>,
     bassFr: number,
-    treFr: number
+    treFr: number,
   ) => {
     if (!mesh) return;
     const vertices = mesh.geometry.attributes.position.array as Float32Array;
@@ -181,11 +193,19 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     const rf = 0.00001;
 
     for (let i = 0; i < vertices.length; i += 3) {
-      const vertex = new THREE.Vector3(vertices[i], vertices[i + 1], vertices[i + 2]).normalize();
+      const vertex = new THREE.Vector3(
+        vertices[i],
+        vertices[i + 1],
+        vertices[i + 2],
+      ).normalize();
       const distance =
         offset +
         bassFr +
-        noise3D(vertex.x + time * rf * 7, vertex.y + time * rf * 8, vertex.z + time * rf * 9) *
+        noise3D(
+          vertex.x + time * rf * 7,
+          vertex.y + time * rf * 8,
+          vertex.z + time * rf * 9,
+        ) *
           amp *
           treFr;
       vertex.multiplyScalar(distance);
@@ -200,7 +220,7 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
 
   const makeRoughGround = (
     mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>,
-    distortionFr: number
+    distortionFr: number,
   ) => {
     if (!mesh) return;
     const vertices = mesh.geometry.attributes.position.array as Float32Array;
@@ -210,7 +230,10 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     for (let i = 0; i < vertices.length; i += 3) {
       const x = vertices[i];
       const y = vertices[i + 1];
-      const distance = (noise2D(x + time * 0.0003, y + time * 0.0001) + 0) * distortionFr * amp;
+      const distance =
+        (noise2D(x + time * 0.0003, y + time * 0.0001) + 0) *
+        distortionFr *
+        amp;
       vertices[i + 2] = distance;
     }
 
@@ -222,7 +245,13 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     return (val - minVal) / (maxVal - minVal);
   };
 
-  const modulate = (val: number, minVal: number, maxVal: number, outMin: number, outMax: number) => {
+  const modulate = (
+    val: number,
+    minVal: number,
+    maxVal: number,
+    outMin: number,
+    outMax: number,
+  ) => {
     const fr = fractionate(val, minVal, maxVal);
     const delta = outMax - outMin;
     return outMin + fr * delta;
@@ -251,8 +280,14 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     const dataArray = new Uint8Array(bufferLength);
     analyserRef.current.getByteFrequencyData(dataArray);
 
-    const lowerHalfArray = dataArray.slice(0, Math.floor(dataArray.length / 2) - 1);
-    const upperHalfArray = dataArray.slice(Math.floor(dataArray.length / 2) - 1, dataArray.length - 1);
+    const lowerHalfArray = dataArray.slice(
+      0,
+      Math.floor(dataArray.length / 2) - 1,
+    );
+    const upperHalfArray = dataArray.slice(
+      Math.floor(dataArray.length / 2) - 1,
+      dataArray.length - 1,
+    );
 
     const overallAvg = avg(dataArray);
     const lowerMax = max(lowerHalfArray);
@@ -270,15 +305,17 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     makeRoughBall(
       ballRef.current,
       modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8),
-      modulate(upperAvgFr, 0, 1, 0, 4)
+      modulate(upperAvgFr, 0, 1, 0, 4),
     );
 
     groupRef.current.rotation.y += 0.005;
 
     // Update materials based on rendering mode and color mode.
     const ballMaterial = ballRef.current.material as THREE.MeshLambertMaterial;
-    const plane1Material = plane1Ref.current.material as THREE.MeshLambertMaterial;
-    const plane2Material = plane2Ref.current.material as THREE.MeshLambertMaterial;
+    const plane1Material = plane1Ref.current
+      .material as THREE.MeshLambertMaterial;
+    const plane2Material = plane2Ref.current
+      .material as THREE.MeshLambertMaterial;
 
     const baseColor = new THREE.Color(0x6904ce);
     const ballBaseColor = new THREE.Color(0xff00ee);
@@ -327,7 +364,11 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
               side={THREE.DoubleSide}
             />
           </mesh>
-          <mesh ref={plane2Ref} rotation-x={-Math.PI / 2} position={[0, -30, 0]}>
+          <mesh
+            ref={plane2Ref}
+            rotation-x={-Math.PI / 2}
+            position={[0, -30, 0]}
+          >
             <planeGeometry args={[800, 800, 20, 20]} />
             <meshLambertMaterial
               color={0x6904ce}
@@ -346,10 +387,25 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
         <perspectiveCamera ref={cameraRef} position={[0, 0, 100]} />
       </scene>
       <Html>
-        <div style={{ position: "absolute", top: 20, left: 20, display: "flex", flexDirection: "column", gap: "10px", color: "white" }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 20,
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            color: "white",
+          }}
+        >
           <div>
             Rendering Mode:
-            <select value={renderingMode} onChange={(e) => setRenderingMode(e.target.value as RenderingMode)}>
+            <select
+              value={renderingMode}
+              onChange={(e) =>
+                setRenderingMode(e.target.value as RenderingMode)
+              }
+            >
               <option value="solid">Solid</option>
               <option value="wireframe">Wireframe</option>
               <option value="rainbow">Rainbow</option>
@@ -358,7 +414,10 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
           </div>
           <div>
             Color Mode:
-            <select value={colorMode} onChange={(e) => setColorMode(e.target.value as ColorMode)}>
+            <select
+              value={colorMode}
+              onChange={(e) => setColorMode(e.target.value as ColorMode)}
+            >
               <option value="default">Default</option>
               <option value="audioAmplitude">Audio Amplitude</option>
               <option value="frequencyBased">Frequency Based</option>
@@ -371,6 +430,9 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
   );
 }
 
-export default function VisualizerOne({ audioUrl, isPaused }: VisualizerOneProps) {
+export default function VisualizerOne({
+  audioUrl,
+  isPaused,
+}: VisualizerOneProps) {
   return <VisualizerOneScene audioUrl={audioUrl} isPaused={isPaused} />;
 }

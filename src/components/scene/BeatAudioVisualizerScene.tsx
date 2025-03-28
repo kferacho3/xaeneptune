@@ -5,11 +5,26 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 
 // Dynamically import visualizer components with SSR disabled.
-const VisualizerOne = dynamic(() => import("@/components/visualizers/VisualizerOne"), { ssr: false });
-const VisualizerTwo = dynamic(() => import("@/components/visualizers/VisualizerTwo"), { ssr: false });
-const VisualizerThree = dynamic(() => import("@/components/visualizers/VisualizerThree"), { ssr: false });
-const VisualizerFour = dynamic(() => import("@/components/visualizers/VisualizerFour"), { ssr: false });
-const SupershapeVisualizer = dynamic(() => import("@/components/visualizers/SupershapeVisualizer"), { ssr: false });
+const VisualizerOne = dynamic(
+  () => import("@/components/visualizers/VisualizerOne"),
+  { ssr: false },
+);
+const VisualizerTwo = dynamic(
+  () => import("@/components/visualizers/VisualizerTwo"),
+  { ssr: false },
+);
+const VisualizerThree = dynamic(
+  () => import("@/components/visualizers/VisualizerThree"),
+  { ssr: false },
+);
+const VisualizerFour = dynamic(
+  () => import("@/components/visualizers/VisualizerFour"),
+  { ssr: false },
+);
+const SupershapeVisualizer = dynamic(
+  () => import("@/components/visualizers/SupershapeVisualizer"),
+  { ssr: false },
+);
 
 export type BeatAudioVisualizerSceneProps = {
   audioUrl: string;
@@ -46,15 +61,22 @@ export default function BeatAudioVisualizerScene({
   const resetAudio = () => {
     // This keeps the same file but changes the query param
     setCurrentAudioUrl((prev) => {
-      const noQuery = prev.split('?')[0];
+      const noQuery = prev.split("?")[0];
       return `${noQuery}?t=${Date.now()}`;
     });
   };
 
   // When randomizing the visualizer, pick one, force a key bump, reset audio
   const randomizeVisualizer = () => {
-    const types: VisualizerType[] = ["one", "two", "three", "four", "supershape"];
-    const newType: VisualizerType = types[Math.floor(Math.random() * types.length)];
+    const types: VisualizerType[] = [
+      "one",
+      "two",
+      "three",
+      "four",
+      "supershape",
+    ];
+    const newType: VisualizerType =
+      types[Math.floor(Math.random() * types.length)];
     console.log("Randomizing to visualizer type:", newType);
     setVisualizerType(newType);
     setVisualizerKey((prev) => prev + 1);
@@ -69,7 +91,7 @@ export default function BeatAudioVisualizerScene({
       const url = URL.createObjectURL(file);
       console.log("Uploaded file URL:", url);
       setCurrentAudioUrl(url);
-      setAudioUrlForBeat(url);  // store so other places also see the new URL
+      setAudioUrlForBeat(url); // store so other places also see the new URL
     }
   };
 
@@ -81,12 +103,30 @@ export default function BeatAudioVisualizerScene({
   };
 
   // Map the type to the actual visualizer component
-  const VisualizerMap: Record<VisualizerType, React.ComponentType<{ audioUrl: string; isPaused: boolean }>> = {
-    one: VisualizerOne as React.ComponentType<{ audioUrl: string; isPaused: boolean }>,
-    two: VisualizerTwo as React.ComponentType<{ audioUrl: string; isPaused: boolean }>,
-    three: VisualizerThree as React.ComponentType<{ audioUrl: string; isPaused: boolean }>,
-    four: VisualizerFour as React.ComponentType<{ audioUrl: string; isPaused: boolean }>,
-    supershape: SupershapeVisualizer as React.ComponentType<{ audioUrl: string; isPaused: boolean }>,
+  const VisualizerMap: Record<
+    VisualizerType,
+    React.ComponentType<{ audioUrl: string; isPaused: boolean }>
+  > = {
+    one: VisualizerOne as React.ComponentType<{
+      audioUrl: string;
+      isPaused: boolean;
+    }>,
+    two: VisualizerTwo as React.ComponentType<{
+      audioUrl: string;
+      isPaused: boolean;
+    }>,
+    three: VisualizerThree as React.ComponentType<{
+      audioUrl: string;
+      isPaused: boolean;
+    }>,
+    four: VisualizerFour as React.ComponentType<{
+      audioUrl: string;
+      isPaused: boolean;
+    }>,
+    supershape: SupershapeVisualizer as React.ComponentType<{
+      audioUrl: string;
+      isPaused: boolean;
+    }>,
   };
 
   const VisualizerComponent = VisualizerMap[visualizerType];
@@ -94,13 +134,17 @@ export default function BeatAudioVisualizerScene({
   return (
     <>
       {/* Render the selected visualizer, passing the current audioUrl and isPaused state */}
-      <VisualizerComponent key={visualizerKey} audioUrl={currentAudioUrl} isPaused={isPaused} />
+      <VisualizerComponent
+        key={visualizerKey}
+        audioUrl={currentAudioUrl}
+        isPaused={isPaused}
+      />
 
       <Html
-style={{
-  pointerEvents: 'auto',
-  zIndex: 9999
-}}
+        style={{
+          pointerEvents: "auto",
+          zIndex: 9999,
+        }}
       >
         <div className="absolute top-40 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-2">
           <div className="flex space-x-8">
@@ -133,24 +177,59 @@ style={{
 
           {/* Visualizer selection buttons */}
           <div className="mt-3 flex text-xs space-x-0">
-            <button onClick={() => switchVisualizer("one")} className="flex flex-col items-center">
-              <img src="/visualizerIcons/neptuneNoise.svg" alt="Noise Visualizer" className="w-8 h-8" />
+            <button
+              onClick={() => switchVisualizer("one")}
+              className="flex flex-col items-center"
+            >
+              <img
+                src="/visualizerIcons/neptuneNoise.svg"
+                alt="Noise Visualizer"
+                className="w-8 h-8"
+              />
               <span className="text-white mt-1">Noise Visualizer</span>
             </button>
-            <button onClick={() => switchVisualizer("two")} className="flex flex-col items-center">
-              <img src="/visualizerIcons/neptuneFractals.svg" alt="Fractal Visualizer" className="w-8 h-8" />
+            <button
+              onClick={() => switchVisualizer("two")}
+              className="flex flex-col items-center"
+            >
+              <img
+                src="/visualizerIcons/neptuneFractals.svg"
+                alt="Fractal Visualizer"
+                className="w-8 h-8"
+              />
               <span className="text-white mt-1">Fractal Visualizer</span>
             </button>
-            <button onClick={() => switchVisualizer("three")} className="flex flex-col items-center">
-              <img src="/visualizerIcons/neptuneSand.svg" alt="Sand Visualizer" className="w-8 h-8" />
+            <button
+              onClick={() => switchVisualizer("three")}
+              className="flex flex-col items-center"
+            >
+              <img
+                src="/visualizerIcons/neptuneSand.svg"
+                alt="Sand Visualizer"
+                className="w-8 h-8"
+              />
               <span className="text-white mt-1">Sand Visualizer</span>
             </button>
-            <button onClick={() => switchVisualizer("four")} className="flex flex-col items-center">
-              <img src="/visualizerIcons/neptuneCellular.svg" alt="Cellular Visualizer" className="w-8 h-8" />
+            <button
+              onClick={() => switchVisualizer("four")}
+              className="flex flex-col items-center"
+            >
+              <img
+                src="/visualizerIcons/neptuneCellular.svg"
+                alt="Cellular Visualizer"
+                className="w-8 h-8"
+              />
               <span className="text-white mt-1">Cellular Visualizer</span>
             </button>
-            <button onClick={() => switchVisualizer("supershape")} className="flex flex-col items-center">
-              <img src="/visualizerIcons/neptuneSupershapes.svg" alt="Supershape Visualizer" className="w-8 h-8" />
+            <button
+              onClick={() => switchVisualizer("supershape")}
+              className="flex flex-col items-center"
+            >
+              <img
+                src="/visualizerIcons/neptuneSupershapes.svg"
+                alt="Supershape Visualizer"
+                className="w-8 h-8"
+              />
               <span className="text-white  mt-1">Supershape Visualizer</span>
             </button>
           </div>
@@ -164,13 +243,12 @@ style={{
               Upload Audio
             </label>
             <input
-  id="audio-upload"
-  type="file"
-  accept="audio/mp3, audio/ogg, audio/wav"
-  onChange={handleFileUpload}
-  className="hidden"
-/>
-
+              id="audio-upload"
+              type="file"
+              accept="audio/mp3, audio/ogg, audio/wav"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
           </div>
         </div>
       </Html>

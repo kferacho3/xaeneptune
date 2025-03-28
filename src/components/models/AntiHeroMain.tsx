@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import NavigationMenu, { Route } from '@/components/layout/NavigationMenu';
-import { Billboard, useGLTF } from '@react-three/drei';
-import { useFrame, useThree } from '@react-three/fiber';
-import React, { useRef, useState } from 'react';
-import * as THREE from 'three';
-import { GLTF } from 'three-stdlib';
+import NavigationMenu, { Route } from "@/components/layout/NavigationMenu";
+import { Billboard, useGLTF } from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
+import React, { useRef, useState } from "react";
+import * as THREE from "three";
+import { GLTF } from "three-stdlib";
 
-interface AntiHeroLogoProps extends React.ComponentPropsWithoutRef<'group'> {
+interface AntiHeroLogoProps extends React.ComponentPropsWithoutRef<"group"> {
   showMarkers: boolean;
   onSelectRoute: (route: Route) => void;
 }
@@ -22,7 +22,7 @@ export default function AntiHeroLogo({
   const occluderRef = useRef<THREE.Mesh>(null);
   const { camera, pointer } = useThree();
   const { nodes, materials } = useGLTF(
-    'https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHeroMain.glb'
+    "https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHeroMain.glb",
   ) as unknown as GLTFResult;
 
   // --- Drag & Flick Logic ---
@@ -81,7 +81,7 @@ export default function AntiHeroLogo({
       group.current.rotation.y = THREE.MathUtils.lerp(
         group.current.rotation.y,
         targetY,
-        0.2
+        0.2,
       );
     }
   });
@@ -90,7 +90,10 @@ export default function AntiHeroLogo({
     <group>
       <group position={[0, -2, 0]}>
         {showMarkers && (
-          <NavigationMenu onSelectRoute={onSelectRoute} occluder={occluderRef} />
+          <NavigationMenu
+            onSelectRoute={onSelectRoute}
+            occluder={occluderRef}
+          />
         )}
       </group>
       {/* Wrap the interactive section with a Billboard so it always faces the camera.
@@ -112,8 +115,14 @@ export default function AntiHeroLogo({
             position={[-0.101, -0.5, -0.289]}
             scale={[7.164, 1, 7.164]}
           >
-       <mesh geometry={nodes.ANTIHERO_1.geometry} material={materials.PaletteMaterial001} />
-       <mesh geometry={nodes.ANTIHERO_2.geometry} material={nodes.ANTIHERO_2.material} />
+            <mesh
+              geometry={nodes.ANTIHERO_1.geometry}
+              material={materials.PaletteMaterial001}
+            />
+            <mesh
+              geometry={nodes.ANTIHERO_2.geometry}
+              material={nodes.ANTIHERO_2.material}
+            />
           </group>
         </group>
       </Billboard>
@@ -139,4 +148,6 @@ type GLTFResult = GLTF & {
   };
 };
 
-useGLTF.preload('https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHeroMain.glb');
+useGLTF.preload(
+  "https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHeroMain.glb",
+);

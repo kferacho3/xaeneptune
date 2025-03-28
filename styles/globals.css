@@ -15,31 +15,30 @@
   }
 }
 @font-face {
-  font-family: 'Devil1';
-  src: url('/fonts/Devil1.ttf') format('truetype');
+  font-family: "Devil1";
+  src: url("/fonts/Devil1.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Devil2';
-  src: url('/fonts/Devil2.ttf') format('truetype');
+  font-family: "Devil2";
+  src: url("/fonts/Devil2.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Devil3';
-  src: url('/fonts/Devil3.ttf') format('truetype');
+  font-family: "Devil3";
+  src: url("/fonts/Devil3.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
 }
-
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Orbitron', sans-serif;
+  font-family: "Orbitron", sans-serif;
 }
 
 /* Reset and Base Styles */
@@ -50,10 +49,11 @@ body,
   width: 100vw;
   margin: 0;
   padding: 0;
-  left: 0; right: 0; margin: 0 auto;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   overflow-x: hidden; /* Prevent horizontal scrolling */
 }
-
 
 /* Canvas Styles */
 canvas {

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { hardcodedAlbums } from '@/data/artistsData';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { hardcodedAlbums } from "@/data/artistsData";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 // ---------------------
 // INTERFACES
@@ -56,36 +56,36 @@ interface DiscographyGroup {
 // XO June fallback album
 // ----------------------------------------------------------------------
 const xoJuneAlbum: SpotifyAlbum & { tracks: SpotifyTrack[] } = {
-  id: 'xo-june-bedroom-tapes-vol1',
-  name: 'Bedroom Tapes, Vol 1.',
-  release_date: '2024',
+  id: "xo-june-bedroom-tapes-vol1",
+  name: "Bedroom Tapes, Vol 1.",
+  release_date: "2024",
   images: [
     {
-      url: 'https://i1.sndcdn.com/artworks-HO9ZhEvqdwTcFVk2-R8IuQQ-t1080x1080.jpg',
+      url: "https://i1.sndcdn.com/artworks-HO9ZhEvqdwTcFVk2-R8IuQQ-t1080x1080.jpg",
     },
   ],
-  external_urls: { spotify: 'https://soundcloud.com/xojune/real-foyf' },
+  external_urls: { spotify: "https://soundcloud.com/xojune/real-foyf" },
   tracks: [
     {
-      id: 'xo-june-real-foyf',
-      name: 'Real (FOYF) Prod. XaeNeptune',
+      id: "xo-june-real-foyf",
+      name: "Real (FOYF) Prod. XaeNeptune",
       preview_url: null,
-      external_urls: { 
-        spotify: 'https://soundcloud.com/xojune/real-foyf',
-        soundcloud: 'https://soundcloud.com/xojune/real-foyf',
+      external_urls: {
+        spotify: "https://soundcloud.com/xojune/real-foyf",
+        soundcloud: "https://soundcloud.com/xojune/real-foyf",
       },
       album: {
-        id: 'xo-june-bedroom-tapes-vol1',
-        name: 'Bedroom Tapes, Vol 1.',
+        id: "xo-june-bedroom-tapes-vol1",
+        name: "Bedroom Tapes, Vol 1.",
         images: [
           {
-            url: 'https://i1.sndcdn.com/artworks-HO9ZhEvqdwTcFVk2-R8IuQQ-t1080x1080.jpg',
+            url: "https://i1.sndcdn.com/artworks-HO9ZhEvqdwTcFVk2-R8IuQQ-t1080x1080.jpg",
           },
         ],
-        release_date: '2024',
-        external_urls: { spotify: 'https://soundcloud.com/xojune/real-foyf' },
+        release_date: "2024",
+        external_urls: { spotify: "https://soundcloud.com/xojune/real-foyf" },
       },
-      artists: [{ name: 'XO June' }],
+      artists: [{ name: "XO June" }],
     },
   ],
 };
@@ -97,7 +97,7 @@ const xoJuneAlbum: SpotifyAlbum & { tracks: SpotifyTrack[] } = {
 function getArtistImageUrl(artist: SpotifyArtist | null): string {
   // If the "artist" is null or there's no artist.name, return a fallback.
   if (!artist || !artist.name) {
-    return 'https://via.placeholder.com/150?text=No+Image';
+    return "https://via.placeholder.com/150?text=No+Image";
   }
 
   // If there ARE images, use the first one
@@ -107,33 +107,37 @@ function getArtistImageUrl(artist: SpotifyArtist | null): string {
 
   // Otherwise, handle special fallback by name
   const lowerName = artist.name.toLowerCase();
-  if (lowerName === 'iann tyler') {
-    return 'https://i1.sndcdn.com/avatars-8HyvIOZxOAq1iNja-dBVAMA-t500x500.jpg';
-  } else if (lowerName === 'kyistt') {
-    return 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5a/12/bc/5a12bc69-7832-d7c2-83d8-7fb3412c4f41/pr_source.png/190x190cc.webp';
-  } else if (lowerName === 'statik') {
-    return 'https://via.placeholder.com/300?text=Vinyl+Record';
+  if (lowerName === "iann tyler") {
+    return "https://i1.sndcdn.com/avatars-8HyvIOZxOAq1iNja-dBVAMA-t500x500.jpg";
+  } else if (lowerName === "kyistt") {
+    return "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5a/12/bc/5a12bc69-7832-d7c2-83d8-7fb3412c4f41/pr_source.png/190x190cc.webp";
+  } else if (lowerName === "statik") {
+    return "https://via.placeholder.com/300?text=Vinyl+Record";
   }
 
   // Generic fallback
-  return 'https://via.placeholder.com/150?text=No+Image';
+  return "https://via.placeholder.com/150?text=No+Image";
 }
-
 
 // ----------------------------------------------------------------------
 // UTILITY: FETCH ALBUM DATA FROM SPOTIFY (for real images, release date, etc.)
 // ----------------------------------------------------------------------
-async function fetchSpotifyAlbum(albumId: string): Promise<SpotifyAlbum | null> {
+async function fetchSpotifyAlbum(
+  albumId: string,
+): Promise<SpotifyAlbum | null> {
   try {
     const res = await fetch(`/api/spotify/album?albumId=${albumId}`);
     if (!res.ok) {
-      console.error(`Error fetching album data for ${albumId}`, await res.text());
+      console.error(
+        `Error fetching album data for ${albumId}`,
+        await res.text(),
+      );
       return null;
     }
     const album = await res.json();
     return album as SpotifyAlbum;
   } catch (error) {
-    console.error('Error in fetchSpotifyAlbum:', error);
+    console.error("Error in fetchSpotifyAlbum:", error);
     return null;
   }
 }
@@ -146,7 +150,9 @@ async function fetchAlbumTracks(albumId: string): Promise<SpotifyTrack[]> {
     // Might need to be /api/spotify/album-tracks?albumId=xxx in your app
     const res = await fetch(`/api/spotify/album?albumId=${albumId}/tracks`);
     if (!res.ok) {
-      console.error(`Error fetching tracks for album ${albumId}: ${await res.text()}`);
+      console.error(
+        `Error fetching tracks for album ${albumId}: ${await res.text()}`,
+      );
       return [];
     }
     const data = await res.json();
@@ -177,8 +183,8 @@ function longestCommonSubstring(s1: string, s2: string): number {
 }
 
 function isSimilar(name1: string, name2: string): boolean {
-  const a = name1.replace(/\s/g, '').toLowerCase();
-  const b = name2.replace(/\s/g, '').toLowerCase();
+  const a = name1.replace(/\s/g, "").toLowerCase();
+  const b = name2.replace(/\s/g, "").toLowerCase();
   return longestCommonSubstring(a, b) >= 5;
 }
 
@@ -187,32 +193,35 @@ function isSimilar(name1: string, name2: string): boolean {
 // ----------------------------------------------------------------------
 function rgbToHex(r: number, g: number, b: number): string {
   return (
-    '#' +
+    "#" +
     [r, g, b]
       .map((x) => {
         const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
+        return hex.length === 1 ? "0" + hex : hex;
       })
-      .join('')
+      .join("")
   );
 }
 
 function extractPrimaryColors(imageUrl: string): Promise<[string, string]> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
-    img.crossOrigin = 'Anonymous';
+    img.crossOrigin = "Anonymous";
     img.src = imageUrl;
     img.onload = () => {
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = img.width;
       canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject('Could not get canvas context');
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject("Could not get canvas context");
       ctx.drawImage(img, 0, 0, img.width, img.height);
 
       // sample half top-left
       const data1 = ctx.getImageData(0, 0, img.width / 2, img.height / 2).data;
-      let r1 = 0, g1 = 0, b1 = 0, count1 = 0;
+      let r1 = 0,
+        g1 = 0,
+        b1 = 0,
+        count1 = 0;
       for (let i = 0; i < data1.length; i += 4) {
         r1 += data1[i];
         g1 += data1[i + 1];
@@ -228,9 +237,12 @@ function extractPrimaryColors(imageUrl: string): Promise<[string, string]> {
         img.width / 2,
         img.height / 2,
         img.width / 2,
-        img.height / 2
+        img.height / 2,
       ).data;
-      let r2 = 0, g2 = 0, b2 = 0, count2 = 0;
+      let r2 = 0,
+        g2 = 0,
+        b2 = 0,
+        count2 = 0;
       for (let i = 0; i < data2.length; i += 4) {
         r2 += data2[i];
         g2 += data2[i + 1];
@@ -243,7 +255,7 @@ function extractPrimaryColors(imageUrl: string): Promise<[string, string]> {
 
       resolve([rgbToHex(r1, g1, b1), rgbToHex(r2, g2, b2)]);
     };
-    img.onerror = () => reject('Image load error');
+    img.onerror = () => reject("Image load error");
   });
 }
 
@@ -253,11 +265,11 @@ function extractPrimaryColors(imageUrl: string): Promise<[string, string]> {
 function getAhmadFallbackTopTracks(): SpotifyTrack[] {
   // "neptune sent it" from "jordanyear" (id=6PBCQ44h15c7VN35lAzu3M, track=jt1)
   // "FIND YOUR LOVE" from "Social Networks" (id=55Xr7mE7Zya6ccCViy7yyh, track=sn5)
-  const jordanyear = hardcodedAlbums['6PBCQ44h15c7VN35lAzu3M'];
-  const social = hardcodedAlbums['55Xr7mE7Zya6ccCViy7yyh'];
+  const jordanyear = hardcodedAlbums["6PBCQ44h15c7VN35lAzu3M"];
+  const social = hardcodedAlbums["55Xr7mE7Zya6ccCViy7yyh"];
 
-  const track1 = jordanyear.tracks.find((t) => t.id === 'jt1');
-  const track2 = social.tracks.find((t) => t.id === 'sn5');
+  const track1 = jordanyear.tracks.find((t) => t.id === "jt1");
+  const track2 = social.tracks.find((t) => t.id === "sn5");
 
   if (!track1 || !track2) return [];
 
@@ -284,7 +296,7 @@ function getAhmadFallbackTopTracks(): SpotifyTrack[] {
 async function extractTracksForArtist(
   artist: SpotifyArtist,
   setArtistDiscography: (groups: DiscographyGroup[]) => void,
-  setLoadingTracks: (loading: boolean) => void
+  setLoadingTracks: (loading: boolean) => void,
 ) {
   setLoadingTracks(true);
   const artistName = artist.name;
@@ -297,9 +309,11 @@ async function extractTracksForArtist(
 
     // Filter to tracks that have both this artist + Xae Neptune
     const filtered = albumTracks.filter((track) => {
-      const hasArtist = track.artists.some((a) => isSimilar(a.name, artistName));
+      const hasArtist = track.artists.some((a) =>
+        isSimilar(a.name, artistName),
+      );
       const hasXae = track.artists.some(
-        (a) => a.name.toLowerCase() === 'xae neptune'
+        (a) => a.name.toLowerCase() === "xae neptune",
       );
       return hasArtist && hasXae;
     });
@@ -319,7 +333,7 @@ async function extractTracksForArtist(
   }
 
   // If the selected artist is XO June, add the XO June fallback album
-  if (artist.name.toLowerCase() === 'xo june') {
+  if (artist.name.toLowerCase() === "xo june") {
     extractedTracks = [
       ...extractedTracks,
       ...xoJuneAlbum.tracks.map((t) => ({
@@ -336,7 +350,7 @@ async function extractTracksForArtist(
   }
 
   // Special rule for Ahmad: only show the two specific albums/tracks
-  if (artist.name.toLowerCase() === 'ahmad') {
+  if (artist.name.toLowerCase() === "ahmad") {
     const ahmadTracks = getAhmadFallbackTopTracks();
     extractedTracks = ahmadTracks;
   }
@@ -383,9 +397,9 @@ async function extractTracksForArtist(
   discographyMap.forEach((group) => {
     group.tracks.sort((a, b) => {
       const aHasXae =
-        a.artists[0].name.toLowerCase() === 'xae neptune' ? -1 : 1;
+        a.artists[0].name.toLowerCase() === "xae neptune" ? -1 : 1;
       const bHasXae =
-        b.artists[0].name.toLowerCase() === 'xae neptune' ? -1 : 1;
+        b.artists[0].name.toLowerCase() === "xae neptune" ? -1 : 1;
       return aHasXae - bHasXae;
     });
   });
@@ -399,61 +413,74 @@ async function extractTracksForArtist(
 // ----------------------------------------------------------------------
 export default function Artist() {
   const [mainArtist, setMainArtist] = useState<SpotifyArtist | null>(null);
-  const [associatedArtists, setAssociatedArtists] = useState<SpotifyArtist[]>([]);
+  const [associatedArtists, setAssociatedArtists] = useState<SpotifyArtist[]>(
+    [],
+  );
   const [loadingMain, setLoadingMain] = useState(true);
   const [loadingAssociated, setLoadingAssociated] = useState(true);
 
-  const [selectedArtist, setSelectedArtist] = useState<SpotifyArtist | null>(null);
-  const [activeArtistTab, setActiveArtistTab] = useState<'top-tracks' | 'discography'>('top-tracks');
+  const [selectedArtist, setSelectedArtist] = useState<SpotifyArtist | null>(
+    null,
+  );
+  const [activeArtistTab, setActiveArtistTab] = useState<
+    "top-tracks" | "discography"
+  >("top-tracks");
 
   const [artistTopTracks, setArtistTopTracks] = useState<SpotifyTrack[]>([]);
   const [loadingArtistTopTracks, setLoadingArtistTopTracks] = useState(false);
 
-  const [artistDiscography, setArtistDiscography] = useState<DiscographyGroup[]>([]);
+  const [artistDiscography, setArtistDiscography] = useState<
+    DiscographyGroup[]
+  >([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
 
-  const [selectedDiscographyAlbum, setSelectedDiscographyAlbum] = useState<SpotifyAlbum | null>(null);
-  const [discographyTracks, setDiscographyTracks] = useState<SpotifyTrack[]>([]);
+  const [selectedDiscographyAlbum, setSelectedDiscographyAlbum] =
+    useState<SpotifyAlbum | null>(null);
+  const [discographyTracks, setDiscographyTracks] = useState<SpotifyTrack[]>(
+    [],
+  );
 
-  const [gradientColors, setGradientColors] = useState<[string, string] | null>(null);
+  const [gradientColors, setGradientColors] = useState<[string, string] | null>(
+    null,
+  );
 
   // Main Artist is Xae Neptune
-  const mainArtistId = '7iysPipkcsfGFVEgUMDzHQ';
+  const mainArtistId = "7iysPipkcsfGFVEgUMDzHQ";
 
   // Associated IDs
   const associatedArtistIds = [
-    '4ihlULofncvxd3Cz7ewTNV', // Jyse
-    '3uwUJ78bwdDBLo3O04xlnL', // Kartier
-    '4nRgpdGBG8DPYMHikqUp3w', // Bigbulwayne
-    '6mFKPMFGbulPhOnj3UvzAF', // Vxin
-    '0z3M3HSEsrgi5YmwY5e9fB',
-    '2pZnyv4zLqnSDktBqXQlZz',
-    '0zRLHcRfGiz3GCHk852mIL',
-    '6cPZNDrHphEZ3ok4t8K7ZT',
-    '5bNFzNn84AoUqClYZJKan5',
-    '1IwJ9sVzmn5hBSe02HsLnM',
-    '5pVOuKzA3hhsdScwg2k4o',
-    '3k8lBDenIm90lWaSpAYQeH',
-    '4O0urd9sL16UmRnmdHienf',
-    '05eq9g0p6jze8k6Wva5BUz',
-    '2pZnyv4zLqnSDktBqXQlZz',
-    '0z3M3HSEsrgi5YmwY5e9fB',
-    '4wtNgDt8QcZCPfx64NiBGi',
-    '6E9lvijZw6hhoNiEaZ765i',
+    "4ihlULofncvxd3Cz7ewTNV", // Jyse
+    "3uwUJ78bwdDBLo3O04xlnL", // Kartier
+    "4nRgpdGBG8DPYMHikqUp3w", // Bigbulwayne
+    "6mFKPMFGbulPhOnj3UvzAF", // Vxin
+    "0z3M3HSEsrgi5YmwY5e9fB",
+    "2pZnyv4zLqnSDktBqXQlZz",
+    "0zRLHcRfGiz3GCHk852mIL",
+    "6cPZNDrHphEZ3ok4t8K7ZT",
+    "5bNFzNn84AoUqClYZJKan5",
+    "1IwJ9sVzmn5hBSe02HsLnM",
+    "5pVOuKzA3hhsdScwg2k4o",
+    "3k8lBDenIm90lWaSpAYQeH",
+    "4O0urd9sL16UmRnmdHienf",
+    "05eq9g0p6jze8k6Wva5BUz",
+    "2pZnyv4zLqnSDktBqXQlZz",
+    "0z3M3HSEsrgi5YmwY5e9fB",
+    "4wtNgDt8QcZCPfx64NiBGi",
+    "6E9lvijZw6hhoNiEaZ765i",
   ];
 
   // Hardcoded XO June
   const xoJuneArtist: SpotifyArtist = {
-    id: 'xo-june',
-    name: 'XO June',
+    id: "xo-june",
+    name: "XO June",
     images: [
       {
-        url: 'https://i1.sndcdn.com/avatars-WTj6LWMHQK0o1lDw-Vz5D1A-t500x500.jpg',
+        url: "https://i1.sndcdn.com/avatars-WTj6LWMHQK0o1lDw-Vz5D1A-t500x500.jpg",
       },
     ],
     followers: { total: 0 },
     genres: [],
-    external_urls: { spotify: 'https://soundcloud.com/xojune' },
+    external_urls: { spotify: "https://soundcloud.com/xojune" },
   };
 
   // ----------------
@@ -466,7 +493,7 @@ export default function Artist() {
         const data: SpotifyArtist = await res.json();
         setMainArtist(data);
       } catch (error) {
-        console.error('Error fetching main artist data:', error);
+        console.error("Error fetching main artist data:", error);
       } finally {
         setLoadingMain(false);
       }
@@ -481,7 +508,7 @@ export default function Artist() {
     const fetchAssociatedArtists = async () => {
       try {
         const promises = associatedArtistIds.map((id) =>
-          fetch(`/api/spotify/artist?artistId=${id}`).then((res) => res.json())
+          fetch(`/api/spotify/artist?artistId=${id}`).then((res) => res.json()),
         );
         const artistsData = await Promise.all(promises);
 
@@ -489,7 +516,7 @@ export default function Artist() {
         const allArtists = [...artistsData, xoJuneArtist];
         setAssociatedArtists(allArtists);
       } catch (error) {
-        console.error('Error fetching associated artists:', error);
+        console.error("Error fetching associated artists:", error);
       } finally {
         setLoadingAssociated(false);
       }
@@ -506,7 +533,7 @@ export default function Artist() {
     setLoadingArtistTopTracks(true);
 
     // Special case: Ahmad
-    if (selectedArtist.name.toLowerCase() === 'ahmad') {
+    if (selectedArtist.name.toLowerCase() === "ahmad") {
       const fallback = getAhmadFallbackTopTracks();
       setArtistTopTracks(fallback);
       setLoadingArtistTopTracks(false);
@@ -518,7 +545,7 @@ export default function Artist() {
           setArtistTopTracks(data.tracks.slice(0, 10) || []);
         })
         .catch((error) => {
-          console.error('Error fetching artist top tracks:', error);
+          console.error("Error fetching artist top tracks:", error);
           setArtistTopTracks([]);
         })
         .finally(() => {
@@ -526,7 +553,11 @@ export default function Artist() {
         });
     }
 
-    extractTracksForArtist(selectedArtist, setArtistDiscography, setLoadingTracks);
+    extractTracksForArtist(
+      selectedArtist,
+      setArtistDiscography,
+      setLoadingTracks,
+    );
   }, [selectedArtist]);
 
   // ----------------
@@ -567,13 +598,13 @@ export default function Artist() {
   // Compute background gradient colors
   // ----------------
   useEffect(() => {
-    let imageUrl = '';
+    let imageUrl = "";
     if (selectedDiscographyAlbum && selectedDiscographyAlbum.images?.[0]?.url) {
       imageUrl = selectedDiscographyAlbum.images[0].url;
     } else if (selectedArtist?.images?.[0]?.url) {
       imageUrl = selectedArtist.images[0].url;
     } else if (
-      mainArtist?.name?.toLowerCase() === 'xae neptune' &&
+      mainArtist?.name?.toLowerCase() === "xae neptune" &&
       mainArtist.images?.[0]?.url
     ) {
       imageUrl = mainArtist.images[0].url;
@@ -582,8 +613,8 @@ export default function Artist() {
     if (imageUrl) {
       extractPrimaryColors(imageUrl)
         .then((colors) => {
-          if (mainArtist?.name.toLowerCase() === 'xae neptune') {
-            setGradientColors(['#000000', colors[1]]);
+          if (mainArtist?.name.toLowerCase() === "xae neptune") {
+            setGradientColors(["#000000", colors[1]]);
           } else {
             setGradientColors(colors);
           }
@@ -619,7 +650,7 @@ export default function Artist() {
       <div className="min-h-screen pt-20 pb-10 px-4 bg-gradient-to-br from-black via-green-800 to-white">
         <div className="max-w-4xl mx-auto text-center text-white">
           <h1 className="text-4xl font-bold mb-4">
-            {mainArtist?.name || 'Xae Neptune'}
+            {mainArtist?.name || "Xae Neptune"}
           </h1>
 
           {/* Use next/image for main artist's image if it exists */}
@@ -627,7 +658,7 @@ export default function Artist() {
             <div className="flex justify-center mb-4 relative w-40 h-40 mx-auto">
               <Image
                 src={mainArtist.images[0].url}
-                alt={mainArtist.name || 'Main Artist'}
+                alt={mainArtist.name || "Main Artist"}
                 fill
                 className="rounded-full object-cover border-4 border-white"
                 sizes="(max-width: 768px) 40px, 80px"
@@ -638,9 +669,7 @@ export default function Artist() {
           <p className="text-lg mb-2">
             Followers: {mainArtist?.followers?.total ?? 0}
           </p>
-          <p className="mb-6">
-            Genres: {mainArtist?.genres?.join(', ') ?? ''}
-          </p>
+          <p className="mb-6">Genres: {mainArtist?.genres?.join(", ") ?? ""}</p>
         </div>
 
         {/* Associated Artists */}
@@ -654,78 +683,97 @@ export default function Artist() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-         {associatedArtists.map(
-      ({ 
-        id, 
-        name = "", 
-        images, 
-        followers, 
-        genres, 
-        external_urls 
-      }) => {
-        // Base fallback if no images:
-        const baseImageUrl = images && images[0]?.url ? images[0].url : "";
-        
-        // We'll do a lowercase name check for special artist fallback images:
-        const lowerName = name.toLowerCase();
-        const imageUrl =
-          lowerName === "iann tyler"
-            ? "https://i1.sndcdn.com/avatars-8HyvIOZxOAq1iNja-dBVAMA-t500x500.jpg"
-            : lowerName === "kyistt"
-            ? "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5a/12/bc/5a12bc69-7832-d7c2-83d8-7fb3412c4f41/pr_source.png/190x190cc.webp"
-            : lowerName === "statik"
-            ? "https://via.placeholder.com/150?text=Record+Label"
-            : baseImageUrl;
+              {associatedArtists.map(
+                ({
+                  id,
+                  name = "",
+                  images,
+                  followers,
+                  genres,
+                  external_urls,
+                }) => {
+                  // Base fallback if no images:
+                  const baseImageUrl =
+                    images && images[0]?.url ? images[0].url : "";
 
-        // Then render
-        return (
-          <div
-            key={id}
-            className="bg-white shadow-md rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
-            onClick={() => setSelectedArtist({ id, name, images, followers, genres, external_urls })}
-          >
-            <div className="relative w-full h-40 mb-4">
-              <Image
-                src={imageUrl || "/fallback.png"}
-                alt={name}
-                fill
-                className="object-cover rounded"
-              />
+                  // We'll do a lowercase name check for special artist fallback images:
+                  const lowerName = name.toLowerCase();
+                  const imageUrl =
+                    lowerName === "iann tyler"
+                      ? "https://i1.sndcdn.com/avatars-8HyvIOZxOAq1iNja-dBVAMA-t500x500.jpg"
+                      : lowerName === "kyistt"
+                        ? "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5a/12/bc/5a12bc69-7832-d7c2-83d8-7fb3412c4f41/pr_source.png/190x190cc.webp"
+                        : lowerName === "statik"
+                          ? "https://via.placeholder.com/150?text=Record+Label"
+                          : baseImageUrl;
+
+                  // Then render
+                  return (
+                    <div
+                      key={id}
+                      className="bg-white shadow-md rounded-lg p-4 cursor-pointer transform transition duration-200 hover:scale-105"
+                      onClick={() =>
+                        setSelectedArtist({
+                          id,
+                          name,
+                          images,
+                          followers,
+                          genres,
+                          external_urls,
+                        })
+                      }
+                    >
+                      <div className="relative w-full h-40 mb-4">
+                        <Image
+                          src={imageUrl || "/fallback.png"}
+                          alt={name}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 text-gray-900">
+                        {name}
+                      </h3>
+                      <p className="text-sm text-gray-800">
+                        Followers: {followers?.total ?? 0}
+                      </p>
+                      <p className="text-sm text-gray-800">
+                        Genres: {genres?.join(", ") ?? ""}
+                      </p>
+                      <div className="mt-4 flex justify-between">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (external_urls?.spotify) {
+                              window.open(external_urls.spotify, "_blank");
+                            }
+                          }}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+                        >
+                          Open Spotify
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedArtist({
+                              id,
+                              name,
+                              images,
+                              followers,
+                              genres,
+                              external_urls,
+                            });
+                          }}
+                          className="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 rounded hover:bg-indigo-100 transition"
+                        >
+                          View Artist
+                        </button>
+                      </div>
+                    </div>
+                  );
+                },
+              )}
             </div>
-            <h3 className="text-xl font-bold mb-2 text-gray-900">{name}</h3>
-            <p className="text-sm text-gray-800">
-              Followers: {followers?.total ?? 0}
-            </p>
-            <p className="text-sm text-gray-800">
-              Genres: {genres?.join(", ") ?? ""}
-            </p>
-            <div className="mt-4 flex justify-between">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (external_urls?.spotify) {
-                    window.open(external_urls.spotify, "_blank");
-                  }
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-              >
-                Open Spotify
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedArtist({ id, name, images, followers, genres, external_urls });
-                }}
-                className="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 rounded hover:bg-indigo-100 transition"
-              >
-                View Artist
-              </button>
-            </div>
-          </div>
-        );
-      }
-    )}
-  </div>
           )}
         </div>
       </div>
@@ -739,7 +787,7 @@ export default function Artist() {
     // Build a dynamic gradient if we have the extracted colors
     const backgroundStyle = gradientColors
       ? `linear-gradient(to bottom, ${gradientColors[0]}, ${gradientColors[1]}, white)`
-      : 'linear-gradient(to bottom, #000000, #FFFFFF)';
+      : "linear-gradient(to bottom, #000000, #FFFFFF)";
 
     return (
       <div
@@ -761,15 +809,13 @@ export default function Artist() {
           &larr; Go Back
         </button>
         <div className="max-w-4xl mx-auto text-center text-black">
-          <h1 className="text-4xl font-bold mb-4">
-            {selectedArtist?.name}
-          </h1>
+          <h1 className="text-4xl font-bold mb-4">{selectedArtist?.name}</h1>
 
           {/* Artist Image (with fallback if needed) */}
           <div className="relative w-40 h-40 mx-auto mb-4">
             <Image
               src={getArtistImageUrl(selectedArtist)}
-              alt={selectedArtist?.name || 'Selected Artist'}
+              alt={selectedArtist?.name || "Selected Artist"}
               fill
               className="rounded-full object-cover border-4 border-black"
               sizes="(max-width: 768px) 40px, 80px"
@@ -780,34 +826,34 @@ export default function Artist() {
             Followers: {selectedArtist?.followers?.total ?? 0}
           </p>
           <p className="mb-6">
-            Genres: {selectedArtist?.genres?.join(', ') ?? ''}
+            Genres: {selectedArtist?.genres?.join(", ") ?? ""}
           </p>
 
           {/* Tab Buttons */}
           <div className="flex justify-center mb-8 space-x-4">
             <button
-              onClick={() => setActiveArtistTab('top-tracks')}
+              onClick={() => setActiveArtistTab("top-tracks")}
               className={`px-4 py-2 rounded ${
-                activeArtistTab === 'top-tracks'
-                  ? 'bg-white text-black'
-                  : 'bg-transparent border border-white text-white hover:bg-gray-700'
+                activeArtistTab === "top-tracks"
+                  ? "bg-white text-black"
+                  : "bg-transparent border border-white text-white hover:bg-gray-700"
               }`}
             >
               Top Tracks
             </button>
             <button
-              onClick={() => setActiveArtistTab('discography')}
+              onClick={() => setActiveArtistTab("discography")}
               className={`px-4 py-2 rounded ${
-                activeArtistTab === 'discography'
-                  ? 'bg-white text-black'
-                  : 'bg-transparent border border-white text-white hover:bg-gray-700'
+                activeArtistTab === "discography"
+                  ? "bg-white text-black"
+                  : "bg-transparent border border-white text-white hover:bg-gray-700"
               }`}
             >
               Discography
             </button>
           </div>
 
-          {activeArtistTab === 'top-tracks'
+          {activeArtistTab === "top-tracks"
             ? renderArtistTopTracks()
             : renderArtistDiscography()}
         </div>
@@ -832,8 +878,10 @@ export default function Artist() {
             key={track.id}
             className="bg-white p-4 rounded-lg shadow-md transition-transform hover:scale-105 cursor-pointer"
             onClick={() => {
-              const url = track.external_urls?.spotify || track.album.external_urls?.spotify;
-              if (url) window.open(url, '_blank');
+              const url =
+                track.external_urls?.spotify ||
+                track.album.external_urls?.spotify;
+              if (url) window.open(url, "_blank");
             }}
           >
             {track.album.images?.[0]?.url && (
@@ -846,7 +894,9 @@ export default function Artist() {
                 />
               </div>
             )}
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">{track.name}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              {track.name}
+            </h2>
             <p className="text-sm text-gray-700">Album: {track.album.name}</p>
             {track.preview_url ? (
               <audio controls src={track.preview_url} className="w-full mt-2" />
@@ -870,7 +920,9 @@ export default function Artist() {
       return renderDiscographyAlbumDetail();
     }
     if (!artistDiscography.length) {
-      return <p className="text-black">No discography found for this artist.</p>;
+      return (
+        <p className="text-black">No discography found for this artist.</p>
+      );
     }
 
     // grid of albums
@@ -906,7 +958,7 @@ export default function Artist() {
               <p className="text-gray-700 text-sm">
                 {group.album.release_date
                   ? group.album.release_date.substring(0, 4)
-                  : ''}
+                  : ""}
               </p>
             </div>
           </div>
@@ -945,8 +997,10 @@ export default function Artist() {
                   key={track.id}
                   className="flex items-center bg-gray-100 rounded-md p-3 cursor-pointer transition-colors hover:bg-gray-200"
                   onClick={() => {
-                    const url = track.external_urls?.spotify || track.album.external_urls?.spotify;
-                    if (url) window.open(url, '_blank');
+                    const url =
+                      track.external_urls?.spotify ||
+                      track.album.external_urls?.spotify;
+                    if (url) window.open(url, "_blank");
                   }}
                 >
                   <div className="relative w-12 h-12 flex-shrink-0 rounded overflow-hidden">
@@ -962,15 +1016,16 @@ export default function Artist() {
                   <div className="ml-4">
                     <p className="font-bold text-gray-900">{track.name}</p>
                     <p className="text-sm text-gray-700">
-                      {track.artists.map((a) => a.name).join(', ')}
+                      {track.artists.map((a) => a.name).join(", ")}
                     </p>
                   </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       const url =
-                        track.external_urls?.spotify || track.album.external_urls?.spotify;
-                      if (url) window.open(url, '_blank');
+                        track.external_urls?.spotify ||
+                        track.album.external_urls?.spotify;
+                      if (url) window.open(url, "_blank");
                     }}
                     className="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded flex items-center gap-1"
                   >

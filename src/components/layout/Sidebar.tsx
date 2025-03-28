@@ -1,7 +1,12 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { FaApple, FaRecordVinyl, FaSoundcloud, FaSpotify } from 'react-icons/fa';
+import Image from "next/image";
+import {
+  FaApple,
+  FaRecordVinyl,
+  FaSoundcloud,
+  FaSpotify,
+} from "react-icons/fa";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -9,22 +14,32 @@ type SidebarProps = {
   setActiveRoute: (route: string) => void;
 };
 
-export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProps) {
+export default function Sidebar({
+  isOpen,
+  onClose,
+  setActiveRoute,
+}: SidebarProps) {
   return (
     <div
       className={`fixed top-0 right-0 w-72 h-full bg-gray-900 text-white transition-all duration-300 z-50 ${
-        isOpen ? 'right-0' : '-right-72'
+        isOpen ? "right-0" : "-right-72"
       }`}
     >
       <div className="p-6 flex flex-col h-full">
         <div className="mb-8 flex justify-center">
-          <Image src="/AntiHeroLogo.png" alt="AntiHero Logo" width={150} height={150} priority />
+          <Image
+            src="/AntiHeroLogo.png"
+            alt="AntiHero Logo"
+            width={150}
+            height={150}
+            priority
+          />
         </div>
         <ul className="flex-1 space-y-4 text-xl">
           <li
             className="cursor-pointer hover:text-red-500"
             onClick={() => {
-              setActiveRoute('music');
+              setActiveRoute("music");
               onClose();
             }}
           >
@@ -33,7 +48,7 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
           <li
             className="cursor-pointer hover:text-red-500"
             onClick={() => {
-              setActiveRoute('beats');
+              setActiveRoute("beats");
               onClose();
             }}
           >
@@ -42,7 +57,7 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
           <li
             className="cursor-pointer hover:text-red-500"
             onClick={() => {
-              setActiveRoute('albums');
+              setActiveRoute("albums");
               onClose();
             }}
           >
@@ -51,7 +66,7 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
           <li
             className="cursor-pointer hover:text-red-500"
             onClick={() => {
-              setActiveRoute('artist');
+              setActiveRoute("artist");
               onClose();
             }}
           >
@@ -60,7 +75,7 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
           <li
             className="cursor-pointer hover:text-red-500"
             onClick={() => {
-              setActiveRoute('connect');
+              setActiveRoute("connect");
               onClose();
             }}
           >
@@ -69,7 +84,7 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
           <li
             className="cursor-pointer hover:text-red-500"
             onClick={() => {
-              setActiveRoute('connect');
+              setActiveRoute("connect");
               onClose();
             }}
           >
@@ -79,7 +94,7 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
         <div className="space-y-4 mb-4">
           <button
             onClick={() => {
-              setActiveRoute('beats');
+              setActiveRoute("beats");
               onClose();
             }}
             className="w-full py-2 rounded bg-gray-800 hover:bg-red-500 font-bold"
@@ -88,7 +103,7 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
           </button>
           <button
             onClick={() => {
-              setActiveRoute('beats-visualizer');
+              setActiveRoute("beats-visualizer");
               onClose();
             }}
             className="w-full py-2 rounded bg-gray-800 hover:bg-red-500 font-bold"
@@ -97,10 +112,22 @@ export default function Sidebar({ isOpen, onClose, setActiveRoute }: SidebarProp
           </button>
         </div>
         <div className="flex justify-around text-2xl">
-          <FaRecordVinyl title="Beastars (Record Label)" className="hover:text-red-500 cursor-pointer" />
-          <FaApple title="Apple Music" className="hover:text-red-500 cursor-pointer" />
-          <FaSoundcloud title="SoundCloud" className="hover:text-red-500 cursor-pointer" />
-          <FaSpotify title="Spotify" className="hover:text-red-500 cursor-pointer" />
+          <FaRecordVinyl
+            title="Beastars (Record Label)"
+            className="hover:text-red-500 cursor-pointer"
+          />
+          <FaApple
+            title="Apple Music"
+            className="hover:text-red-500 cursor-pointer"
+          />
+          <FaSoundcloud
+            title="SoundCloud"
+            className="hover:text-red-500 cursor-pointer"
+          />
+          <FaSpotify
+            title="Spotify"
+            className="hover:text-red-500 cursor-pointer"
+          />
         </div>
       </div>
     </div>

@@ -5,11 +5,19 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 /**
  * Creates a 3D Menger Sponge geometry using cubes.
  */
-export function createMengerSpongeGeometry(level: number, size: number): THREE.BufferGeometry {
+export function createMengerSpongeGeometry(
+  level: number,
+  size: number,
+): THREE.BufferGeometry {
   const geometries: THREE.BufferGeometry[] = [];
   const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 
-  function createCube(x: number, y: number, z: number, s: number): THREE.BufferGeometry {
+  function createCube(
+    x: number,
+    y: number,
+    z: number,
+    s: number,
+  ): THREE.BufferGeometry {
     const mesh = new THREE.Mesh(cubeGeometry);
     mesh.scale.set(s, s, s);
     mesh.position.set(x, y, z);
@@ -31,7 +39,7 @@ export function createMengerSpongeGeometry(level: number, size: number): THREE.B
             const newCenter = new THREE.Vector3(
               center.x + i * newSize,
               center.y + j * newSize,
-              center.z + k * newSize
+              center.z + k * newSize,
             );
             mengerSponge(lvl - 1, newSize, newCenter);
           }
@@ -52,67 +60,67 @@ export function createMengerSpongeGeometry(level: number, size: number): THREE.B
  * For each grid point, the SDF is iterated and if the point “remains” (i.e. does not escape) it is rendered as a small sphere.
  */
 export function createMandelSpheresGeometry(params: {
-    type: "mandelbulb" | "mandelbox";
-    nPower?: number;
-    maxIterations: number;
-    dim: number;
-    sphereRadius: number;
-  }): THREE.BufferGeometry {
-    const { type, nPower = 8, maxIterations, dim, sphereRadius } = params;
-    const points: THREE.Vector3[] = [];
-    // Loop over a 3D grid
-    for (let x = 0; x < dim; x++) {
-      for (let y = 0; y < dim; y++) {
-        for (let z = 0; z < dim; z++) {
-          const u = THREE.MathUtils.mapLinear(x, 0, dim - 1, -2, 2);
-          const v = THREE.MathUtils.mapLinear(y, 0, dim - 1, -2, 2);
-          const w = THREE.MathUtils.mapLinear(z, 0, dim - 1, -2, 2);
-          const pos = new THREE.Vector3(u, v, w);
-          let iterations = 0;
-          const zVec = pos.clone();
-          while (zVec.length() < 2 && iterations < maxIterations) {
-            const r = zVec.length();
-            if (r === 0) break;
-            const theta = Math.acos(zVec.z / r);
-            const phi = Math.atan2(zVec.y, zVec.x);
-            const r_n = Math.pow(r, nPower);
-            const theta_n = theta * nPower;
-            const phi_n = phi * nPower;
-            let newX = r_n * Math.sin(theta_n) * Math.cos(phi_n);
-            let newY = r_n * Math.sin(theta_n) * Math.sin(phi_n);
-            let newZ = r_n * Math.cos(theta_n);
-            if (type === "mandelbox") {
-              // For Mandelbox, use a box-folding variant:
-              newX = zVec.x > 1 ? 2 - zVec.x : zVec.x < -1 ? -2 - zVec.x : zVec.x;
-              newY = zVec.y > 1 ? 2 - zVec.y : zVec.y < -1 ? -2 - zVec.y : zVec.y;
-              newZ = zVec.z > 1 ? 2 - zVec.z : zVec.z < -1 ? -2 - zVec.z : zVec.z;
-              const scale = 20;
-              newX *= scale;
-              newY *= scale;
-              newZ *= scale;
-            }
-            zVec.set(newX, newY, newZ).add(pos);
-            iterations++;
+  type: "mandelbulb" | "mandelbox";
+  nPower?: number;
+  maxIterations: number;
+  dim: number;
+  sphereRadius: number;
+}): THREE.BufferGeometry {
+  const { type, nPower = 8, maxIterations, dim, sphereRadius } = params;
+  const points: THREE.Vector3[] = [];
+  // Loop over a 3D grid
+  for (let x = 0; x < dim; x++) {
+    for (let y = 0; y < dim; y++) {
+      for (let z = 0; z < dim; z++) {
+        const u = THREE.MathUtils.mapLinear(x, 0, dim - 1, -2, 2);
+        const v = THREE.MathUtils.mapLinear(y, 0, dim - 1, -2, 2);
+        const w = THREE.MathUtils.mapLinear(z, 0, dim - 1, -2, 2);
+        const pos = new THREE.Vector3(u, v, w);
+        let iterations = 0;
+        const zVec = pos.clone();
+        while (zVec.length() < 2 && iterations < maxIterations) {
+          const r = zVec.length();
+          if (r === 0) break;
+          const theta = Math.acos(zVec.z / r);
+          const phi = Math.atan2(zVec.y, zVec.x);
+          const r_n = Math.pow(r, nPower);
+          const theta_n = theta * nPower;
+          const phi_n = phi * nPower;
+          let newX = r_n * Math.sin(theta_n) * Math.cos(phi_n);
+          let newY = r_n * Math.sin(theta_n) * Math.sin(phi_n);
+          let newZ = r_n * Math.cos(theta_n);
+          if (type === "mandelbox") {
+            // For Mandelbox, use a box-folding variant:
+            newX = zVec.x > 1 ? 2 - zVec.x : zVec.x < -1 ? -2 - zVec.x : zVec.x;
+            newY = zVec.y > 1 ? 2 - zVec.y : zVec.y < -1 ? -2 - zVec.y : zVec.y;
+            newZ = zVec.z > 1 ? 2 - zVec.z : zVec.z < -1 ? -2 - zVec.z : zVec.z;
+            const scale = 20;
+            newX *= scale;
+            newY *= scale;
+            newZ *= scale;
           }
-          if (iterations === maxIterations) {
-            points.push(new THREE.Vector3(u, v, w));
-          }
+          zVec.set(newX, newY, newZ).add(pos);
+          iterations++;
+        }
+        if (iterations === maxIterations) {
+          points.push(new THREE.Vector3(u, v, w));
         }
       }
     }
-    const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 16, 16);
-    const geometries: THREE.BufferGeometry[] = [];
-    for (const pt of points) {
-      const mesh = new THREE.Mesh(sphereGeometry);
-      mesh.position.copy(pt);
-      mesh.updateMatrix();
-      geometries.push(sphereGeometry.clone().applyMatrix4(mesh.matrix));
-    }
-    // Only merge if we have at least one geometry.
-    return geometries.length > 0
-      ? mergeGeometries(geometries, false)
-      : new THREE.BufferGeometry();
   }
+  const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 16, 16);
+  const geometries: THREE.BufferGeometry[] = [];
+  for (const pt of points) {
+    const mesh = new THREE.Mesh(sphereGeometry);
+    mesh.position.copy(pt);
+    mesh.updateMatrix();
+    geometries.push(sphereGeometry.clone().applyMatrix4(mesh.matrix));
+  }
+  // Only merge if we have at least one geometry.
+  return geometries.length > 0
+    ? mergeGeometries(geometries, false)
+    : new THREE.BufferGeometry();
+}
 
 /**
  * Creates the Buddhabrot fractal geometry using spheres.
@@ -128,7 +136,7 @@ export function createBuddhabrotSpheresGeometry(params: {
   for (let i = 0; i < sampleCount; i++) {
     const c = new THREE.Vector2(
       THREE.MathUtils.lerp(bounds.minX, bounds.maxX, Math.random()),
-      THREE.MathUtils.lerp(bounds.minY, bounds.maxY, Math.random())
+      THREE.MathUtils.lerp(bounds.minY, bounds.maxY, Math.random()),
     );
     const z = new THREE.Vector2(0, 0);
     const trajectory: THREE.Vector3[] = [];
@@ -162,7 +170,10 @@ export function createBuddhabrotSpheresGeometry(params: {
  * Creates an Apollonian Gasket geometry using spheres.
  * (A simplified 2D algorithm is extruded to 3D.)
  */
-export function createApollonianGasketGeometry(iterations: number, minRadius: number = 0.1): THREE.BufferGeometry {
+export function createApollonianGasketGeometry(
+  iterations: number,
+  minRadius: number = 0.1,
+): THREE.BufferGeometry {
   const circles: { center: THREE.Vector3; radius: number }[] = [];
   const geometries: THREE.BufferGeometry[] = [];
   const sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
@@ -197,7 +208,7 @@ export function createApollonianGasketGeometry(iterations: number, minRadius: nu
           const newCenter = new THREE.Vector3(
             (c1.x + c2.x + c3.x) / 3,
             (c1.y + c2.y + c3.y) / 3,
-            (c1.z + c2.z + c3.z) / 3
+            (c1.z + c2.z + c3.z) / 3,
           );
           addCircle(newCenter, newRadius);
         }
@@ -221,12 +232,16 @@ export function createApollonianGasketGeometry(iterations: number, minRadius: nu
 export function createPythagorasTree3DCubesGeometry(
   level: number,
   size: number = 1,
-  thickness: number = 0.1
+  thickness: number = 0.1,
 ): THREE.BufferGeometry {
   const geometries: THREE.BufferGeometry[] = [];
   const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 
-  function createBox(pos: THREE.Vector3, s: number, rot: THREE.Euler): THREE.BufferGeometry {
+  function createBox(
+    pos: THREE.Vector3,
+    s: number,
+    rot: THREE.Euler,
+  ): THREE.BufferGeometry {
     const mesh = new THREE.Mesh(cubeGeometry);
     mesh.scale.set(s, s, thickness);
     mesh.position.copy(pos);
@@ -235,7 +250,12 @@ export function createPythagorasTree3DCubesGeometry(
     return cubeGeometry.clone().applyMatrix4(mesh.matrix);
   }
 
-  function generateTree(lvl: number, pos: THREE.Vector3, s: number, rot: THREE.Euler) {
+  function generateTree(
+    lvl: number,
+    pos: THREE.Vector3,
+    s: number,
+    rot: THREE.Euler,
+  ) {
     if (lvl === 0) return;
     geometries.push(createBox(pos, s, rot));
     if (lvl > 1) {
@@ -266,7 +286,7 @@ export function createNFlakeSpheresGeometry(
   level: number,
   size: number = 1,
   type: string = "icosahedron",
-  sphereRadius: number = 0.1
+  sphereRadius: number = 0.1,
 ): THREE.BufferGeometry {
   const finalPositions: THREE.Vector3[] = [];
   const MIN_SCALE = 1e-4;
@@ -319,9 +339,11 @@ export function createNFlakeSpheresGeometry(
       const normal = new THREE.Vector3(
         normalsAttr.getX(i),
         normalsAttr.getY(i),
-        normalsAttr.getZ(i)
+        normalsAttr.getZ(i),
       ).normalize();
-      const newOffset = offset.clone().add(normal.multiplyScalar(scale * childOffsetFactor));
+      const newOffset = offset
+        .clone()
+        .add(normal.multiplyScalar(scale * childOffsetFactor));
       generateFlake(lvl - 1, scale * childScaleFactor, newOffset);
     }
   }
@@ -343,11 +365,17 @@ export function createNFlakeSpheresGeometry(
 export function createSierpinskiTetrahedronSpheresGeometry(
   level: number,
   size: number = 1,
-  sphereRadius: number = 0.1
+  sphereRadius: number = 0.1,
 ): THREE.BufferGeometry {
   const points: THREE.Vector3[] = [];
 
-  function tetrahedron(p1: THREE.Vector3, p2: THREE.Vector3, p3: THREE.Vector3, p4: THREE.Vector3, n: number) {
+  function tetrahedron(
+    p1: THREE.Vector3,
+    p2: THREE.Vector3,
+    p3: THREE.Vector3,
+    p4: THREE.Vector3,
+    n: number,
+  ) {
     if (n === 0) {
       points.push(p1.clone(), p2.clone(), p3.clone(), p4.clone());
     } else {
@@ -364,10 +392,22 @@ export function createSierpinskiTetrahedronSpheresGeometry(
     }
   }
 
-  const a = new THREE.Vector3(0, size * Math.sqrt(6) / 3, 0);
-  const b = new THREE.Vector3(-size / 2, -size * Math.sqrt(6) / 6, size * Math.sqrt(3) / 3);
-  const c = new THREE.Vector3(size / 2, -size * Math.sqrt(6) / 6, size * Math.sqrt(3) / 3);
-  const d = new THREE.Vector3(0, -size * Math.sqrt(6) / 6, -size * Math.sqrt(3) * 2 / 6);
+  const a = new THREE.Vector3(0, (size * Math.sqrt(6)) / 3, 0);
+  const b = new THREE.Vector3(
+    -size / 2,
+    (-size * Math.sqrt(6)) / 6,
+    (size * Math.sqrt(3)) / 3,
+  );
+  const c = new THREE.Vector3(
+    size / 2,
+    (-size * Math.sqrt(6)) / 6,
+    (size * Math.sqrt(3)) / 3,
+  );
+  const d = new THREE.Vector3(
+    0,
+    (-size * Math.sqrt(6)) / 6,
+    (-size * Math.sqrt(3) * 2) / 6,
+  );
   tetrahedron(a, b, c, d, level);
   const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 8, 8);
   const geometries: THREE.BufferGeometry[] = [];
@@ -386,7 +426,7 @@ export function createSierpinskiTetrahedronSpheresGeometry(
 export function createKochSnowflakeSpheresGeometry(
   level: number,
   size: number = 1,
-  sphereRadius: number = 0.1
+  sphereRadius: number = 0.1,
 ): THREE.BufferGeometry {
   const points: THREE.Vector3[] = [];
 
@@ -398,7 +438,9 @@ export function createKochSnowflakeSpheresGeometry(
     const v = new THREE.Vector3().subVectors(p2, p1).divideScalar(3);
     const pB = p1.clone().add(v);
     const pD = p2.clone().sub(v);
-    const pC = pB.clone().add(v.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 3));
+    const pC = pB
+      .clone()
+      .add(v.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 3));
     generate(p1, pB, lvl - 1);
     generate(pB, pC, lvl - 1);
     generate(pC, pD, lvl - 1);
@@ -406,9 +448,9 @@ export function createKochSnowflakeSpheresGeometry(
   }
 
   const triangle = [
-    new THREE.Vector3(-size / 2, -Math.sqrt(3) * size / 6, 0),
-    new THREE.Vector3(size / 2, -Math.sqrt(3) * size / 6, 0),
-    new THREE.Vector3(0, Math.sqrt(3) * size / 3, 0)
+    new THREE.Vector3(-size / 2, (-Math.sqrt(3) * size) / 6, 0),
+    new THREE.Vector3(size / 2, (-Math.sqrt(3) * size) / 6, 0),
+    new THREE.Vector3(0, (Math.sqrt(3) * size) / 3, 0),
   ];
   generate(triangle[0], triangle[1], level);
   generate(triangle[1], triangle[2], level);
@@ -432,11 +474,19 @@ export function createKochSnowflakeSpheresGeometry(
 /**
  * Creates a Sierpinski Carpet geometry using cubes.
  */
-export function createSierpinskiCarpetCubesGeometry(level: number, size: number = 1): THREE.BufferGeometry {
+export function createSierpinskiCarpetCubesGeometry(
+  level: number,
+  size: number = 1,
+): THREE.BufferGeometry {
   const geometries: THREE.BufferGeometry[] = [];
   const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 
-  function createCube(x: number, y: number, z: number, s: number): THREE.BufferGeometry {
+  function createCube(
+    x: number,
+    y: number,
+    z: number,
+    s: number,
+  ): THREE.BufferGeometry {
     const mesh = new THREE.Mesh(cubeGeometry);
     mesh.scale.set(s, s, s);
     mesh.position.set(x, y, z);
@@ -458,7 +508,7 @@ export function createSierpinskiCarpetCubesGeometry(level: number, size: number 
             const newCenter = new THREE.Vector3(
               center.x + i * newSize,
               center.y + j * newSize,
-              center.z + k * newSize
+              center.z + k * newSize,
             );
             carpet(lvl - 1, newSize, newCenter);
           }
@@ -473,15 +523,26 @@ export function createSierpinskiCarpetCubesGeometry(level: number, size: number 
 /**
  * (Optional) Creates a Cantor Dust geometry using spheres.
  */
-export function createCantorDustSpheresGeometry(level: number, size: number = 1): THREE.BufferGeometry {
+export function createCantorDustSpheresGeometry(
+  level: number,
+  size: number = 1,
+): THREE.BufferGeometry {
   const points: THREE.Vector3[] = [];
-  function generate(lvl: number, cubeMin: THREE.Vector3, cubeMax: THREE.Vector3) {
+  function generate(
+    lvl: number,
+    cubeMin: THREE.Vector3,
+    cubeMax: THREE.Vector3,
+  ) {
     if (lvl === 0) {
-      const mid = new THREE.Vector3().addVectors(cubeMin, cubeMax).multiplyScalar(0.5);
+      const mid = new THREE.Vector3()
+        .addVectors(cubeMin, cubeMax)
+        .multiplyScalar(0.5);
       points.push(mid);
       return;
     }
-    const diff = new THREE.Vector3().subVectors(cubeMax, cubeMin).multiplyScalar(1 / 3);
+    const diff = new THREE.Vector3()
+      .subVectors(cubeMax, cubeMin)
+      .multiplyScalar(1 / 3);
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         for (let k = 0; k < 3; k++) {
@@ -489,7 +550,7 @@ export function createCantorDustSpheresGeometry(level: number, size: number = 1)
           const newMin = new THREE.Vector3(
             cubeMin.x + i * diff.x,
             cubeMin.y + j * diff.y,
-            cubeMin.z + k * diff.z
+            cubeMin.z + k * diff.z,
           );
           const newMax = new THREE.Vector3().addVectors(newMin, diff);
           generate(lvl - 1, newMin, newMax);
@@ -519,7 +580,7 @@ export function createJuliaSetSpheresGeometry(
   level: number,
   size: number = 3,
   c: THREE.Vector2 = new THREE.Vector2(-0.8, 0.1565),
-  sphereRadius: number = 0.1
+  sphereRadius: number = 0.1,
 ): THREE.BufferGeometry {
   const points: THREE.Vector3[] = [];
   const iterations = 100;
@@ -527,8 +588,20 @@ export function createJuliaSetSpheresGeometry(
   const resolution = 200;
   for (let i = 0; i < resolution; i++) {
     for (let j = 0; j < resolution; j++) {
-      const x = THREE.MathUtils.mapLinear(i, 0, resolution, -size / 2, size / 2);
-      const y = THREE.MathUtils.mapLinear(j, 0, resolution, -size / 2, size / 2);
+      const x = THREE.MathUtils.mapLinear(
+        i,
+        0,
+        resolution,
+        -size / 2,
+        size / 2,
+      );
+      const y = THREE.MathUtils.mapLinear(
+        j,
+        0,
+        resolution,
+        -size / 2,
+        size / 2,
+      );
       const z = new THREE.Vector2(x, y);
       let iter = 0;
       while (z.lengthSq() < bailout * bailout && iter < iterations) {

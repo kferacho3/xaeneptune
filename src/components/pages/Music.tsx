@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 // Minimal track interfaces
 interface SpotifyArtist {
@@ -37,7 +37,9 @@ interface PlaylistResponse {
 }
 
 export default function Music() {
-  const [activeTab, setActiveTab] = useState<'top-tracks' | 'playlist'>('top-tracks');
+  const [activeTab, setActiveTab] = useState<"top-tracks" | "playlist">(
+    "top-tracks",
+  );
 
   // State for top tracks
   const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([]);
@@ -48,15 +50,17 @@ export default function Music() {
   const [loadingPlaylist, setLoadingPlaylist] = useState(true);
 
   // Hard-coded for demonstration
-  const artistId = '7iysPipkcsfGFVEgUMDzHQ'; // Xae Neptune
-  const playlistId = '1NL9L9zkZjkxlAVV3Qcqfh'; // The playlist you want to display
+  const artistId = "7iysPipkcsfGFVEgUMDzHQ"; // Xae Neptune
+  const playlistId = "1NL9L9zkZjkxlAVV3Qcqfh"; // The playlist you want to display
 
   // Fetch top tracks + playlist data
   useEffect(() => {
     const fetchTopTracks = async () => {
       setLoadingTopTracks(true);
       try {
-        const res = await fetch(`/api/spotify/artist-top-tracks?artistId=${artistId}`);
+        const res = await fetch(
+          `/api/spotify/artist-top-tracks?artistId=${artistId}`,
+        );
         if (!res.ok) {
           console.error(`Error fetching top tracks: ${await res.text()}`);
           setTopTracks([]);
@@ -65,7 +69,7 @@ export default function Music() {
           setTopTracks(data.tracks || []);
         }
       } catch (error) {
-        console.error('Error fetching top tracks:', error);
+        console.error("Error fetching top tracks:", error);
         setTopTracks([]);
       } finally {
         setLoadingTopTracks(false);
@@ -76,7 +80,9 @@ export default function Music() {
       setLoadingPlaylist(true);
       try {
         // This route is newly created; see /api/spotify/playlist example below
-        const res = await fetch(`/api/spotify/playlist?playlistId=${playlistId}`);
+        const res = await fetch(
+          `/api/spotify/playlist?playlistId=${playlistId}`,
+        );
         if (!res.ok) {
           console.error(`Error fetching playlist tracks: ${await res.text()}`);
           setPlaylistTracks([]);
@@ -89,7 +95,7 @@ export default function Music() {
           setPlaylistTracks(extractedTracks);
         }
       } catch (error) {
-        console.error('Error fetching playlist:', error);
+        console.error("Error fetching playlist:", error);
         setPlaylistTracks([]);
       } finally {
         setLoadingPlaylist(false);
@@ -107,7 +113,7 @@ export default function Music() {
       className="bg-gray-900 p-4 rounded-lg shadow-md transition-transform hover:scale-105"
       onClick={() => {
         if (track.external_urls?.spotify) {
-          window.open(track.external_urls.spotify, '_blank');
+          window.open(track.external_urls.spotify, "_blank");
         }
       }}
     >
@@ -124,11 +130,12 @@ export default function Music() {
       )}
       <h2 className="text-xl font-semibold text-white mb-2">{track.name}</h2>
       <p className="text-sm text-gray-300 mb-1">
-        Artist(s): {track.artists.map((a) => a.name).join(', ')}
+        Artist(s): {track.artists.map((a) => a.name).join(", ")}
       </p>
       {track.album?.name && (
         <p className="text-sm text-gray-300">
-          Album: {track.album.name} {track.album.release_date && `(${track.album.release_date})`}
+          Album: {track.album.name}{" "}
+          {track.album.release_date && `(${track.album.release_date})`}
         </p>
       )}
       {track.preview_url ? (
@@ -155,10 +162,16 @@ export default function Music() {
 
   const renderPlaylistTracks = () => {
     if (loadingPlaylist) {
-      return <p className="text-center text-white">Loading playlist tracks...</p>;
+      return (
+        <p className="text-center text-white">Loading playlist tracks...</p>
+      );
     }
     if (!playlistTracks.length) {
-      return <p className="text-center text-white">No tracks found in the playlist.</p>;
+      return (
+        <p className="text-center text-white">
+          No tracks found in the playlist.
+        </p>
+      );
     }
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
@@ -175,21 +188,21 @@ export default function Music() {
       {/* Tab Buttons */}
       <nav className="flex justify-center mb-6 space-x-4">
         <button
-          onClick={() => setActiveTab('top-tracks')}
+          onClick={() => setActiveTab("top-tracks")}
           className={`px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-            activeTab === 'top-tracks'
-              ? 'bg-white text-black'
-              : 'bg-transparent border border-white text-white hover:bg-gray-700'
+            activeTab === "top-tracks"
+              ? "bg-white text-black"
+              : "bg-transparent border border-white text-white hover:bg-gray-700"
           }`}
         >
           Top Tracks
         </button>
         <button
-          onClick={() => setActiveTab('playlist')}
+          onClick={() => setActiveTab("playlist")}
           className={`px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-            activeTab === 'playlist'
-              ? 'bg-white text-black'
-              : 'bg-transparent border border-white text-white hover:bg-gray-700'
+            activeTab === "playlist"
+              ? "bg-white text-black"
+              : "bg-transparent border border-white text-white hover:bg-gray-700"
           }`}
         >
           Playlist Tracks
@@ -197,10 +210,12 @@ export default function Music() {
       </nav>
 
       {/* Tab Content */}
-      {activeTab === 'top-tracks' ? renderTopTracks() : renderPlaylistTracks()}
+      {activeTab === "top-tracks" ? renderTopTracks() : renderPlaylistTracks()}
 
       <footer className="mt-12 text-center text-sm text-gray-500">
-        <p>© {new Date().getFullYear()} Xaeneptune Music. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} Xaeneptune Music. All rights reserved.
+        </p>
       </footer>
     </main>
   );

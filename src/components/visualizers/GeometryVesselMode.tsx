@@ -5,7 +5,11 @@ import * as THREE from "three";
 
 // Define rendering and color modes
 export type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
-export type ColorMode = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
+export type ColorMode =
+  | "default"
+  | "audioAmplitude"
+  | "frequencyBased"
+  | "rainbow";
 
 // Props include audioUrl for audio-reactive features.
 interface GeometryVesselProps {
@@ -81,7 +85,7 @@ const GeometryVessel: React.FC<GeometryVesselProps> = ({
       direction: THREE.Vector3,
       length: number,
       thickness: number,
-      depth: number
+      depth: number,
     ) => {
       if (depth > maxDepth) return;
 
@@ -91,7 +95,7 @@ const GeometryVessel: React.FC<GeometryVesselProps> = ({
       const color = new THREE.Color().setHSL(
         0.3 + (depth / maxDepth) * 0.3,
         0.8,
-        0.5
+        0.5,
       );
       branches.push({
         position: position.clone(),
@@ -111,21 +115,45 @@ const GeometryVessel: React.FC<GeometryVesselProps> = ({
         const rightDirection = new THREE.Vector3()
           .copy(direction)
           .applyAxisAngle(new THREE.Vector3(0, 0, 1), angle + fftValue * 0.5);
-        generateBranch(endPoint.clone(), rightDirection, newLength, newThickness, depth + 1);
+        generateBranch(
+          endPoint.clone(),
+          rightDirection,
+          newLength,
+          newThickness,
+          depth + 1,
+        );
       }
       if (depth < maxDepth - 2 || Math.random() > 0.5) {
         const leftDirection = new THREE.Vector3()
           .copy(direction)
           .applyAxisAngle(new THREE.Vector3(0, 0, 1), -angle - fftValue * 0.5);
-        generateBranch(endPoint.clone(), leftDirection, newLength, newThickness, depth + 1);
+        generateBranch(
+          endPoint.clone(),
+          leftDirection,
+          newLength,
+          newThickness,
+          depth + 1,
+        );
       }
       if (depth < maxDepth - 3 && Math.random() > 0.7) {
         const straightDirection = direction.clone();
-        generateBranch(endPoint.clone(), straightDirection, newLength * 0.9, newThickness * 0.8, depth + 1);
+        generateBranch(
+          endPoint.clone(),
+          straightDirection,
+          newLength * 0.9,
+          newThickness * 0.8,
+          depth + 1,
+        );
       }
     };
 
-    generateBranch(initialPosition, initialDirection, initialLength, initialThickness, 0);
+    generateBranch(
+      initialPosition,
+      initialDirection,
+      initialLength,
+      initialThickness,
+      0,
+    );
     return branches;
   }, [fftData]);
 
@@ -181,7 +209,12 @@ const GeometryVessel: React.FC<GeometryVesselProps> = ({
           }}
         >
           <cylinderGeometry
-            args={[branch.thickness * 0.5, branch.thickness * 0.4, branch.length, 8]}
+            args={[
+              branch.thickness * 0.5,
+              branch.thickness * 0.4,
+              branch.length,
+              8,
+            ]}
           />
           <meshStandardMaterial color={branch.color} {...materialProps} />
           {/* Apply an Euler rotation helper so the branch aligns with its direction */}
@@ -190,7 +223,7 @@ const GeometryVessel: React.FC<GeometryVesselProps> = ({
               new THREE.Euler(
                 Math.PI / 2,
                 0,
-                Math.atan2(branch.direction.x, branch.direction.y)
+                Math.atan2(branch.direction.x, branch.direction.y),
               )
             }
           />

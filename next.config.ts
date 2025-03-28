@@ -1,5 +1,5 @@
 // next.config.ts
-import { NextConfig } from 'next';
+import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -7,13 +7,19 @@ const nextConfig: NextConfig = {
     appDir: true,
   },
   images: {
-    domains: ['i.scdn.co', 'via.placeholder.com', 'i1.sndcdn.com', 'open.spotify.com', 'is1-ssl.mzstatic.com'],
+    domains: [
+      "i.scdn.co",
+      "via.placeholder.com",
+      "i1.sndcdn.com",
+      "open.spotify.com",
+      "is1-ssl.mzstatic.com",
+    ],
   },
   webpack(config) {
     config.module.rules.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
       exclude: /node_modules/,
-      type: 'asset/source', // loads shader files as raw text
+      type: "asset/source", // loads shader files as raw text
     });
     return config;
   },

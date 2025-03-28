@@ -1,25 +1,28 @@
-'use client';
+"use client";
 
-import AntiHeroLogo from '@/components/models/AntiHeroMain';
-import { GalaxyModel } from '@/components/models/Galaxy';
-import { GalaxySkyboxModel } from '@/components/models/GalaxySkybox';
-import { NeptuneModel } from '@/components/models/Neptune';
-import AntiHero3D from '@/components/models/text3D/AntiHero3D';
-import BeatAudioVisualizerScene from '@/components/scene/BeatAudioVisualizerScene';
-import { useVisualizer } from '@/context/VisualizerContext';
-import { Route, useRouteStore } from '@/store/useRouteStore';
-import { MeshReflectorMaterial, OrbitControls, Sparkles } from '@react-three/drei';
-import { useFrame, useThree } from '@react-three/fiber';
-import { EffectComposer, GodRays } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
-import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
+import AntiHeroLogo from "@/components/models/AntiHeroMain";
+import { GalaxyModel } from "@/components/models/Galaxy";
+import { GalaxySkyboxModel } from "@/components/models/GalaxySkybox";
+import { NeptuneModel } from "@/components/models/Neptune";
+import AntiHero3D from "@/components/models/text3D/AntiHero3D";
+import BeatAudioVisualizerScene from "@/components/scene/BeatAudioVisualizerScene";
+import { useVisualizer } from "@/context/VisualizerContext";
+import { Route, useRouteStore } from "@/store/useRouteStore";
+import {
+  MeshReflectorMaterial,
+  OrbitControls,
+  Sparkles,
+} from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
+import { EffectComposer, GodRays } from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
+import React, { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 // Import react-spring for smooth animations in three.js
-import { a, useSpring } from '@react-spring/three';
+import { a, useSpring } from "@react-spring/three";
 
 // Define an animated group so that the "group" element is correctly typed.
-const AnimatedGroup = a('group');
-
+const AnimatedGroup = a("group");
 
 type SceneProps = {
   onLoaded?: () => void;
@@ -32,11 +35,21 @@ type SceneProps = {
   onBeatShuffle?: () => void;
 };
 
-function AnimatedScale({ visible, children }: { visible: boolean; children: React.ReactNode }) {
+function AnimatedScale({
+  visible,
+  children,
+}: {
+  visible: boolean;
+  children: React.ReactNode;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   useEffect(() => {
     if (groupRef.current) {
-      groupRef.current.scale.set(visible ? 0 : 1, visible ? 0 : 1, visible ? 0 : 1);
+      groupRef.current.scale.set(
+        visible ? 0 : 1,
+        visible ? 0 : 1,
+        visible ? 0 : 1,
+      );
     }
   }, [visible]);
   useFrame((_, delta) => {
@@ -71,7 +84,9 @@ function FadingGalaxySkybox({ specialEffect }: { specialEffect?: boolean }) {
   );
 }
 
-function NeptuneModelAnimated(props: Omit<React.ComponentProps<typeof NeptuneModel>, 'scale'>) {
+function NeptuneModelAnimated(
+  props: Omit<React.ComponentProps<typeof NeptuneModel>, "scale">,
+) {
   return (
     <group>
       <NeptuneModel {...props} />
@@ -126,9 +141,11 @@ type CrescentMoonTransmissiveProps = {
   moonRef?: React.MutableRefObject<THREE.Mesh | null>;
 };
 
-function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {}) {
+function CrescentMoonTransmissive({
+  moonRef,
+}: CrescentMoonTransmissiveProps = {}) {
   const material = new THREE.MeshPhysicalMaterial({
-    emissive: '#4b0082',
+    emissive: "#4b0082",
     emissiveIntensity: 2,
     transmission: 1,
     roughness: 0,
@@ -154,7 +171,7 @@ function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {
           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
         }
         #include <dithering_fragment>
-      `
+      `,
     );
   };
 
@@ -184,10 +201,34 @@ function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {
 function EnvironmentParticles() {
   return (
     <group>
-      <Sparkles count={250} scale={[300, 300, 300]} size={20} speed={0.5} color="#4b0082" />
-      <Sparkles count={250} scale={[300, 300, 300]} size={20} speed={0.5} color="yellow" />
-      <Sparkles count={150} scale={[300, 300, 300]} size={20} speed={0.5} color="#00008B" />
-      <Sparkles count={100} scale={[300, 300, 300]} size={20} speed={0.5} color="red" />
+      <Sparkles
+        count={250}
+        scale={[300, 300, 300]}
+        size={20}
+        speed={0.5}
+        color="#4b0082"
+      />
+      <Sparkles
+        count={250}
+        scale={[300, 300, 300]}
+        size={20}
+        speed={0.5}
+        color="yellow"
+      />
+      <Sparkles
+        count={150}
+        scale={[300, 300, 300]}
+        size={20}
+        speed={0.5}
+        color="#00008B"
+      />
+      <Sparkles
+        count={100}
+        scale={[300, 300, 300]}
+        size={20}
+        speed={0.5}
+        color="red"
+      />
     </group>
   );
 }
@@ -234,11 +275,11 @@ export default function Scene({
         }
       }, 100);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     handleResize();
     return () => {
       clearTimeout(timeout);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -264,19 +305,23 @@ export default function Scene({
         if (onLoaded) onLoaded();
       } else {
         const t = elapsedTimeRef.current / animationDuration;
-        camera.position.lerpVectors(initialCameraPosition, targetCameraPosition, t);
+        camera.position.lerpVectors(
+          initialCameraPosition,
+          targetCameraPosition,
+          t,
+        );
         camera.lookAt(0, 0, 0);
       }
     }
   });
 
   if (!showVisualizer) {
-    scene.fog = new THREE.FogExp2('#000000', 0.0015);
+    scene.fog = new THREE.FogExp2("#000000", 0.0015);
   }
 
   const antiHeroConfig = {
-    text: 'ANTI-HERO',
-    color: '#4210ae',
+    text: "ANTI-HERO",
+    color: "#4210ae",
     fontSize: 10,
     fontDepth: 1,
     uTwistSpeed: 15,
@@ -302,31 +347,34 @@ export default function Scene({
 
       {showVisualizer ? (
         <BeatAudioVisualizerScene
-          audioUrl={audioUrlForBeat || '/audio/sample-beat.mp3'}
-          onGoBack={onBeatGoBack || (() => onSelectRoute('beats'))}
-          onShuffle={onBeatShuffle || (() => console.log('Shuffle beat'))}
+          audioUrl={audioUrlForBeat || "/audio/sample-beat.mp3"}
+          onGoBack={onBeatGoBack || (() => onSelectRoute("beats"))}
+          onShuffle={onBeatShuffle || (() => console.log("Shuffle beat"))}
         />
       ) : (
         <>
-          {activeRoute === 'xaeneptunesworld' ? (
+          {activeRoute === "xaeneptunesworld" ? (
             <group>
               <FadingGalaxySkybox specialEffect={specialEffect} />
-              <AnimatedScale visible={activeRoute === 'xaeneptunesworld'}>
+              <AnimatedScale visible={activeRoute === "xaeneptunesworld"}>
                 <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
                   <NeptuneModelAnimated onSelectRoute={onSelectRoute} />
                 </AnimatedGroup>
               </AnimatedScale>
-              <AnimatedScale visible={activeRoute === 'xaeneptunesworld'}>
+              <AnimatedScale visible={activeRoute === "xaeneptunesworld"}>
                 <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
                   <GalaxyModel />
                 </AnimatedGroup>
               </AnimatedScale>
             </group>
           ) : (
-            <AnimatedScale visible={activeRoute === 'home'}>
+            <AnimatedScale visible={activeRoute === "home"}>
               <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
                 <group rotation={[0, Math.PI, 0]}>
-                  <AntiHeroLogo showMarkers={markersVisible} onSelectRoute={onSelectRoute} />
+                  <AntiHeroLogo
+                    showMarkers={markersVisible}
+                    onSelectRoute={onSelectRoute}
+                  />
                 </group>
                 <AntiHero3D
                   config={antiHeroConfig}
@@ -335,7 +383,11 @@ export default function Scene({
                   onSelectRoute={onSelectRoute}
                   position={[0, -8, 0]}
                 />
-                <directionalLight intensity={0.8} position={[50, 50, 50]} color="#aaaaff" />
+                <directionalLight
+                  intensity={0.8}
+                  position={[50, 50, 50]}
+                  color="#aaaaff"
+                />
                 <ambientLight intensity={0.4} color="#5555aa" />
               </AnimatedGroup>
             </AnimatedScale>
@@ -376,7 +428,7 @@ export default function Scene({
               samples={120}
               density={2.25}
               decay={0.93}
-              weight={0.8}  // less prominent effect for the crescent moon
+              weight={0.8} // less prominent effect for the crescent moon
               exposure={0.1}
             />
           ) : (
@@ -385,8 +437,8 @@ export default function Scene({
         </EffectComposer>
       )}
 
- {/* Instead of using Reflector, use a mesh with MeshReflectorMaterial */}
- <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -70, 0]}>
+      {/* Instead of using Reflector, use a mesh with MeshReflectorMaterial */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -70, 0]}>
         <planeGeometry args={[10000, 10000]} />
         <MeshReflectorMaterial
           blur={[512, 512]}
@@ -405,4 +457,3 @@ export default function Scene({
     </group>
   );
 }
- 

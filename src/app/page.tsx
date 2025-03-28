@@ -1,25 +1,36 @@
 // /src/app/page.tsx
-'use client';
-import GoBackButton from '@/components/layout/GoBackButton';
-import TopBarNavbar from '@/components/layout/TopBarNavbar';
-import Albums from '@/components/pages/Albums';
-import Artist from '@/components/pages/Artist';
-import BeatsAvailable from '@/components/pages/BeatsAvailable';
-import Connect from '@/components/pages/Connect';
-import Music from '@/components/pages/Music';
-import XaeneptunesWorld from '@/components/pages/XaeneptunesWorld';
-import Scene from '@/components/scene/Scene';
-import { VisualizerProvider, useVisualizer } from '@/context/VisualizerContext';
-import { Route, useRouteStore } from '@/store/useRouteStore';
-import { Loader, OrbitControls, PerformanceMonitor } from '@react-three/drei';
-import { Canvas } from '@react-three/fiber';
-import { Bloom, EffectComposer, SMAA, Vignette } from '@react-three/postprocessing';
-import { motion } from 'framer-motion';
-import Head from 'next/head';
-import { Suspense, useEffect, useState } from 'react';
+"use client";
+import GoBackButton from "@/components/layout/GoBackButton";
+import TopBarNavbar from "@/components/layout/TopBarNavbar";
+import Albums from "@/components/pages/Albums";
+import Artist from "@/components/pages/Artist";
+import BeatsAvailable from "@/components/pages/BeatsAvailable";
+import Connect from "@/components/pages/Connect";
+import Music from "@/components/pages/Music";
+import XaeneptunesWorld from "@/components/pages/XaeneptunesWorld";
+import Scene from "@/components/scene/Scene";
+import { VisualizerProvider, useVisualizer } from "@/context/VisualizerContext";
+import { Route, useRouteStore } from "@/store/useRouteStore";
+import { Loader, OrbitControls, PerformanceMonitor } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import {
+  Bloom,
+  EffectComposer,
+  SMAA,
+  Vignette,
+} from "@react-three/postprocessing";
+import { motion } from "framer-motion";
+import Head from "next/head";
+import { Suspense, useEffect, useState } from "react";
 
 export default function HomePage() {
-  const { activeRoute, setActiveRoute,  onBeatGoBack, onBeatShuffle, visualizerMode } = useRouteStore();
+  const {
+    activeRoute,
+    setActiveRoute,
+    onBeatGoBack,
+    onBeatShuffle,
+    visualizerMode,
+  } = useRouteStore();
   const { isBeatVisualizer } = useVisualizer();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [dpr, setDpr] = useState(1.5);
@@ -28,27 +39,27 @@ export default function HomePage() {
   useEffect(() => {
     const handleResize = () => setMobile(window.innerWidth < 768);
     handleResize();
-    window.addEventListener('resize', handleResize);
-    document.body.style.overflow = 'hidden';
+    window.addEventListener("resize", handleResize);
+    document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener('resize', handleResize);
-      document.body.style.overflow = 'auto';
+      window.removeEventListener("resize", handleResize);
+      document.body.style.overflow = "auto";
     };
   }, []);
 
   const renderContent = () => {
     switch (activeRoute) {
-      case 'music':
+      case "music":
         return <Music />;
-      case 'artist':
+      case "artist":
         return <Artist />;
-      case 'beats':
+      case "beats":
         return <BeatsAvailable />;
-      case 'albums':
+      case "albums":
         return <Albums />;
-      case 'connect':
+      case "connect":
         return <Connect />;
-      case 'xaeneptunesworld':
+      case "xaeneptunesworld":
         return <XaeneptunesWorld />;
       default:
         return null;
@@ -56,8 +67,8 @@ export default function HomePage() {
   };
 
   const promptMessage = mobile
-    ? 'Drag with your fingers to explore'
-    : 'Click and drag to explore';
+    ? "Drag with your fingers to explore"
+    : "Click and drag to explore";
 
   return (
     <VisualizerProvider>
@@ -68,19 +79,24 @@ export default function HomePage() {
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.ico" />
         </Head>
-        <div style={{ width: '100vw', height: '100vh' }} className="w-full h-full relative">
-          <div style={{ zIndex: 100, position: 'absolute', top: 0, width: '100%' }}>
+        <div
+          style={{ width: "100vw", height: "100vh" }}
+          className="w-full h-full relative"
+        >
+          <div
+            style={{ zIndex: 100, position: "absolute", top: 0, width: "100%" }}
+          >
             <TopBarNavbar />
           </div>
           <Canvas
-            style={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
+            style={{ position: "absolute", top: 0, left: 0, zIndex: 1 }}
             className="w-full h-screen"
             camera={{ position: [0, 75, 200], fov: 75 }}
             onPointerDown={() => setHasInteracted(true)}
             dpr={dpr}
             gl={{
               alpha: false,
-              powerPreference: 'high-performance',
+              powerPreference: "high-performance",
               stencil: false,
               antialias: false,
               depth: false,
@@ -90,50 +106,61 @@ export default function HomePage() {
               <Scene
                 isMobile={mobile}
                 onSelectRoute={(route: Route) => setActiveRoute(route)}
-                specialEffect={activeRoute === 'xaeneptunesworld'}
+                specialEffect={activeRoute === "xaeneptunesworld"}
                 activeRoute={activeRoute}
                 visualizerMode={visualizerMode || isBeatVisualizer}
-                onBeatGoBack={onBeatGoBack || (() => setActiveRoute('beats'))}
-                onBeatShuffle={onBeatShuffle || (() => console.log('Shuffle beat'))}
+                onBeatGoBack={onBeatGoBack || (() => setActiveRoute("beats"))}
+                onBeatShuffle={
+                  onBeatShuffle || (() => console.log("Shuffle beat"))
+                }
               />
             )}
-            <PerformanceMonitor onIncline={() => setDpr(1)} onDecline={() => setDpr(0.6)} />
+            <PerformanceMonitor
+              onIncline={() => setDpr(1)}
+              onDecline={() => setDpr(0.6)}
+            />
             <OrbitControls
-  autoRotate
-  autoRotateSpeed={0.15}
-  zoomSpeed={2}
-  maxDistance={75}
-  minDistance={35}
-  minPolarAngle={0}
-  maxPolarAngle={Math.PI / 1.75}
-/>
+              autoRotate
+              autoRotateSpeed={0.15}
+              zoomSpeed={2}
+              maxDistance={75}
+              minDistance={35}
+              minPolarAngle={0}
+              maxPolarAngle={Math.PI / 1.75}
+            />
             <directionalLight intensity={3} position={[-25, 60, -60]} />
             <Suspense fallback={null}>
               <EffectComposer multisampling={0}>
                 <Vignette />
-                <Bloom mipmapBlur radius={0.9} luminanceThreshold={0.966} intensity={2} levels={4} />
+                <Bloom
+                  mipmapBlur
+                  radius={0.9}
+                  luminanceThreshold={0.966}
+                  intensity={2}
+                  levels={4}
+                />
                 <SMAA />
               </EffectComposer>
             </Suspense>
           </Canvas>
-          {activeRoute !== 'home' && activeRoute !== 'beats-visualizer' && (
+          {activeRoute !== "home" && activeRoute !== "beats-visualizer" && (
             <div
               style={{
-                position: 'absolute',
+                position: "absolute",
                 top: 0,
                 left: 0,
-                width: '100%',
-                height: '100%',
+                width: "100%",
+                height: "100%",
                 zIndex: 50,
-                pointerEvents: 'auto',
-                overflowY: 'auto',
-                WebkitOverflowScrolling: 'touch',
+                pointerEvents: "auto",
+                overflowY: "auto",
+                WebkitOverflowScrolling: "touch",
               }}
             >
               <div className="min-h-screen">{renderContent()}</div>
             </div>
           )}
-          {!hasInteracted && activeRoute === 'home' && (
+          {!hasInteracted && activeRoute === "home" && (
             <div
               onPointerDown={() => setHasInteracted(true)}
               className="absolute inset-0 flex items-center justify-center z-50"
@@ -149,16 +176,16 @@ export default function HomePage() {
               </motion.div>
             </div>
           )}
-          {activeRoute !== 'home' && (
+          {activeRoute !== "home" && (
             <div
               style={{
-                position: 'fixed',
-                bottom: '1.5%',
-                left: mobile ? '0.5%' : '2%',
+                position: "fixed",
+                bottom: "1.5%",
+                left: mobile ? "0.5%" : "2%",
                 zIndex: 200,
               }}
             >
-              <GoBackButton onClick={() => setActiveRoute('home')} />
+              <GoBackButton onClick={() => setActiveRoute("home")} />
             </div>
           )}
         </div>

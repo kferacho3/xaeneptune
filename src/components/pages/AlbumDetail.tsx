@@ -1,8 +1,8 @@
 // /src/components/pages/AlbumDetail.tsx
-'use client';
+"use client";
 
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 interface SpotifyAlbum {
   name: string;
@@ -37,7 +37,7 @@ export default function AlbumDetail() {
         const tracksData = await tracksRes.json();
         setTracks(tracksData.items);
       } catch (error) {
-        console.error('Error fetching album details:', error);
+        console.error("Error fetching album details:", error);
       } finally {
         setLoading(false);
       }

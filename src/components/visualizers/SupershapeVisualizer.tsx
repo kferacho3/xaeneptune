@@ -41,20 +41,23 @@ export default function SupershapeVisualizer({
 }) {
   // References for audio and mesh
   const meshRef = useRef<THREE.Mesh>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);        // Keeping these to avoid removing original lines
-  const audioContextRef = useRef<AudioContext | null>(null);     //
-  const analyserRef = useRef<AnalyserNode | null>(null);         //
+  const audioRef = useRef<HTMLAudioElement | null>(null); // Keeping these to avoid removing original lines
+  const audioContextRef = useRef<AudioContext | null>(null); //
+  const analyserRef = useRef<AnalyserNode | null>(null); //
   const audioDataRef = useRef<Uint8Array | null>(null);
 
   // Store the user-selected shape config (and its parameters)
   const [currentConfig, setCurrentConfig] = useState<SupershapeConfig>(
-    allSupershapeConfigs[0]
+    allSupershapeConfigs[0],
   );
   const [_currentParams, setCurrentParams] = useState<
-    SupershapeParams | SupershapeMeshParams | ParametricCode9Params | MakeMeshParams
+    | SupershapeParams
+    | SupershapeMeshParams
+    | ParametricCode9Params
+    | MakeMeshParams
   >(currentConfig.params);
   const [targetParams, setTargetParams] = useState<typeof currentConfig.params>(
-    currentConfig.params
+    currentConfig.params,
   );
 
   // Rendering and color modes
@@ -94,17 +97,19 @@ export default function SupershapeVisualizer({
           SEGMENTS,
           currentConfig.params as SupershapeParams,
           BASE_RADIUS,
-          precomputedParams
+          precomputedParams,
         );
       case "supershape_mesh":
-        return createSupershapeMeshGeometry(currentConfig.params as SupershapeMeshParams);
+        return createSupershapeMeshGeometry(
+          currentConfig.params as SupershapeMeshParams,
+        );
       case "parametric_code9":
         // Provide your own parametric geometry if needed
         return new THREE.BufferGeometry();
       case "make_mesh":
         return createMakeMeshGeometry(
           currentConfig.params as MakeMeshParams,
-          100
+          100,
         );
       default:
         return new THREE.BufferGeometry();
@@ -114,7 +119,7 @@ export default function SupershapeVisualizer({
   /**
    * Build the material based on the renderingMode.
    * If the user selects "rainbow" in renderingMode, we'll do per-vertex coloring below,
-   * but we still need a base material. 
+   * but we still need a base material.
    */
   const material = useMemo(() => {
     if (renderingMode === "wireframe") {
@@ -151,7 +156,8 @@ export default function SupershapeVisualizer({
 
       // Create context
       sharedAudioContext = new AudioContext();
-      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
+      const src =
+        sharedAudioContext.createMediaElementSource(sharedAudioElement);
       sharedAnalyser = sharedAudioContext.createAnalyser();
       sharedAnalyser.fftSize = 2048;
       src.connect(sharedAnalyser);
@@ -174,11 +180,17 @@ export default function SupershapeVisualizer({
     }
 
     // If not paused, attempt to resume & play
-    if (!isPaused && sharedAudioContext && sharedAudioContext.state === "suspended") {
+    if (
+      !isPaused &&
+      sharedAudioContext &&
+      sharedAudioContext.state === "suspended"
+    ) {
       sharedAudioContext.resume();
     }
     if (!isPaused) {
-      sharedAudioElement.play().catch((err) => console.warn("Audio play error:", err));
+      sharedAudioElement
+        .play()
+        .catch((err) => console.warn("Audio play error:", err));
     } else {
       sharedAudioElement.pause();
     }
@@ -220,7 +232,8 @@ export default function SupershapeVisualizer({
     // Get frequency data from the shared analyser
     sharedAnalyser.getByteFrequencyData(audioDataRef.current);
     const normData = Array.from(audioDataRef.current).map((val) => val / 255);
-    const overallAmplitude = normData.reduce((sum, v) => sum + v, 0) / normData.length;
+    const overallAmplitude =
+      normData.reduce((sum, v) => sum + v, 0) / normData.length;
 
     // Lerp from current to target shape params
     setCurrentParams((prev) => {
@@ -254,15 +267,15 @@ export default function SupershapeVisualizer({
         currentConfig.type === "make_mesh"
       ) {
         // Flatten, lerp each numeric key
-        const flatPrev = (prev as unknown) as { [key: string]: number };
-        const flatTarget = (targetParams as unknown) as { [key: string]: number };
+        const flatPrev = prev as unknown as { [key: string]: number };
+        const flatTarget = targetParams as unknown as { [key: string]: number };
         const newParams: { [key: string]: number } = {};
         for (const k in flatPrev) {
           if (Object.prototype.hasOwnProperty.call(flatPrev, k)) {
             newParams[k] = THREE.MathUtils.lerp(
               flatPrev[k],
               flatTarget[k] ?? flatPrev[k],
-              MORPH_FACTOR
+              MORPH_FACTOR,
             );
           }
         }
@@ -335,14 +348,22 @@ export default function SupershapeVisualizer({
         >
           {/* Dropdown to switch among allSupershapeConfigs */}
           <div>
-            <label htmlFor="configSelect" style={{ display: "block", marginBottom: "5px" }}>
+            <label
+              htmlFor="configSelect"
+              style={{ display: "block", marginBottom: "5px" }}
+            >
               Supershape Type:
             </label>
             <select
               id="configSelect"
               value={allSupershapeConfigs.indexOf(currentConfig)}
               onChange={handleConfigChange}
-              style={{ padding: "8px", borderRadius: "4px", width: "100%", marginBottom: "10px" }}
+              style={{
+                padding: "8px",
+                borderRadius: "4px",
+                width: "100%",
+                marginBottom: "10px",
+              }}
             >
               {allSupershapeConfigs.map((cfg, idx) => (
                 <option key={idx} value={idx}>
@@ -353,14 +374,24 @@ export default function SupershapeVisualizer({
           </div>
           {/* Rendering mode dropdown */}
           <div>
-            <label htmlFor="renderingMode" style={{ display: "block", marginBottom: "5px" }}>
+            <label
+              htmlFor="renderingMode"
+              style={{ display: "block", marginBottom: "5px" }}
+            >
               Rendering Mode:
             </label>
             <select
               id="renderingMode"
               value={renderingMode}
-              onChange={(e) => setRenderingMode(e.target.value as RenderingMode)}
-              style={{ padding: "8px", borderRadius: "4px", width: "100%", marginBottom: "10px" }}
+              onChange={(e) =>
+                setRenderingMode(e.target.value as RenderingMode)
+              }
+              style={{
+                padding: "8px",
+                borderRadius: "4px",
+                width: "100%",
+                marginBottom: "10px",
+              }}
             >
               <option value="solid">Solid</option>
               <option value="wireframe">Wireframe</option>
@@ -370,7 +401,10 @@ export default function SupershapeVisualizer({
           </div>
           {/* Color mode dropdown */}
           <div>
-            <label htmlFor="colorMode" style={{ display: "block", marginBottom: "5px" }}>
+            <label
+              htmlFor="colorMode"
+              style={{ display: "block", marginBottom: "5px" }}
+            >
               Color Mode:
             </label>
             <select

@@ -23,8 +23,6 @@ export interface SpotifyTrack {
   };
 }
 
-
-
 export interface SpotifyAlbum {
   id: string;
   name: string;
@@ -74,10 +72,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/0ba3l20L7lOjpDzStvLebV?si=c262a0227f604eb6",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "iann tyler" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "iann tyler" }],
       },
       {
         id: "jt3",
@@ -87,10 +82,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/4KFwCATEivOvlDoyZ0Q89U?si=650cceee570e4bb3",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Kyistt" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Kyistt" }],
       },
       {
         id: "jt4",
@@ -100,10 +92,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/26HZfrLc2ulHNE93iODXUP?si=8ad19c57d6354e50",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "iann tyler" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "iann tyler" }],
       },
       {
         id: "jt5",
@@ -113,10 +102,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/6oBbTgnBevnAB9mNCdjk3W?si=3dc9dd9f6ca64d3d",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "KING AKH" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "KING AKH" }],
       },
       {
         id: "jt6",
@@ -126,9 +112,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/0ToA0a3uAsX3HyiSKxXMVv?si=a29b71e71ee543e6",
         },
-        artists: [
-          { name: "Xae Neptune" },
-        ],
+        artists: [{ name: "Xae Neptune" }],
       },
     ],
   },
@@ -158,10 +142,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/1IUGKM3Yy7zbG0BkkkDV0f?si=12e2b49f85904f3c",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "iann tyler" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "iann tyler" }],
       },
     ],
   },
@@ -220,10 +201,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/2vimZX5PNAEuSt0Yu2Fq5f?si=7c4bd3aefcee4a78",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Meezy Trust No One" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Meezy Trust No One" }],
       },
       {
         id: "sn4",
@@ -233,10 +211,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/4iQuO79zdSBQH1RLMBWL1J?si=807f9a02a50c4e20",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Macc Mota" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Macc Mota" }],
       },
       {
         id: "sn5",
@@ -246,10 +221,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/02BJ0Au7DbawtnCVHqVhaX?si=44666e0337464234",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Ahmad" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Ahmad" }],
       },
       {
         id: "sn6",
@@ -259,10 +231,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/6uq9XAMS27khSQHTP8p9Zi?si=49881086ee9041b6",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Connect Zero" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Connect Zero" }],
       },
       {
         id: "sn7",
@@ -286,10 +255,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/0FJLdB5QBCtgH0Xn1mliFK?si=08cd6fef1cdd4191",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Connect Zero" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Connect Zero" }],
       },
       {
         id: "sn9",
@@ -313,10 +279,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/1AnxYTrea6K3Jd8LDF9p2X?si=9e20b2f7453c45d6",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Noughtie Dee" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Noughtie Dee" }],
       },
       {
         id: "sn11",
@@ -326,10 +289,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/4slRDMf4sNL25xBF3yvLcg?si=fff1667da2644e17",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Macc Mota" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Macc Mota" }],
       },
     ],
   },
@@ -427,10 +387,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/5t4oa0XNO7DDYifb3SGibS?si=abd8826dcec64071",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Connect Zero" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Connect Zero" }],
       },
     ],
   },
@@ -460,10 +417,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/2z0HM0M8LBmZCyiCdQphKW?si=357947203a05494a",
         },
-        artists: [
-          { name: "Xae Neptune" },
-          { name: "Ahmad" },
-        ],
+        artists: [{ name: "Xae Neptune" }, { name: "Ahmad" }],
       },
     ],
   },
@@ -683,10 +637,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/5AnA35tPJABP1nOwfgFpRa?si=c19ebbab6c5a4031",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
       {
         id: "cz2",
@@ -696,10 +647,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/07VTkzWhlDWsez5v0P2XOu?si=7514579587d649eb",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
       {
         id: "cz3",
@@ -709,10 +657,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/3kTnKR1n37eEIT98Gi6HIv?si=e3836dfdc45b4298",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
       {
         id: "cz4",
@@ -722,10 +667,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/59Wka7E62XfDvyaCFbo0sF?si=5f3a536348f444ff",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
       {
         id: "cz5",
@@ -735,10 +677,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/4sBl7ujYc8khlhLMuiYlHc?si=5906c2b6ab4241f6",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
       {
         id: "cz6",
@@ -748,10 +687,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/1PpwpItwkfdtJuudffkYdH?si=33188d54470c42d3",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
       {
         id: "cz7",
@@ -761,10 +697,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/3403QceK9ZgdybYneBJMBz?si=d0dfe0d2ae714f81",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
       {
         id: "cz8",
@@ -774,10 +707,7 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
           spotify:
             "https://open.spotify.com/track/3MxAwuwgxDXHr7nji85tPi?si=b68d9efb774f44f3",
         },
-        artists: [
-          { name: "Connect Zero" },
-          { name: "Siméon" },
-        ],
+        artists: [{ name: "Connect Zero" }, { name: "Siméon" }],
       },
     ],
   },
@@ -804,7 +734,8 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
         name: "Skyline Dreams",
         preview_url: null,
         external_urls: {
-          spotify: "https://open.spotify.com/track/connectZeroHouse1?si=placeholder",
+          spotify:
+            "https://open.spotify.com/track/connectZeroHouse1?si=placeholder",
         },
         artists: [{ name: "Connect Zero" }],
       },
@@ -833,7 +764,8 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
         name: "Midnight Reflections",
         preview_url: null,
         external_urls: {
-          spotify: "https://open.spotify.com/track/connectZeroAYAI1?si=placeholder",
+          spotify:
+            "https://open.spotify.com/track/connectZeroAYAI1?si=placeholder",
         },
         artists: [{ name: "Connect Zero" }],
       },
@@ -862,7 +794,8 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
         name: "Stained Paper",
         preview_url: null,
         external_urls: {
-          spotify: "https://open.spotify.com/track/connectZeroMarble1?si=placeholder",
+          spotify:
+            "https://open.spotify.com/track/connectZeroMarble1?si=placeholder",
         },
         artists: [{ name: "Connect Zero" }],
       },
@@ -914,39 +847,40 @@ export const hardcodedAlbums: { [albumId: string]: SpotifyAlbum } = {
     ],
   },
   "27gTHYIdtdr0y9tUWTQaa8": {
-  id: "27gTHYIdtdr0y9tUWTQaa8",
-  name: "Bedroom Tapes, Vol. 1",
-  release_date: "2024",
-  images: [
-    {
-      url: "https://i1.sndcdn.com/artworks-HO9ZhEvqdwTcFVk2-R8IuQQ-t1080x1080.jpg",
-    },
-  ],
-  external_urls: {
-    // Spotify album link
-    spotify: "https://open.spotify.com/album/27gTHYIdtdr0y9tUWTQaa8?si=T9IKxW7ATFKYmujRLKj4sg",
-  },
-  tracks: [
-    {
-      id: "0ifuEYFX59NeBdxoovbNNy", // The Spotify track ID
-      name: "Real (FOYF) Prod. XaeNeptune",
-      preview_url: null, // doesn't play from Spotify
-      external_urls: {
-        spotify: 'https://open.spotify.com/track/xyz',
-        soundcloud: 'https://soundcloud.com/xojune/real-foyf',
+    id: "27gTHYIdtdr0y9tUWTQaa8",
+    name: "Bedroom Tapes, Vol. 1",
+    release_date: "2024",
+    images: [
+      {
+        url: "https://i1.sndcdn.com/artworks-HO9ZhEvqdwTcFVk2-R8IuQQ-t1080x1080.jpg",
       },
-      
-      artists: [
-        {
-          name: "XO June",
-          external_urls: {
-            // XO June artist link
-            spotify: "https://open.spotify.com/artist/63D2bukrY4QvIuHG6oLE3j?si=FI3OaeOTTLiuatza8SX99w",
-          },
-        },
-      ],
+    ],
+    external_urls: {
+      // Spotify album link
+      spotify:
+        "https://open.spotify.com/album/27gTHYIdtdr0y9tUWTQaa8?si=T9IKxW7ATFKYmujRLKj4sg",
     },
-  ],
-},
+    tracks: [
+      {
+        id: "0ifuEYFX59NeBdxoovbNNy", // The Spotify track ID
+        name: "Real (FOYF) Prod. XaeNeptune",
+        preview_url: null, // doesn't play from Spotify
+        external_urls: {
+          spotify: "https://open.spotify.com/track/xyz",
+          soundcloud: "https://soundcloud.com/xojune/real-foyf",
+        },
 
+        artists: [
+          {
+            name: "XO June",
+            external_urls: {
+              // XO June artist link
+              spotify:
+                "https://open.spotify.com/artist/63D2bukrY4QvIuHG6oLE3j?si=FI3OaeOTTLiuatza8SX99w",
+            },
+          },
+        ],
+      },
+    ],
+  },
 };

@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { Html } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef, useState } from 'react';
+import { Html } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef, useState } from "react";
 import {
   FaCompactDisc,
   FaEnvelope,
   FaHeadphones,
   FaMusic,
   FaUser,
-} from 'react-icons/fa';
-import { GiPlanetCore } from 'react-icons/gi';
-import * as THREE from 'three';
+} from "react-icons/fa";
+import { GiPlanetCore } from "react-icons/gi";
+import * as THREE from "three";
 
 export type Route =
-  | 'music'
-  | 'artist'
-  | 'beats'
-  | 'albums'
-  | 'connect'
-  | 'xaeneptunesworld';
+  | "music"
+  | "artist"
+  | "beats"
+  | "albums"
+  | "connect"
+  | "xaeneptunesworld";
 
 interface NavigationMenuProps {
   onSelectRoute: (route: Route) => void;
@@ -82,8 +82,8 @@ function Marker({
         occlude={[occluder]}
         onOcclude={setOccluded}
         style={{
-          pointerEvents: 'auto',
-          transition: 'opacity 0.3s ease-out',
+          pointerEvents: "auto",
+          transition: "opacity 0.3s ease-out",
           opacity: isVisible ? 1 : 0,
         }}
       >
@@ -96,8 +96,8 @@ function Marker({
             width: `${markerSize}px`,
             height: `${markerSize}px`,
             // Adjust the border width based on hover state
-            border: hovered ? '3px solid lightblue' : '1px solid white',
-            boxShadow: '0 0 15px rgba(173,216,230,0.8)',
+            border: hovered ? "3px solid lightblue" : "1px solid white",
+            boxShadow: "0 0 15px rgba(173,216,230,0.8)",
           }}
         >
           {children}
@@ -107,7 +107,7 @@ function Marker({
   );
 }
 
-Marker.displayName = 'Marker';
+Marker.displayName = "Marker";
 
 export default function NavigationMenu({
   onSelectRoute,
@@ -124,12 +124,32 @@ export default function NavigationMenu({
     position: [number, number, number];
     rotation?: [number, number, number];
   }[] = [
-    { name: 'MUSIC', route: 'music', icon: FaMusic, position: [15, 0, 0] },
-    { name: 'ARTIST', route: 'artist', icon: FaUser, position: [-15, 0, 0] },
-    { name: 'BEATS FOR SALE', route: 'beats', icon: FaHeadphones, position: [0, 15, 0] },
-    { name: 'ALBUMS', route: 'albums', icon: FaCompactDisc, position: [0, -15, 0] },
-    { name: 'CONNECT', route: 'connect', icon: FaEnvelope, position: [0, 0, 15] },
-    { name: "XAENEPTUNE'S WORLD", route: 'xaeneptunesworld', icon: GiPlanetCore, position: [0, 0, -15] },
+    { name: "MUSIC", route: "music", icon: FaMusic, position: [15, 0, 0] },
+    { name: "ARTIST", route: "artist", icon: FaUser, position: [-15, 0, 0] },
+    {
+      name: "BEATS FOR SALE",
+      route: "beats",
+      icon: FaHeadphones,
+      position: [0, 15, 0],
+    },
+    {
+      name: "ALBUMS",
+      route: "albums",
+      icon: FaCompactDisc,
+      position: [0, -15, 0],
+    },
+    {
+      name: "CONNECT",
+      route: "connect",
+      icon: FaEnvelope,
+      position: [0, 0, 15],
+    },
+    {
+      name: "XAENEPTUNE'S WORLD",
+      route: "xaeneptunesworld",
+      icon: GiPlanetCore,
+      position: [0, 0, -15],
+    },
   ];
 
   return (
@@ -146,10 +166,10 @@ export default function NavigationMenu({
           >
             <IconComponent className="text-xl" />
             <span className="text-[10px] mt-1 text-center">
-              {item.name.split(' ').map((word, i) => (
+              {item.name.split(" ").map((word, i) => (
                 <span key={i}>
                   {word}
-                  {i < item.name.split(' ').length - 1 && <br />}
+                  {i < item.name.split(" ").length - 1 && <br />}
                 </span>
               ))}
             </span>

@@ -1,11 +1,11 @@
 // src/app/admin/page.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function AdminPage() {
-  const [musicContent, setMusicContent] = useState<string>('');
-  const [artistContent, setArtistContent] = useState<string>('');
+  const [musicContent, setMusicContent] = useState<string>("");
+  const [artistContent, setArtistContent] = useState<string>("");
   // Add additional state for Beats, Albums, etc. as needed
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,7 +28,9 @@ export default function AdminPage() {
           />
         </div>
         <div>
-          <label className="block font-semibold mb-1">Artist Page Content</label>
+          <label className="block font-semibold mb-1">
+            Artist Page Content
+          </label>
           <textarea
             className="w-full p-2 border rounded"
             value={artistContent}
@@ -37,7 +39,10 @@ export default function AdminPage() {
           />
         </div>
         {/* Add more fields for Beats, Albums, etc. */}
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
           Save Changes
         </button>
       </form>

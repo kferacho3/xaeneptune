@@ -20,7 +20,11 @@ import {
 
 // Types for rendering mode, color mode, and fractal type.
 export type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
-export type ColorMode = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
+export type ColorMode =
+  | "default"
+  | "audioAmplitude"
+  | "frequencyBased"
+  | "rainbow";
 export type FractalType =
   | "mandelbulb"
   | "mandelbox"
@@ -96,7 +100,12 @@ function FractalShader({
       case "sierpinskiCarpet":
         return createSierpinskiCarpetCubesGeometry(3, 10);
       case "juliaSet":
-        return createJuliaSetSpheresGeometry(1, 3, new THREE.Vector2(-0.8, 0.1565), 0.1);
+        return createJuliaSetSpheresGeometry(
+          1,
+          3,
+          new THREE.Vector2(-0.8, 0.1565),
+          0.1,
+        );
       case "pythagorasTree":
         return createPythagorasTree3DCubesGeometry(7, 5, 0.1);
       case "kochSnowflake":
@@ -135,7 +144,7 @@ function FractalShader({
         wireframe: true,
         side: THREE.DoubleSide,
       }),
-    []
+    [],
   );
   const solidMaterial = useMemo(
     () =>
@@ -144,7 +153,7 @@ function FractalShader({
         flatShading: true,
         side: THREE.DoubleSide,
       }),
-    []
+    [],
   );
   const transparentMaterial = useMemo(
     () =>
@@ -154,15 +163,19 @@ function FractalShader({
         opacity: 0.5,
         side: THREE.DoubleSide,
       }),
-    []
+    [],
   );
-  const getMaterial = (mode: RenderingMode, color: ColorMode): THREE.Material => {
+  const getMaterial = (
+    mode: RenderingMode,
+    color: ColorMode,
+  ): THREE.Material => {
     if (mode === "wireframe") return wireframeMaterial;
     if (mode === "transparent") return transparentMaterial;
     if (color === "audioAmplitude") {
       const amp =
         audioData.length > 0
-          ? audioData.reduce((sum, val) => sum + val, 0) / (audioData.length * 255)
+          ? audioData.reduce((sum, val) => sum + val, 0) /
+            (audioData.length * 255)
           : 0;
       return new THREE.MeshPhongMaterial({
         color: new THREE.Color(amp, amp, amp),
@@ -172,7 +185,9 @@ function FractalShader({
     }
     if (color === "frequencyBased") {
       const avgFrequency =
-        audioData.length > 0 ? audioData.reduce((sum, val) => sum + val, 0) / audioData.length : 128;
+        audioData.length > 0
+          ? audioData.reduce((sum, val) => sum + val, 0) / audioData.length
+          : 128;
       return new THREE.MeshPhongMaterial({
         color: new THREE.Color(avgFrequency / 255, 1 - avgFrequency / 255, 0.5),
         flatShading: true,
@@ -181,7 +196,10 @@ function FractalShader({
     }
     return solidMaterial;
   };
-  const dynamicMaterial = useMemo(() => getMaterial(renderingMode, colorMode), [renderingMode, colorMode, audioData]);
+  const dynamicMaterial = useMemo(
+    () => getMaterial(renderingMode, colorMode),
+    [renderingMode, colorMode, audioData],
+  );
 
   useEffect(() => {
     if (!groupRef.current) return;
@@ -224,7 +242,12 @@ function FractalShader({
 
   useFrame(() => {
     const posAttr = fractalGeometry.getAttribute("position");
-    if (!groupRef.current || audioData.length === 0 || !posAttr || !originalPositionsRef.current)
+    if (
+      !groupRef.current ||
+      audioData.length === 0 ||
+      !posAttr ||
+      !originalPositionsRef.current
+    )
       return;
     const positions = posAttr.array as Float32Array;
     const originalPositions = originalPositionsRef.current;
@@ -264,8 +287,18 @@ function FractalShader({
     groupRef.current.rotation.y += 0.001;
   });
 
-  const availableRenderingModes: RenderingMode[] = ["solid", "wireframe", "rainbow", "transparent"];
-  const availableColorModes: ColorMode[] = ["default", "audioAmplitude", "frequencyBased", "rainbow"];
+  const availableRenderingModes: RenderingMode[] = [
+    "solid",
+    "wireframe",
+    "rainbow",
+    "transparent",
+  ];
+  const availableColorModes: ColorMode[] = [
+    "default",
+    "audioAmplitude",
+    "frequencyBased",
+    "rainbow",
+  ];
   return (
     <group ref={groupRef}>
       <Html>
@@ -283,14 +316,24 @@ function FractalShader({
           }}
         >
           <div>
-            <label htmlFor="fractalType" style={{ display: "block", marginBottom: "5px" }}>
+            <label
+              htmlFor="fractalType"
+              style={{ display: "block", marginBottom: "5px" }}
+            >
               Fractal:
             </label>
             <select
               id="fractalType"
               value={fractalType}
-              onChange={(e) => setLocalFractalType(e.target.value as FractalType)}
-              style={{ padding: "8px", borderRadius: "4px", width: "100%", marginBottom: "10px" }}
+              onChange={(e) =>
+                setLocalFractalType(e.target.value as FractalType)
+              }
+              style={{
+                padding: "8px",
+                borderRadius: "4px",
+                width: "100%",
+                marginBottom: "10px",
+              }}
             >
               {fractalTypes.map((type) => (
                 <option key={type} value={type}>
@@ -300,14 +343,24 @@ function FractalShader({
             </select>
           </div>
           <div>
-            <label htmlFor="renderingMode" style={{ display: "block", marginBottom: "5px" }}>
+            <label
+              htmlFor="renderingMode"
+              style={{ display: "block", marginBottom: "5px" }}
+            >
               Rendering:
             </label>
             <select
               id="renderingMode"
               value={renderingMode}
-              onChange={(e) => setLocalRenderingMode(e.target.value as RenderingMode)}
-              style={{ padding: "8px", borderRadius: "4px", width: "100%", marginBottom: "10px" }}
+              onChange={(e) =>
+                setLocalRenderingMode(e.target.value as RenderingMode)
+              }
+              style={{
+                padding: "8px",
+                borderRadius: "4px",
+                width: "100%",
+                marginBottom: "10px",
+              }}
             >
               {availableRenderingModes.map((mode) => (
                 <option key={mode} value={mode}>
@@ -317,7 +370,10 @@ function FractalShader({
             </select>
           </div>
           <div>
-            <label htmlFor="colorMode" style={{ display: "block", marginBottom: "5px" }}>
+            <label
+              htmlFor="colorMode"
+              style={{ display: "block", marginBottom: "5px" }}
+            >
               Color Mode:
             </label>
             <select
@@ -354,13 +410,13 @@ export default function VisualizerTwo({
 }) {
   // Parent already provides a Canvas.
   const [currentFractalType, setCurrentFractalType] = useState<FractalType>(
-    propFractalType ?? "mandelbox"
+    propFractalType ?? "mandelbox",
   );
   const [localRenderingMode, setLocalRenderingMode] = useState<RenderingMode>(
-    propRenderingMode ?? "transparent"
+    propRenderingMode ?? "transparent",
   );
   const [localColorMode, setLocalColorMode] = useState<ColorMode>(
-    propColorMode ?? "frequencyBased"
+    propColorMode ?? "frequencyBased",
   );
   const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(0));
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -376,7 +432,8 @@ export default function VisualizerTwo({
       sharedAudioElement.crossOrigin = "anonymous";
       sharedAudioElement.loop = true;
       sharedAudioContext = new AudioContext();
-      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
+      const src =
+        sharedAudioContext.createMediaElementSource(sharedAudioElement);
       sharedAnalyser = sharedAudioContext.createAnalyser();
       sharedAnalyser.fftSize = 64;
       src.connect(sharedAnalyser);
@@ -392,12 +449,13 @@ export default function VisualizerTwo({
     // Use audioSourceRef if possible (do not remove it)
     if (!audioSourceRef.current && sharedAudioContext && sharedAudioElement) {
       try {
-        audioSourceRef.current = sharedAudioContext.createMediaElementSource(sharedAudioElement);
+        audioSourceRef.current =
+          sharedAudioContext.createMediaElementSource(sharedAudioElement);
       } catch {
         // If already created, ignore.
       }
     }
-    
+
     if (sharedAnalyser) {
       const bufferLength = sharedAnalyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
@@ -418,7 +476,7 @@ export default function VisualizerTwo({
       sharedAudioElement
         .play()
         .catch((err) =>
-          console.warn("Audio play interrupted or blocked:", err)
+          console.warn("Audio play interrupted or blocked:", err),
         );
     } else {
       sharedAudioElement.pause();

@@ -1,5 +1,5 @@
 // MeshReflectorMaterial.ts
-import { Matrix4, MeshStandardMaterial, Texture } from 'three';
+import { Matrix4, MeshStandardMaterial, Texture } from "three";
 
 type UninitializedUniform<Value> = { value: Value | null };
 
@@ -42,7 +42,7 @@ export class MeshReflectorMaterial extends MeshStandardMaterial {
 
   onBeforeCompile(shader: any) {
     if (!shader.defines?.USE_UV) {
-      shader.defines.USE_UV = '';
+      shader.defines.USE_UV = "";
     }
     shader.uniforms.hasBlur = this._hasBlur;
     shader.uniforms.tDiffuse = this._tDiffuse;
@@ -65,10 +65,10 @@ varying vec4 my_vUv;
 ${shader.vertexShader}
 `;
     shader.vertexShader = shader.vertexShader.replace(
-      '#include <project_vertex>',
+      "#include <project_vertex>",
       `#include <project_vertex>
 my_vUv = textureMatrix * vec4( position, 1.0 );
-gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );`
+gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );`,
     );
     shader.fragmentShader = `
 uniform sampler2D tDiffuse;
@@ -91,7 +91,7 @@ varying vec4 my_vUv;
 ${shader.fragmentShader}
 `;
     shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <emissivemap_fragment>',
+      "#include <emissivemap_fragment>",
       `#include <emissivemap_fragment>
 
 float distortionFactor = 0.0;
@@ -154,7 +154,7 @@ newMerge.g = (merge.g - 0.5) * mixContrast + 0.5;
 newMerge.b = (merge.b - 0.5) * mixContrast + 0.5;
 
 diffuseColor.rgb = diffuseColor.rgb * ((1.0 - min(1.0, mirror)) + newMerge.rgb * mixStrength);
-`
+`,
     );
   }
 

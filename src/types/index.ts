@@ -1,25 +1,29 @@
 // src/types/index.ts
 export type SupershapeConfig = {
   type: "supershape" | "supershape_mesh" | "parametric_code9" | "make_mesh";
-  params: SupershapeParams | SupershapeMeshParams | ParametricCode9Params | MakeMeshParams;
+  params:
+    | SupershapeParams
+    | SupershapeMeshParams
+    | ParametricCode9Params
+    | MakeMeshParams;
 };
 
 export interface SupershapeParams {
   params1: {
-      m: number;
-      n1: number;
-      n2: number;
-      n3: number;
-      a?: number;
-      b?: number;
+    m: number;
+    n1: number;
+    n2: number;
+    n3: number;
+    a?: number;
+    b?: number;
   };
   params2: {
-      m: number;
-      n1: number;
-      n2: number;
-      n3: number;
-      a?: number;
-      b?: number;
+    m: number;
+    n1: number;
+    n2: number;
+    n3: number;
+    a?: number;
+    b?: number;
   };
   resol: number;
 }

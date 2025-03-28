@@ -1,9 +1,9 @@
-import { Route } from '@/components/layout/NavigationMenu';
-import { extend, useFrame, useLoader } from '@react-three/fiber';
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { Route } from "@/components/layout/NavigationMenu";
+import { extend, useFrame, useLoader } from "@react-three/fiber";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import * as THREE from "three";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 extend({ TextGeometry });
 
 interface AntiHero3DConfig {
@@ -54,7 +54,7 @@ export default function AntiHero3D({
   const refMaterial = useRef<CustomMeshStandardMaterial | null>(null);
 
   // Load the font.
-  const font = useLoader(FontLoader, '/fonts/Devil2.json');
+  const font = useLoader(FontLoader, "/fonts/Devil2.json");
 
   // Create the text geometry.
   const geo = new TextGeometry(config.text, {
@@ -81,10 +81,14 @@ export default function AntiHero3D({
   // Update uniforms when config changes.
   useEffect(() => {
     if (refMaterial.current?.userData.shader) {
-      refMaterial.current.userData.shader.uniforms.uRadius.value = config.uRadius;
-      refMaterial.current.userData.shader.uniforms.uTwists.value = config.uTwists;
-      refMaterial.current.userData.shader.uniforms.uTwistSpeed.value = config.uTwistSpeed;
-      refMaterial.current.userData.shader.uniforms.uRotateSpeed.value = config.uRotateSpeed;
+      refMaterial.current.userData.shader.uniforms.uRadius.value =
+        config.uRadius;
+      refMaterial.current.userData.shader.uniforms.uTwists.value =
+        config.uTwists;
+      refMaterial.current.userData.shader.uniforms.uTwistSpeed.value =
+        config.uTwistSpeed;
+      refMaterial.current.userData.shader.uniforms.uRotateSpeed.value =
+        config.uRotateSpeed;
     }
   }, [config]);
 
@@ -116,7 +120,8 @@ export default function AntiHero3D({
     shader.uniforms = { ...refUniforms, ...shader.uniforms };
 
     // Inject uniform declarations and functions into the vertex shader.
-    shader.vertexShader = `
+    shader.vertexShader =
+      `
       uniform float uTwistSpeed;
       uniform float uRotateSpeed;
       uniform float uTwists;
@@ -151,17 +156,17 @@ export default function AntiHero3D({
 
     // Modify normals.
     shader.vertexShader = shader.vertexShader.replace(
-      '#include <beginnormal_vertex>',
+      "#include <beginnormal_vertex>",
       `#include <beginnormal_vertex>
       float xx = mapRange(position.x, uMin.x, uMax.x, -1.0, 1.0);
       objectNormal = rotate(objectNormal, vec3(1.0, 0.0, 0.0), 0.5 * PI * uTwists * xx + 0.01 * uTime * uTwistSpeed);
       objectNormal = rotate(objectNormal, vec3(0.0, 0.0, 1.0), (xx + 0.01 * uTime * uRotateSpeed) * PI);
-      `
+      `,
     );
 
     // Modify vertex positions with twist/rotate and capture y coordinate for the gradient.
     shader.vertexShader = shader.vertexShader.replace(
-      '#include <begin_vertex>',
+      "#include <begin_vertex>",
       `#include <begin_vertex>
       vec3 pos = transformed;
       float theta = (xx + 0.01 * uTime * uRotateSpeed) * PI;
@@ -170,24 +175,25 @@ export default function AntiHero3D({
       vec3 circled = vec3(dir.xy * uRadius, pos.z) + vec3(pos.y * dir.x, pos.y * dir.y, 0.0);
       transformed = circled;
       vY = transformed.y;
-      `
+      `,
     );
 
     // Inject varying and use it in the fragment shader to create a gradient.
-    shader.fragmentShader = `
+    shader.fragmentShader =
+      `
       varying float vY;
       uniform vec3 uMin;
       uniform vec3 uMax;
     ` + shader.fragmentShader;
 
     shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
+      "#include <output_fragment>",
       `
       float t = (vY - uMin.y) / (uMax.y - uMin.y);
       vec3 gradientColor = mix(vec3(0.0, 0.0, 0.0), vec3(0.29, 0.0, 0.51), t);
       diffuseColor.rgb = gradientColor;
       #include <output_fragment>
-      `
+      `,
     );
 
     if (refMaterial.current) {
@@ -199,7 +205,8 @@ export default function AntiHero3D({
   const onBeforeCompileOutline = (shader: CustomShader) => {
     shader.uniforms = { ...refUniforms, ...shader.uniforms };
 
-    shader.vertexShader = `
+    shader.vertexShader =
+      `
       uniform float uTwistSpeed;
       uniform float uRotateSpeed;
       uniform float uTwists;
@@ -233,16 +240,16 @@ export default function AntiHero3D({
     ` + shader.vertexShader;
 
     shader.vertexShader = shader.vertexShader.replace(
-      '#include <beginnormal_vertex>',
+      "#include <beginnormal_vertex>",
       `#include <beginnormal_vertex>
       float xx = mapRange(position.x, uMin.x, uMax.x, -1.0, 1.0);
       objectNormal = rotate(objectNormal, vec3(1.0, 0.0, 0.0), 0.5 * PI * uTwists * xx + 0.01 * uTime * uTwistSpeed);
       objectNormal = rotate(objectNormal, vec3(0.0, 0.0, 1.0), (xx + 0.01 * uTime * uRotateSpeed) * PI);
-      `
+      `,
     );
 
     shader.vertexShader = shader.vertexShader.replace(
-      '#include <begin_vertex>',
+      "#include <begin_vertex>",
       `#include <begin_vertex>
       vec3 pos = transformed;
       float theta = (xx + 0.01 * uTime * uRotateSpeed) * PI;
@@ -251,22 +258,23 @@ export default function AntiHero3D({
       vec3 circled = vec3(dir.xy * uRadius, pos.z) + vec3(pos.y * dir.x, pos.y * dir.y, 0.0);
       transformed = circled;
       vY = transformed.y;
-      `
+      `,
     );
 
     // Inject varying and force a white color in the fragment shader.
-    shader.fragmentShader = `
+    shader.fragmentShader =
+      `
       varying float vY;
       uniform vec3 uMin;
       uniform vec3 uMax;
     ` + shader.fragmentShader;
 
     shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
+      "#include <output_fragment>",
       `
       diffuseColor.rgb = vec3(1.0);
       #include <output_fragment>
-      `
+      `,
     );
   };
 

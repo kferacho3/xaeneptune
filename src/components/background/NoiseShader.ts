@@ -1,7 +1,7 @@
 // src/components/background/NoiseShader.tsx
 
 const NoiseShader = {
-    vertexShader: /* glsl */ `
+  vertexShader: /* glsl */ `
       varying vec2 vUv;
   
       void main() {
@@ -10,7 +10,7 @@ const NoiseShader = {
         gl_Position = vec4(position.xy, 0.0, 1.0);
       }
     `,
-    fragmentShader: /* glsl */ `
+  fragmentShader: /* glsl */ `
       precision mediump float;
       varying vec2 vUv;
   
@@ -123,8 +123,7 @@ const NoiseShader = {
   
         gl_FragColor = vec4(colour, 1.0);
       }
-    `
-  };
-  
-  export default NoiseShader;
-  
+    `,
+};
+
+export default NoiseShader;

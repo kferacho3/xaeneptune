@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { hardcodedAlbums } from '@/data/artistsData';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { hardcodedAlbums } from "@/data/artistsData";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface SpotifyTrack {
   id: string;
@@ -37,24 +37,28 @@ interface ArtistAlbumsResponse {
  * "open.spotify.com/album", we use a fallback mapping instead.
  */
 function getAlbumCoverUrl(album: SpotifyAlbum): string {
-  const url = album.images?.[0]?.url || '';
-  if (url.includes('open.spotify.com/album')) {
+  const url = album.images?.[0]?.url || "";
+  if (url.includes("open.spotify.com/album")) {
     const fallbackMapping: Record<string, string> = {
-      '257teVy7xAOfpN9OzY85Lo': 'https://i.scdn.co/image/ab67616d0000b273prerolls2cover',
-      '0djUyeQEWuCWhz1VWRLkFe': 'https://i.scdn.co/image/ab67616d0000b273wherethesidewalkendscover',
+      "257teVy7xAOfpN9OzY85Lo":
+        "https://i.scdn.co/image/ab67616d0000b273prerolls2cover",
+      "0djUyeQEWuCWhz1VWRLkFe":
+        "https://i.scdn.co/image/ab67616d0000b273wherethesidewalkendscover",
     };
-    return fallbackMapping[album.id] || '/fallback-album.png';
+    return fallbackMapping[album.id] || "/fallback-album.png";
   }
   return url;
 }
 
 export default function Albums() {
   // Three tab states
-  type Tabs = 'associated' | 'personal' | 'executive';
-  const [activeTab, setActiveTab] = useState<Tabs>('associated');
+  type Tabs = "associated" | "personal" | "executive";
+  const [activeTab, setActiveTab] = useState<Tabs>("associated");
 
   // The complete merged list of albums
-  const [discographyAlbums, setDiscographyAlbums] = useState<SpotifyAlbum[]>([]);
+  const [discographyAlbums, setDiscographyAlbums] = useState<SpotifyAlbum[]>(
+    [],
+  );
   const [loadingDiscography, setLoadingDiscography] = useState(true);
 
   // When an album is clicked, we can show the detail view with tracklist
@@ -64,29 +68,31 @@ export default function Albums() {
 
   // ID arrays for personal vs executive albums
   const personalAlbumIds = [
-    '6PBCQ44h15c7VN35lAzu3M', // jordanyear
-    '55Xr7mE7Zya6ccCViy7yyh', // Social Networks
+    "6PBCQ44h15c7VN35lAzu3M", // jordanyear
+    "55Xr7mE7Zya6ccCViy7yyh", // Social Networks
   ];
   const executiveAlbumIds = [
-    '0djUyeQEWuCWhz1VWRLkFe', // Where The Sidewalk Ends...
-    '257teVy7xAOfpN9OzY85Lo', // Pre Rolls 2
-    '0QBZSqSw8BumuSzFWqjXYR',
-    '343aezvXQOm8UTT9lNB64h',
-    '3yejH64Ofken9zTwLQ9c7X',
+    "0djUyeQEWuCWhz1VWRLkFe", // Where The Sidewalk Ends...
+    "257teVy7xAOfpN9OzY85Lo", // Pre Rolls 2
+    "0QBZSqSw8BumuSzFWqjXYR",
+    "343aezvXQOm8UTT9lNB64h",
+    "3yejH64Ofken9zTwLQ9c7X",
   ];
 
   // Fetch all albums from Spotify + fallback
-  const artistId = '7iysPipkcsfGFVEgUMDzHQ';
+  const artistId = "7iysPipkcsfGFVEgUMDzHQ";
   useEffect(() => {
     const fetchDiscographyAlbums = async () => {
       setLoadingDiscography(true);
       try {
         // 1) Fetch from Spotify
         const albumsRes = await fetch(
-          `/api/spotify/artist-albums?artistId=${artistId}&include_groups=album,single&limit=50`
+          `/api/spotify/artist-albums?artistId=${artistId}&include_groups=album,single&limit=50`,
         );
         if (!albumsRes.ok) {
-          console.error(`Error fetching artist albums: ${await albumsRes.text()}`);
+          console.error(
+            `Error fetching artist albums: ${await albumsRes.text()}`,
+          );
           setDiscographyAlbums([]);
           return;
         }
@@ -103,15 +109,21 @@ export default function Albums() {
         });
 
         // 3) Check for fallback albums not in the Spotify result
-        const fallbackOnly = Object.values(hardcodedAlbums).filter((a) => !fetchedIds.has(a.id));
+        const fallbackOnly = Object.values(hardcodedAlbums).filter(
+          (a) => !fetchedIds.has(a.id),
+        );
 
         // 4) For each fallback, attempt to fetch real data
         const updatedFallback = await Promise.all(
           fallbackOnly.map(async (alb) => {
             try {
-              const fallbackRes = await fetch(`/api/spotify/album?albumId=${alb.id}`);
+              const fallbackRes = await fetch(
+                `/api/spotify/album?albumId=${alb.id}`,
+              );
               if (!fallbackRes.ok) {
-                console.error(`Error fetching detail for fallback album ${alb.id}: ${await fallbackRes.text()}`);
+                console.error(
+                  `Error fetching detail for fallback album ${alb.id}: ${await fallbackRes.text()}`,
+                );
                 return alb;
               }
               const realData = await fallbackRes.json();
@@ -120,18 +132,20 @@ export default function Albums() {
               console.error(`Fallback fetch error for ${alb.id}`, err);
               return alb; // fallback to local data only
             }
-          })
+          }),
         );
 
         // 5) Combine everything & sort by release_date desc
         const finalAlbums = [...merged, ...updatedFallback];
         finalAlbums.sort(
-          (a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+          (a, b) =>
+            new Date(b.release_date).getTime() -
+            new Date(a.release_date).getTime(),
         );
 
         setDiscographyAlbums(finalAlbums);
       } catch (err) {
-        console.error('Error fetching discography albums:', err);
+        console.error("Error fetching discography albums:", err);
         setDiscographyAlbums([]);
       } finally {
         setLoadingDiscography(false);
@@ -152,9 +166,13 @@ export default function Albums() {
 
     setLoadingAlbumTracks(true);
     try {
-      const res = await fetch(`/api/spotify/albums/${album.id}/tracks?market=ES&limit=50`);
+      const res = await fetch(
+        `/api/spotify/albums/${album.id}/tracks?market=ES&limit=50`,
+      );
       if (!res.ok) {
-        console.error(`Error fetching tracks for album ${album.id}: ${await res.text()}`);
+        console.error(
+          `Error fetching tracks for album ${album.id}: ${await res.text()}`,
+        );
         setAlbumTracks([]);
         return;
       }
@@ -198,8 +216,10 @@ export default function Albums() {
 
         <div className="md:w-1/2">
           <h2 className="text-3xl font-bold text-white mb-4 bg-indigo-800 bg-opacity-50 p-3 rounded">
-            {selectedAlbum.name}{' '}
-            <span className="text-lg font-light">({selectedAlbum.release_date || 'N/A'})</span>
+            {selectedAlbum.name}{" "}
+            <span className="text-lg font-light">
+              ({selectedAlbum.release_date || "N/A"})
+            </span>
           </h2>
           {loadingAlbumTracks ? (
             <p className="text-gray-400 text-center my-6">Loading tracks...</p>
@@ -210,8 +230,10 @@ export default function Albums() {
                   key={track.id}
                   className="flex items-center bg-gray-900 rounded p-3 cursor-pointer hover:bg-gray-800 transition-colors"
                   onClick={() => {
-                    const url = track.external_urls?.spotify || track.album?.external_urls?.spotify;
-                    if (url) window.open(url, '_blank');
+                    const url =
+                      track.external_urls?.spotify ||
+                      track.album?.external_urls?.spotify;
+                    if (url) window.open(url, "_blank");
                   }}
                 >
                   <div className="relative w-12 h-12 flex-shrink-0 rounded overflow-hidden">
@@ -226,20 +248,25 @@ export default function Albums() {
                   <div className="ml-4">
                     <p className="text-white font-semibold">{track.name}</p>
                     <p className="text-gray-400 text-sm">
-                      {track.artists.map((a) => a.name).join(', ')}
+                      {track.artists.map((a) => a.name).join(", ")}
                     </p>
                   </div>
                   {track.preview_url && (
                     <div className="ml-4">
-                      <audio controls src={track.preview_url} className="w-24 md:w-32" />
+                      <audio
+                        controls
+                        src={track.preview_url}
+                        className="w-24 md:w-32"
+                      />
                     </div>
                   )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       const url =
-                        track.external_urls?.spotify || track.album?.external_urls?.spotify;
-                      if (url) window.open(url, '_blank');
+                        track.external_urls?.spotify ||
+                        track.album?.external_urls?.spotify;
+                      if (url) window.open(url, "_blank");
                     }}
                     className="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1"
                   >
@@ -249,7 +276,9 @@ export default function Albums() {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-400 text-center my-6">No tracks available for this album.</p>
+            <p className="text-gray-400 text-center my-6">
+              No tracks available for this album.
+            </p>
           )}
         </div>
       </div>
@@ -294,7 +323,7 @@ export default function Albums() {
               <div className="p-4">
                 <h3 className="text-xl font-bold truncate">{alb.name}</h3>
                 <p className="text-sm text-gray-400">
-                  {alb.release_date ? alb.release_date.substring(0, 4) : ''}
+                  {alb.release_date ? alb.release_date.substring(0, 4) : ""}
                 </p>
               </div>
             </div>
@@ -319,7 +348,11 @@ export default function Albums() {
     const personal = discographyAlbums.filter((alb) => personalSet.has(alb.id));
 
     if (!personal.length) {
-      return <p className="text-center text-white mt-10">No personal albums found.</p>;
+      return (
+        <p className="text-center text-white mt-10">
+          No personal albums found.
+        </p>
+      );
     }
 
     if (selectedAlbum) {
@@ -348,7 +381,7 @@ export default function Albums() {
               <div className="p-4">
                 <h3 className="text-xl font-bold truncate">{alb.name}</h3>
                 <p className="text-sm text-gray-400">
-                  {alb.release_date ? alb.release_date.substring(0, 4) : ''}
+                  {alb.release_date ? alb.release_date.substring(0, 4) : ""}
                 </p>
               </div>
             </div>
@@ -370,10 +403,16 @@ export default function Albums() {
     }
 
     const executiveSet = new Set(executiveAlbumIds);
-    const executive = discographyAlbums.filter((alb) => executiveSet.has(alb.id));
+    const executive = discographyAlbums.filter((alb) =>
+      executiveSet.has(alb.id),
+    );
 
     if (!executive.length) {
-      return <p className="text-center text-white mt-10">No executive produced albums found.</p>;
+      return (
+        <p className="text-center text-white mt-10">
+          No executive produced albums found.
+        </p>
+      );
     }
 
     if (selectedAlbum) {
@@ -402,7 +441,7 @@ export default function Albums() {
               <div className="p-4">
                 <h3 className="text-xl font-bold truncate">{alb.name}</h3>
                 <p className="text-sm text-gray-400">
-                  {alb.release_date ? alb.release_date.substring(0, 4) : 'N/A'}
+                  {alb.release_date ? alb.release_date.substring(0, 4) : "N/A"}
                 </p>
               </div>
             </div>
@@ -427,31 +466,31 @@ export default function Albums() {
       {/* Tab Navigation */}
       <nav className="flex justify-center mt-8 space-x-6">
         <button
-          onClick={() => setActiveTab('associated')}
+          onClick={() => setActiveTab("associated")}
           className={`px-6 md:px-8 py-2 md:py-3 rounded-lg text-md md:text-xl font-semibold transition-all ${
-            activeTab === 'associated'
-              ? 'bg-blue-700 text-white shadow-lg'
-              : 'bg-gray-700 text-gray-300 hover:bg-blue-600'
+            activeTab === "associated"
+              ? "bg-blue-700 text-white shadow-lg"
+              : "bg-gray-700 text-gray-300 hover:bg-blue-600"
           }`}
         >
           Associated Albums
         </button>
         <button
-          onClick={() => setActiveTab('personal')}
+          onClick={() => setActiveTab("personal")}
           className={`px-6 md:px-8 py-2 md:py-3 rounded-lg text-md md:text-xl font-semibold transition-all ${
-            activeTab === 'personal'
-              ? 'bg-blue-700 text-white shadow-lg'
-              : 'bg-gray-700 text-gray-300 hover:bg-blue-600'
+            activeTab === "personal"
+              ? "bg-blue-700 text-white shadow-lg"
+              : "bg-gray-700 text-gray-300 hover:bg-blue-600"
           }`}
         >
           Personal Albums
         </button>
         <button
-          onClick={() => setActiveTab('executive')}
+          onClick={() => setActiveTab("executive")}
           className={`px-6 md:px-8 py-2 md:py-3 rounded-lg text-md md:text-xl font-semibold transition-all ${
-            activeTab === 'executive'
-              ? 'bg-blue-700 text-white shadow-lg'
-              : 'bg-gray-700 text-gray-300 hover:bg-blue-600'
+            activeTab === "executive"
+              ? "bg-blue-700 text-white shadow-lg"
+              : "bg-gray-700 text-gray-300 hover:bg-blue-600"
           }`}
         >
           Executive Produced
@@ -459,14 +498,16 @@ export default function Albums() {
       </nav>
 
       {/* Tab Content */}
-      {activeTab === 'associated'
+      {activeTab === "associated"
         ? renderAssociatedAlbums()
-        : activeTab === 'personal'
-        ? renderPersonalAlbums()
-        : renderExecutiveAlbums()}
+        : activeTab === "personal"
+          ? renderPersonalAlbums()
+          : renderExecutiveAlbums()}
 
       <footer className="mt-16 text-center text-gray-500 text-sm md:text-base">
-        <p>© {new Date().getFullYear()} Xaeneptune Music. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} Xaeneptune Music. All rights reserved.
+        </p>
       </footer>
     </main>
   );

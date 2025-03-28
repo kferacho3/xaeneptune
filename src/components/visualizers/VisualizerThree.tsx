@@ -3,18 +3,13 @@
 import { shaderMaterial } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useControls } from "leva";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-/** 
+/**
  * This code has:
  *   - Three ENVIRONMENTS (Phantom Star, Octagrams, Raymarching)
- *       => controlled by the uniform "uEnvironment" 
+ *       => controlled by the uniform "uEnvironment"
  *          (0=Phantom, 1=Octagrams, 2=Raymarching)
  *
  *   - Four RENDER MODES (Solid, Wireframe, Rainbow, Transparent/Glass)
@@ -25,11 +20,11 @@ import * as THREE from "three";
  * render mode as a final pass (e.g. wireframe lines, rainbow hue shift, etc.).
  *
  * The FFT data influences each environment’s color, shape, speed,
- * positioning, etc. 
+ * positioning, etc.
  *
  * The color palette is also used across all three scenes.
- * 
- * NOTE: For brevity, we only show a short palette snippet below, 
+ *
+ * NOTE: For brevity, we only show a short palette snippet below,
  * but you'll paste your full palette object in place of `colorPalettes`.
  */
 
@@ -42,248 +37,247 @@ const colorPalettes: Record<string, THREE.Color[]> = {
     new THREE.Color(0xd4a373),
     new THREE.Color(0xfae3d9),
     new THREE.Color(0xffdac1),
-    new THREE.Color(0xe9c46a)
+    new THREE.Color(0xe9c46a),
   ],
   sunset: [
     new THREE.Color(0xf94144),
     new THREE.Color(0xf3722c),
     new THREE.Color(0xf8961e),
     new THREE.Color(0xf9c74f),
-    new THREE.Color(0x90be6d)
+    new THREE.Color(0x90be6d),
   ],
   ocean: [
     new THREE.Color(0x03045e),
     new THREE.Color(0x0077b6),
     new THREE.Color(0x00b4d8),
     new THREE.Color(0x90e0ef),
-    new THREE.Color(0xade8f4)
+    new THREE.Color(0xade8f4),
   ],
   forest: [
     new THREE.Color(0x228b22),
     new THREE.Color(0x3cb371),
     new THREE.Color(0x98fb98),
     new THREE.Color(0x8fbc8f),
-    new THREE.Color(0x6b8e23)
+    new THREE.Color(0x6b8e23),
   ],
   candy: [
     new THREE.Color(0xff69b4),
     new THREE.Color(0xffa07a),
     new THREE.Color(0xffd700),
     new THREE.Color(0xadff2f),
-    new THREE.Color(0x87cefa)
+    new THREE.Color(0x87cefa),
   ],
   pastel: [
     new THREE.Color(0xffdab9),
     new THREE.Color(0xfff0f5),
     new THREE.Color(0xf0fff0),
     new THREE.Color(0xf5f5dc),
-    new THREE.Color(0xffe4e1)
+    new THREE.Color(0xffe4e1),
   ],
   neon: [
     new THREE.Color(0xff00ff),
     new THREE.Color(0x00ffff),
     new THREE.Color(0xffff00),
     new THREE.Color(0x00ff00),
-    new THREE.Color(0xffa500)
+    new THREE.Color(0xffa500),
   ],
   grayscale: [
     new THREE.Color(0x111111),
     new THREE.Color(0x333333),
     new THREE.Color(0x555555),
     new THREE.Color(0x777777),
-    new THREE.Color(0x999999)
+    new THREE.Color(0x999999),
   ],
   blues: [
     new THREE.Color(0xadd8e6),
     new THREE.Color(0x87ceeb),
     new THREE.Color(0x6495ed),
     new THREE.Color(0x4682b4),
-    new THREE.Color(0x1e90ff)
+    new THREE.Color(0x1e90ff),
   ],
   greens: [
     new THREE.Color(0x98fb98),
     new THREE.Color(0x90ee90),
     new THREE.Color(0x3cb371),
     new THREE.Color(0x2e8b57),
-    new THREE.Color(0x008000)
+    new THREE.Color(0x008000),
   ],
   reds: [
     new THREE.Color(0xff6347),
     new THREE.Color(0xff4500),
     new THREE.Color(0xff0000),
     new THREE.Color(0xb22222),
-    new THREE.Color(0x8b0000)
+    new THREE.Color(0x8b0000),
   ],
   purples: [
     new THREE.Color(0xe6e6fa),
     new THREE.Color(0xd8bfd8),
     new THREE.Color(0xdda0dd),
     new THREE.Color(0xee82ee),
-    new THREE.Color(0x9400d3)
+    new THREE.Color(0x9400d3),
   ],
   yellows: [
     new THREE.Color(0xffffe0),
     new THREE.Color(0xfffff0),
     new THREE.Color(0xffd700),
     new THREE.Color(0xffa500),
-    new THREE.Color(0xf0e68c)
+    new THREE.Color(0xf0e68c),
   ],
   oranges: [
     new THREE.Color(0xffa500),
     new THREE.Color(0xff8c00),
     new THREE.Color(0xff7f50),
     new THREE.Color(0xff6347),
-    new THREE.Color(0xff4500)
+    new THREE.Color(0xff4500),
   ],
   browns: [
     new THREE.Color(0xf4a460),
     new THREE.Color(0xd2691e),
     new THREE.Color(0xa0522d),
     new THREE.Color(0x8b4513),
-    new THREE.Color(0x693d3d)
+    new THREE.Color(0x693d3d),
   ],
   teals: [
     new THREE.Color(0x008080),
     new THREE.Color(0x008b8b),
     new THREE.Color(0x20b2aa),
     new THREE.Color(0x48d1cc),
-    new THREE.Color(0x7fffd4)
+    new THREE.Color(0x7fffd4),
   ],
   magentas: [
     new THREE.Color(0xff00ff),
     new THREE.Color(0xff00ff),
     new THREE.Color(0xda70d6),
     new THREE.Color(0xba55d3),
-    new THREE.Color(0x8a2be2)
+    new THREE.Color(0x8a2be2),
   ],
   lime: [
     new THREE.Color(0x00ff00),
     new THREE.Color(0x32cd32),
     new THREE.Color(0x98fb98),
     new THREE.Color(0x90ee90),
-    new THREE.Color(0xadff2f)
+    new THREE.Color(0xadff2f),
   ],
   indigo: [
     new THREE.Color(0x4b0082),
     new THREE.Color(0x8a2be2),
     new THREE.Color(0x9370db),
     new THREE.Color(0x7b68ee),
-    new THREE.Color(0x6a5acd)
+    new THREE.Color(0x6a5acd),
   ],
   violet: [
     new THREE.Color(0xee82ee),
     new THREE.Color(0xd8bfd8),
     new THREE.Color(0xc71585),
     new THREE.Color(0xba55d3),
-    new THREE.Color(0x9400d3)
+    new THREE.Color(0x9400d3),
   ],
   coral: [
     new THREE.Color(0xff7f50),
     new THREE.Color(0xff6347),
     new THREE.Color(0xff4500),
     new THREE.Color(0xfa8072),
-    new THREE.Color(0xf08080)
+    new THREE.Color(0xf08080),
   ],
   salmon: [
     new THREE.Color(0xfa8072),
     new THREE.Color(0xe9967a),
     new THREE.Color(0xffa07a),
     new THREE.Color(0xff7f50),
-    new THREE.Color(0xff6347)
+    new THREE.Color(0xff6347),
   ],
   skyblue: [
     new THREE.Color(0x87ceeb),
     new THREE.Color(0x87cefa),
     new THREE.Color(0x6495ed),
     new THREE.Color(0xadd8e6),
-    new THREE.Color(0xb0e0e6)
+    new THREE.Color(0xb0e0e6),
   ],
   goldenrod: [
     new THREE.Color(0xdaa520),
     new THREE.Color(0xffd700),
     new THREE.Color(0xf0e68c),
     new THREE.Color(0xb8860b),
-    new THREE.Color(0xcd853f)
+    new THREE.Color(0xcd853f),
   ],
   chocolate: [
     new THREE.Color(0xd2691e),
     new THREE.Color(0xf4a460),
     new THREE.Color(0xa0522d),
     new THREE.Color(0x8b4513),
-    new THREE.Color(0x693d3d)
+    new THREE.Color(0x693d3d),
   ],
   maroon: [
     new THREE.Color(0x800000),
     new THREE.Color(0xb03060),
     new THREE.Color(0xff0000),
     new THREE.Color(0xff6347),
-    new THREE.Color(0xff4500)
+    new THREE.Color(0xff4500),
   ],
   olive: [
     new THREE.Color(0x808000),
     new THREE.Color(0x6b8e23),
     new THREE.Color(0x556b2f),
     new THREE.Color(0x9acd32),
-    new THREE.Color(0x8fbc8f)
+    new THREE.Color(0x8fbc8f),
   ],
   cyan: [
     new THREE.Color(0x00ffff),
     new THREE.Color(0x00ced1),
     new THREE.Color(0x40e0d0),
     new THREE.Color(0x48d1cc),
-    new THREE.Color(0x7fffd4)
+    new THREE.Color(0x7fffd4),
   ],
   beige: [
     new THREE.Color(0xf5f5dc),
     new THREE.Color(0xfff8dc),
     new THREE.Color(0xffe4c4),
     new THREE.Color(0xffdab9),
-    new THREE.Color(0xf0fff0)
+    new THREE.Color(0xf0fff0),
   ],
   lavender: [
     new THREE.Color(0xe6e6fa),
     new THREE.Color(0xdda0dd),
     new THREE.Color(0xee82ee),
     new THREE.Color(0xba55d3),
-    new THREE.Color(0x9370db)
+    new THREE.Color(0x9370db),
   ],
   tan: [
     new THREE.Color(0xd2b48c),
     new THREE.Color(0xf4a460),
     new THREE.Color(0xa0522d),
     new THREE.Color(0x8b4513),
-    new THREE.Color(0x693d3d)
+    new THREE.Color(0x693d3d),
   ],
   mustard: [
     new THREE.Color(0xffdb58),
     new THREE.Color(0xf0ad4e),
     new THREE.Color(0xffa500),
     new THREE.Color(0xff8c00),
-    new THREE.Color(0xff7f50)
+    new THREE.Color(0xff7f50),
   ],
   plum: [
     new THREE.Color(0xdda0dd),
     new THREE.Color(0xe0b0ff),
     new THREE.Color(0xcd853f),
     new THREE.Color(0xd8bfd8),
-    new THREE.Color(0x9370db)
+    new THREE.Color(0x9370db),
   ],
   turquoise: [
     new THREE.Color(0x40e0d0),
     new THREE.Color(0x48d1cc),
     new THREE.Color(0x00ced1),
     new THREE.Color(0x008b8b),
-    new THREE.Color(0x008080)
+    new THREE.Color(0x008080),
   ],
   skyblue_darker: [
     new THREE.Color(0x00bfff),
     new THREE.Color(0x1e90ff),
     new THREE.Color(0x0000ff),
     new THREE.Color(0x4169e1),
-    new THREE.Color(0x6495ed)
-  ]
+    new THREE.Color(0x6495ed),
+  ],
 };
-
 
 /** ------------------------------------------------------------
  * 2) The ShaderMaterial definition
@@ -291,8 +285,8 @@ const colorPalettes: Record<string, THREE.Color[]> = {
 const FFTVisualizerMaterial = shaderMaterial(
   {
     // Uniforms for environment and render mode
-    uEnvironment: 0,     // 0=Phantom Star, 1=Octagrams, 2=Raymarching
-    uRenderMode: 0,      // 0=solid, 1=wireframe, 2=rainbow, 3=transparent
+    uEnvironment: 0, // 0=Phantom Star, 1=Octagrams, 2=Raymarching
+    uRenderMode: 0, // 0=solid, 1=wireframe, 2=rainbow, 3=transparent
 
     // Common uniforms
     iTime: 0,
@@ -307,7 +301,7 @@ const FFTVisualizerMaterial = shaderMaterial(
 
   /* --------------------------------------------------------------------------------
    * VERTEX SHADER
-   * We morph geometry by reading from the FFT texture. 
+   * We morph geometry by reading from the FFT texture.
    * --------------------------------------------------------------------------------*/
   /* glsl */ `
     varying vec2 vUV;
@@ -675,7 +669,7 @@ const FFTVisualizerMaterial = shaderMaterial(
       }
       gl_FragColor = applyRenderMode(outColor, vUV);
     }
-  `
+  `,
 );
 
 type FFTVisualizerMaterialImpl = InstanceType<typeof FFTVisualizerMaterial>;
@@ -686,9 +680,9 @@ export type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
 // We define TS type for environment
 export type EnvironmentMode = "phantom" | "octagrams" | "raymarching";
 
-/** 
- * The main React component that sets up the audio, FFT, 
- * the uniforms, etc., and returns a mesh with a plane geometry 
+/**
+ * The main React component that sets up the audio, FFT,
+ * the uniforms, etc., and returns a mesh with a plane geometry
  * that is deformed by our custom shader.
  */
 interface VisualizerThreeProps {
@@ -696,7 +690,10 @@ interface VisualizerThreeProps {
   isPaused: boolean;
 }
 
-export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeProps) {
+export default function VisualizerThree({
+  audioUrl,
+  isPaused,
+}: VisualizerThreeProps) {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -709,7 +706,8 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
   // local states for environment, mode, palette, intensity
   const [envMode, setEnvMode] = useState<EnvironmentMode>("phantom");
   const [renderMode, setRenderMode] = useState<RenderingMode>("solid");
-  const [selectedPaletteName, setSelectedPaletteName] = useState<keyof typeof colorPalettes>("default");
+  const [selectedPaletteName, setSelectedPaletteName] =
+    useState<keyof typeof colorPalettes>("default");
   const [fftIntensity, setFftIntensity] = useState(0.1);
 
   // Example LEVA controls: pick environment, renderMode, palette, intensity
@@ -727,7 +725,8 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
     palette: {
       value: selectedPaletteName,
       options: Object.keys(colorPalettes),
-      onChange: (val: string) => setSelectedPaletteName(val as keyof typeof colorPalettes),
+      onChange: (val: string) =>
+        setSelectedPaletteName(val as keyof typeof colorPalettes),
     },
     fftIntensity: {
       value: fftIntensity,
@@ -747,7 +746,9 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
       audioRef.current.loop = true;
 
       audioContextRef.current = new AudioContext();
-      const src = audioContextRef.current.createMediaElementSource(audioRef.current);
+      const src = audioContextRef.current.createMediaElementSource(
+        audioRef.current,
+      );
 
       analyserRef.current = audioContextRef.current.createAnalyser();
       analyserRef.current.fftSize = 512;
@@ -763,30 +764,31 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
         bLen,
         1,
         THREE.RGBAFormat,
-        THREE.UnsignedByteType
+        THREE.UnsignedByteType,
       );
       fftTextureRef.current.needsUpdate = true;
-    }
-    else {
+    } else {
       // might be a re-render with new audio url
-      if(audioRef.current.src !== audioUrl){
+      if (audioRef.current.src !== audioUrl) {
         audioRef.current.src = audioUrl;
       }
     }
 
     // attempt to start or pause
     const tryPlay = async () => {
-      if(!audioRef.current) return;
-      if(isPaused){
+      if (!audioRef.current) return;
+      if (isPaused) {
         audioRef.current.pause();
-      }
-      else {
-        if(audioContextRef.current && audioContextRef.current.state==="suspended"){
+      } else {
+        if (
+          audioContextRef.current &&
+          audioContextRef.current.state === "suspended"
+        ) {
           await audioContextRef.current.resume();
         }
-        try{
+        try {
           await audioRef.current.play();
-        } catch(err){
+        } catch (err) {
           console.warn("Audio play error:", err);
         }
       }
@@ -798,18 +800,18 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
   useEffect(() => {
     const audio = audioRef.current;
     const ctx = audioContextRef.current;
-    if(!audio || !ctx) return;
+    if (!audio || !ctx) return;
 
     const doUpdate = async () => {
-      if(isPaused){
+      if (isPaused) {
         audio.pause();
       } else {
-        if(ctx.state==="suspended"){
+        if (ctx.state === "suspended") {
           await ctx.resume();
         }
-        try{
+        try {
           await audio.play();
-        } catch(e){
+        } catch (e) {
           console.warn("Audio play error:", e);
         }
       }
@@ -819,7 +821,7 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
 
   // once we have a valid fft texture, set it in the material
   useEffect(() => {
-    if(fftTextureRef.current && customShaderMaterial.uniforms.fftTexture){
+    if (fftTextureRef.current && customShaderMaterial.uniforms.fftTexture) {
       customShaderMaterial.uniforms.fftTexture.value = fftTextureRef.current;
     }
   }, [customShaderMaterial]);
@@ -830,33 +832,36 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
   // animate each frame
   useFrame(({ clock, gl, camera, mouse }) => {
     // optional: make plane always face camera
-    if(planeRef.current){
+    if (planeRef.current) {
       planeRef.current.lookAt(camera.position);
     }
 
     const mat = customShaderMaterial;
     mat.uniforms.iTime.value = clock.elapsedTime;
-    mat.uniforms.iResolution.value.set(gl.domElement.width, gl.domElement.height);
+    mat.uniforms.iResolution.value.set(
+      gl.domElement.width,
+      gl.domElement.height,
+    );
     mat.uniforms.fftIntensity.value = fftIntensity;
 
     // convert envMode => integer
-    if(envMode==="phantom") {
+    if (envMode === "phantom") {
       mat.uniforms.uEnvironment.value = 0;
-    } else if(envMode==="octagrams") {
+    } else if (envMode === "octagrams") {
       mat.uniforms.uEnvironment.value = 1;
     } else {
       mat.uniforms.uEnvironment.value = 2; // raymarching
     }
 
     // convert renderMode => integer
-    if(renderMode==="solid"){
-      mat.uniforms.uRenderMode.value=0;
-    } else if(renderMode==="wireframe"){
-      mat.uniforms.uRenderMode.value=1;
-    } else if(renderMode==="rainbow"){
-      mat.uniforms.uRenderMode.value=2;
+    if (renderMode === "solid") {
+      mat.uniforms.uRenderMode.value = 0;
+    } else if (renderMode === "wireframe") {
+      mat.uniforms.uRenderMode.value = 1;
+    } else if (renderMode === "rainbow") {
+      mat.uniforms.uRenderMode.value = 2;
     } else {
-      mat.uniforms.uRenderMode.value=3; // transparent
+      mat.uniforms.uRenderMode.value = 3; // transparent
     }
 
     // optionally pass in real mouse coords if needed
@@ -865,34 +870,35 @@ export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeP
     mat.uniforms.iMouse.value.z = 0.0; // set to >0 if user is clicking
 
     // update color palette uniform
-    const chosenColors = colorPalettes[selectedPaletteName] || colorPalettes.default;
-    const asVec3 = chosenColors.map(c => new THREE.Vector3(c.r, c.g, c.b));
+    const chosenColors =
+      colorPalettes[selectedPaletteName] || colorPalettes.default;
+    const asVec3 = chosenColors.map((c) => new THREE.Vector3(c.r, c.g, c.b));
     mat.uniforms.colorPalette.value = asVec3;
 
     // if we have the analyser, update the FFT data texture
-    if(analyserRef.current && fftTextureRef.current){
-      const bLen= analyserRef.current.frequencyBinCount;
-      const dataArray= new Uint8Array(bLen);
+    if (analyserRef.current && fftTextureRef.current) {
+      const bLen = analyserRef.current.frequencyBinCount;
+      const dataArray = new Uint8Array(bLen);
       analyserRef.current.getByteFrequencyData(dataArray);
 
-      const txData= fftTextureRef.current.image.data as Uint8Array;
-      for(let i=0; i<bLen; i++){
-        const val= dataArray[i];
-        txData[i*4 + 0]= val;
-        txData[i*4 + 1]= val;
-        txData[i*4 + 2]= val;
-        txData[i*4 + 3]= 255;
+      const txData = fftTextureRef.current.image.data as Uint8Array;
+      for (let i = 0; i < bLen; i++) {
+        const val = dataArray[i];
+        txData[i * 4 + 0] = val;
+        txData[i * 4 + 1] = val;
+        txData[i * 4 + 2] = val;
+        txData[i * 4 + 3] = 255;
       }
-      fftTextureRef.current.needsUpdate= true;
+      fftTextureRef.current.needsUpdate = true;
     }
   });
 
-  // Final render: a plane geometry with many subdivisions 
+  // Final render: a plane geometry with many subdivisions
   return (
     <mesh
       ref={planeRef}
-      position={[0,0,0]}
-      scale={[15,15,1]}
+      position={[0, 0, 0]}
+      scale={[15, 15, 1]}
       frustumCulled={false}
     >
       <planeGeometry args={[20, 20, 60, 60]} />

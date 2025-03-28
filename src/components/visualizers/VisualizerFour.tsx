@@ -53,7 +53,7 @@ function calculateState(
   ruleSet: number[],
   left: number,
   current: number,
-  right: number
+  right: number,
 ): number {
   // Build a 3-bit number from left/current/right bits
   const neighborhood = (left << 2) | (current << 1) | right;
@@ -64,9 +64,9 @@ function calculateState(
 
 // --- Interfaces ---
 interface OrbitingShape {
-  orbitAngle: number;    // orbit position
-  orbitRadius: number;   // distance from main shape
-  orbitSpeed: number;    // revolve speed
+  orbitAngle: number; // orbit position
+  orbitRadius: number; // distance from main shape
+  orbitSpeed: number; // revolve speed
   shapeGeo: "sphere" | "cone" | "cylinder" | "box";
   color: THREE.Color;
   scale: THREE.Vector3;
@@ -78,7 +78,7 @@ interface CellData {
   position: THREE.Vector3;
   targetScale: THREE.Vector3;
   targetColor: THREE.Color;
-  shapeSize: number; 
+  shapeSize: number;
   orbits: OrbitingShape[]; // sub-shapes orbiting the main shape
 }
 
@@ -168,14 +168,17 @@ const INITIAL_RULE = 45;
 const MY_GRID_WIDTH = 3;
 const MY_GRID_HEIGHT = 10;
 
-export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourProps) {
+export default function VisualizerFour({
+  audioUrl,
+  isPaused,
+}: VisualizerFourProps) {
   // The “Rule 90” or whichever rule you choose
   const [ruleSet] = useState<number[]>(() => setRules(INITIAL_RULE));
   const [generation, setGeneration] = useState(0);
 
   // Current color palette and rendering settings
   const [currentPalette, setCurrentPalette] = useState<THREE.Color[]>(
-    colorPalettes[0].map((c) => new THREE.Color(c))
+    colorPalettes[0].map((c) => new THREE.Color(c)),
   );
 
   const [renderingMode, setRenderingMode] = useState<
@@ -210,29 +213,34 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
 
         // 1..3 orbiting shapes
         const orbitCount = Math.floor(Math.random() * 3) + 1;
-        const orbits: OrbitingShape[] = Array.from({ length: orbitCount }, () => {
-          const orbitShapeChoice: Array<"sphere" | "cone" | "cylinder" | "box"> = [
-            "sphere",
-            "cone",
-            "cylinder",
-            "box",
-          ];
-          const shapeGeo =
-            orbitShapeChoice[Math.floor(Math.random() * orbitShapeChoice.length)];
+        const orbits: OrbitingShape[] = Array.from(
+          { length: orbitCount },
+          () => {
+            const orbitShapeChoice: Array<
+              "sphere" | "cone" | "cylinder" | "box"
+            > = ["sphere", "cone", "cylinder", "box"];
+            const shapeGeo =
+              orbitShapeChoice[
+                Math.floor(Math.random() * orbitShapeChoice.length)
+              ];
 
-          return {
-            orbitAngle: Math.random() * Math.PI * 2,
-            orbitRadius: shapeSize * (0.75 + Math.random() * 1.5),
-            orbitSpeed: 0.5 + Math.random() * 1.5,
-            shapeGeo,
-            color: currentPalette[Math.floor(Math.random() * currentPalette.length)].clone(),
-            scale: new THREE.Vector3(
-              Math.random() * 1 + 0.3,
-              Math.random() * 1 + 0.3,
-              Math.random() * 1 + 0.3
-            ),
-          };
-        });
+            return {
+              orbitAngle: Math.random() * Math.PI * 2,
+              orbitRadius: shapeSize * (0.75 + Math.random() * 1.5),
+              orbitSpeed: 0.5 + Math.random() * 1.5,
+              shapeGeo,
+              color:
+                currentPalette[
+                  Math.floor(Math.random() * currentPalette.length)
+                ].clone(),
+              scale: new THREE.Vector3(
+                Math.random() * 1 + 0.3,
+                Math.random() * 1 + 0.3,
+                Math.random() * 1 + 0.3,
+              ),
+            };
+          },
+        );
 
         arr.push({
           color: currentPalette[randomIndex].clone(),
@@ -240,7 +248,7 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
           position: new THREE.Vector3(
             (col - MY_GRID_WIDTH / 2) * CELL_SIZE * 2,
             0,
-            (row - MY_GRID_HEIGHT / 2) * CELL_SIZE * 2
+            (row - MY_GRID_HEIGHT / 2) * CELL_SIZE * 2,
           ),
           targetScale: new THREE.Vector3(shapeSize, shapeSize, shapeSize),
           targetColor: currentPalette[randomIndex].clone(),
@@ -272,15 +280,19 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
         // Wrap around horizontally
         const leftIndex =
           row * MY_GRID_WIDTH + ((col - 1 + MY_GRID_WIDTH) % MY_GRID_WIDTH);
-        const rightIndex =
-          row * MY_GRID_WIDTH + ((col + 1) % MY_GRID_WIDTH);
+        const rightIndex = row * MY_GRID_WIDTH + ((col + 1) % MY_GRID_WIDTH);
 
         const leftState = prevCells[leftIndex].state;
         const rightState = prevCells[rightIndex].state;
         const currentState = cell.state;
 
         // Determine new state from the ruleSet
-        const newState = calculateState(ruleSet, leftState, currentState, rightState);
+        const newState = calculateState(
+          ruleSet,
+          leftState,
+          currentState,
+          rightState,
+        );
 
         // If new state is 0, color black; else pick from the palette
         let nextColor: THREE.Color;
@@ -306,7 +318,9 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
   // Let the user pick a random palette
   const handleRandomPalette = () => {
     const randomIndex = Math.floor(Math.random() * colorPalettes.length);
-    setCurrentPalette(colorPalettes[randomIndex].map((c) => new THREE.Color(c)));
+    setCurrentPalette(
+      colorPalettes[randomIndex].map((c) => new THREE.Color(c)),
+    );
   };
 
   // Audio Setup (Shared)
@@ -326,7 +340,8 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
         return;
       }
       sharedAudioContext = new AudioContextClass();
-      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
+      const src =
+        sharedAudioContext.createMediaElementSource(sharedAudioElement);
       sharedAnalyser = sharedAudioContext.createAnalyser();
       sharedAnalyser.fftSize = 32;
 
@@ -362,11 +377,17 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
     }
 
     // Start or stop audio
-    if (!isPaused && sharedAudioContext && sharedAudioContext.state === "suspended") {
+    if (
+      !isPaused &&
+      sharedAudioContext &&
+      sharedAudioContext.state === "suspended"
+    ) {
       sharedAudioContext.resume();
     }
     if (!isPaused) {
-      sharedAudioElement.play().catch((err) => console.warn("Audio play error:", err));
+      sharedAudioElement
+        .play()
+        .catch((err) => console.warn("Audio play error:", err));
     } else {
       sharedAudioElement.pause();
     }
@@ -398,10 +419,13 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
         // Some color modes
         if (colorMode === "audioAmplitude") {
           // Lerp to white depending on amplitude
-          cell.targetColor.lerp(new THREE.Color(0xffffff), 1 - amplitude * fftIntensity);
+          cell.targetColor.lerp(
+            new THREE.Color(0xffffff),
+            1 - amplitude * fftIntensity,
+          );
         } else if (colorMode === "frequencyBased") {
           // Frequency-based => direct HSL from amplitude
-          const h = amplitude * fftIntensity; 
+          const h = amplitude * fftIntensity;
           cell.targetColor.setHSL(h % 1, 0.8, 0.5);
         } else if (colorMode === "rainbow") {
           // Rotating hue
@@ -459,7 +483,11 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
               value={renderingMode}
               onChange={(e) =>
                 setRenderingMode(
-                  e.target.value as "solid" | "wireframe" | "rainbow" | "transparent"
+                  e.target.value as
+                    | "solid"
+                    | "wireframe"
+                    | "rainbow"
+                    | "transparent",
                 )
               }
             >
@@ -481,7 +509,7 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
                     | "default"
                     | "audioAmplitude"
                     | "frequencyBased"
-                    | "rainbow"
+                    | "rainbow",
                 )
               }
             >

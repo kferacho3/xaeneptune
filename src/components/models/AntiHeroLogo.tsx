@@ -1,8 +1,8 @@
-import { useGLTF } from '@react-three/drei';
-import { useFrame, useThree, type ThreeElements } from '@react-three/fiber';
-import React, { useRef } from 'react';
-import * as THREE from 'three';
-import { GLTF } from 'three-stdlib';
+import { useGLTF } from "@react-three/drei";
+import { useFrame, useThree, type ThreeElements } from "@react-three/fiber";
+import React, { useRef } from "react";
+import * as THREE from "three";
+import { GLTF } from "three-stdlib";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -13,13 +13,13 @@ type GLTFResult = GLTF & {
   };
 };
 
-type AntiHeroLogoProps = ThreeElements['group'];
+type AntiHeroLogoProps = ThreeElements["group"];
 
 export default function AntiHeroLogo(props: AntiHeroLogoProps) {
   const group = useRef<THREE.Group>(null);
   const { mouse } = useThree();
   const { nodes, materials } = useGLTF(
-    'https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHero.glb'
+    "https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHero.glb",
   ) as GLTFResult;
 
   // For flicking behavior.
@@ -69,9 +69,14 @@ export default function AntiHeroLogo(props: AntiHeroLogoProps) {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <mesh geometry={nodes.DarkBackground.geometry} material={materials.PaletteMaterial001} />
+      <mesh
+        geometry={nodes.DarkBackground.geometry}
+        material={materials.PaletteMaterial001}
+      />
     </group>
   );
 }
 
-useGLTF.preload('https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHero.glb');
+useGLTF.preload(
+  "https://xaeneptune.s3.us-east-2.amazonaws.com/glb/AntiHero.glb",
+);

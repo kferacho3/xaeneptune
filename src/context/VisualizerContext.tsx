@@ -7,12 +7,16 @@ type VisualizerContextType = {
   setIsBeatVisualizer: (value: boolean) => void;
 };
 
-const VisualizerContext = createContext<VisualizerContextType | undefined>(undefined);
+const VisualizerContext = createContext<VisualizerContextType | undefined>(
+  undefined,
+);
 
 export const VisualizerProvider = ({ children }: { children: ReactNode }) => {
   const [isBeatVisualizer, setIsBeatVisualizer] = useState<boolean>(false);
   return (
-    <VisualizerContext.Provider value={{ isBeatVisualizer, setIsBeatVisualizer }}>
+    <VisualizerContext.Provider
+      value={{ isBeatVisualizer, setIsBeatVisualizer }}
+    >
       {children}
     </VisualizerContext.Provider>
   );
