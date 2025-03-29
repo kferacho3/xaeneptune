@@ -29,7 +29,7 @@ export const useRouteStore = create<RouteStore>((set) => ({
   visualizerMode: false,
   setVisualizerMode: (mode: boolean) => set({ visualizerMode: mode }),
   audioUrlForBeat:
-    "https://racho-devs.s3.us-east-2.amazonaws.com/about/music/Insane!_8.mp3",
+    "https://xaeneptune.s3.us-east-2.amazonaws.com/beats/2024/SEP+2024/Xae+x+VGS+Midnight+x+beatsbylmc+-+doumissme+126+(C+minor).mp3",
   setAudioUrlForBeat: (url: string) => set({ audioUrlForBeat: url }),
   onBeatGoBack: undefined,
   setOnBeatGoBack: (cb?: () => void) => set({ onBeatGoBack: cb }),
