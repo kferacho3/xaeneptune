@@ -1,4 +1,5 @@
 // /src/api/spotify/auth.ts
+
 import axios, { AxiosError } from "axios";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -14,10 +15,12 @@ export default async function handler(
   const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
   const redirectUri =
-  process.env.NODE_ENV === 'production'
-    ? process.env.SPOTIFY_REDIRECT_URI_PROD
-    : process.env.SPOTIFY_REDIRECT_URI_DEV;
+    process.env.NODE_ENV === "production"
+      ? process.env.SPOTIFY_REDIRECT_URI_PROD
+      : process.env.SPOTIFY_REDIRECT_URI_DEV;
 
+  // Log the redirectUri to confirm it matches your environment
+  console.log("Spotify Auth: using redirectUri =>", redirectUri);
 
   const tokenEndpoint = "https://accounts.spotify.com/api/token";
 
