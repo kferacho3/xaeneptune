@@ -1,6 +1,6 @@
 import { BeatData, beatsData } from "@/data/beatData";
 import React, { useMemo, useState } from "react";
-import { FaCompactDisc, FaHeadphones, FaMusic } from "react-icons/fa";
+import { FaCompactDisc, FaHeadphones, FaMusic, FaSlidersH } from "react-icons/fa";
 
 interface BeatsListProps {
   onBeatSelect: (audioUrl: string) => void;
@@ -12,14 +12,11 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
   const [filterBeatKey, setFilterBeatKey] = useState("");
   const [filterBeatProducer, setFilterBeatProducer] = useState("");
   const [filterBeatDate, setFilterBeatDate] = useState("");
-  const [filterBeatPerMinMin, setFilterBeatPerMinMin] = useState<number | "">(
-    "",
-  );
-  const [filterBeatPerMinMax, setFilterBeatPerMinMax] = useState<number | "">(
-    "",
-  );
+  const [filterBeatPerMinMin, setFilterBeatPerMinMin] = useState<number | "">("");
+  const [filterBeatPerMinMax, setFilterBeatPerMinMax] = useState<number | "">("");
   const [beatsPerPage, setBeatsPerPage] = useState<number | "all">(15);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Advanced filtering: we only filter metadata (no heavy audio is fetched here)
   const filteredBeats = useMemo(() => {
@@ -69,7 +66,7 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
       ? filteredBeats
       : filteredBeats.slice(
           (currentPage - 1) * (beatsPerPage as number),
-          currentPage * (beatsPerPage as number),
+          currentPage * (beatsPerPage as number)
         );
 
   // Choose an icon and color based on the beat's date (year)
@@ -103,108 +100,113 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
     ];
     const randomIcon = icons[Math.floor(Math.random() * icons.length)];
     return (
-      <div
-        className={`w-12 h-12 flex items-center justify-center ${colorClass}`}
-      >
+      <div className={`w-12 h-12 flex items-center justify-center ${colorClass}`}>
         {randomIcon}
       </div>
     );
   };
 
   return (
-    <div className="beats-list-container w-full min-h-screen mt-20 p-4 relative bg-black bg-opacity-80 text-white">
-      <h1 className="text-3xl md:text-4xl font-bold text-center mb-6">
+    <div className="beats-list-container w-full min-h-screen mt-10 p-4 relative bg-black bg-opacity-80 text-white">
+      <h1 className="text-2xl md:text-4xl font-bold text-center mb-2">
         Beats Available
       </h1>
-      {/* Filters */}
-      <div className="filters grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Filter by Beat Name"
-          value={filterBeatName}
-          onChange={(e) => setFilterBeatName(e.target.value)}
-          className="p-2 rounded bg-gray-800 border border-gray-700"
-        />
-        <input
-          type="text"
-          placeholder="Filter by Beat Key"
-          value={filterBeatKey}
-          onChange={(e) => setFilterBeatKey(e.target.value)}
-          className="p-2 rounded bg-gray-800 border border-gray-700"
-        />
-        <input
-          type="text"
-          placeholder="Filter by Beat Producer"
-          value={filterBeatProducer}
-          onChange={(e) => setFilterBeatProducer(e.target.value)}
-          className="p-2 rounded bg-gray-800 border border-gray-700"
-        />
-        <input
-          type="text"
-          placeholder="Filter by Beat Date"
-          value={filterBeatDate}
-          onChange={(e) => setFilterBeatDate(e.target.value)}
-          className="p-2 rounded bg-gray-800 border border-gray-700"
-        />
-        <div className="flex space-x-2">
-          <input
-            type="number"
-            placeholder="Min BPM"
-            value={filterBeatPerMinMin}
-            onChange={(e) =>
-              setFilterBeatPerMinMin(
-                e.target.value === "" ? "" : Number(e.target.value),
-              )
-            }
-            className="p-2 rounded bg-gray-800 border border-gray-700 w-full"
-          />
-          <input
-            type="number"
-            placeholder="Max BPM"
-            value={filterBeatPerMinMax}
-            onChange={(e) =>
-              setFilterBeatPerMinMax(
-                e.target.value === "" ? "" : Number(e.target.value),
-              )
-            }
-            className="p-2 rounded bg-gray-800 border border-gray-700 w-full"
-          />
-        </div>
-        <div className="flex items-center">
-          <label htmlFor="beatsPerPage" className="mr-2">
-            Beats per page:
-          </label>
-          <select
-            id="beatsPerPage"
-            value={beatsPerPage}
-            onChange={(e) =>
-              setBeatsPerPage(
-                e.target.value === "all" ? "all" : Number(e.target.value),
-              )
-            }
-            className="p-2 rounded bg-gray-800 border border-gray-700"
-          >
-            <option value={15}>15</option>
-            <option value={25}>25</option>
-            <option value="all">All</option>
-          </select>
-        </div>
+      {/* Filter Dropdown Toggle */}
+      <div className="flex justify-center mb-4">
+        <button
+          onClick={() => setShowFilters((prev) => !prev)}
+          className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-800 hover:from-indigo-700 hover:via-blue-700 hover:to-indigo-900 transition-colors duration-300 px-4 py-2 rounded"
+        >
+          <FaSlidersH />
+          <span className="text-sm font-medium">Filters</span>
+        </button>
       </div>
+      {/* Filter Dropdown Content */}
+      {showFilters && (
+        <div className="filters grid grid-cols-1 md:grid-cols-3 gap-2 mb-4 p-2 border border-gray-700 rounded bg-gray-900">
+          <input
+            type="text"
+            placeholder="Beat Name"
+            value={filterBeatName}
+            onChange={(e) => setFilterBeatName(e.target.value)}
+            className="p-1 text-sm rounded bg-gray-800 border border-gray-700"
+          />
+          <input
+            type="text"
+            placeholder="Beat Key"
+            value={filterBeatKey}
+            onChange={(e) => setFilterBeatKey(e.target.value)}
+            className="p-1 text-sm rounded bg-gray-800 border border-gray-700"
+          />
+          <input
+            type="text"
+            placeholder="Beat Producer"
+            value={filterBeatProducer}
+            onChange={(e) => setFilterBeatProducer(e.target.value)}
+            className="p-1 text-sm rounded bg-gray-800 border border-gray-700"
+          />
+          <input
+            type="text"
+            placeholder="Beat Date"
+            value={filterBeatDate}
+            onChange={(e) => setFilterBeatDate(e.target.value)}
+            className="p-1 text-sm rounded bg-gray-800 border border-gray-700"
+          />
+          <div className="flex space-x-2">
+            <input
+              type="number"
+              placeholder="Min BPM"
+              value={filterBeatPerMinMin}
+              onChange={(e) =>
+                setFilterBeatPerMinMin(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="p-1 text-sm rounded bg-gray-800 border border-gray-700 w-full"
+            />
+            <input
+              type="number"
+              placeholder="Max BPM"
+              value={filterBeatPerMinMax}
+              onChange={(e) =>
+                setFilterBeatPerMinMax(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="p-1 text-sm rounded bg-gray-800 border border-gray-700 w-full"
+            />
+          </div>
+          <div className="flex items-center">
+            <label htmlFor="beatsPerPage" className="mr-2 text-sm">
+              Beats per page:
+            </label>
+            <select
+              id="beatsPerPage"
+              value={beatsPerPage}
+              onChange={(e) =>
+                setBeatsPerPage(e.target.value === "all" ? "all" : Number(e.target.value))
+              }
+              className="p-1 text-sm rounded bg-gray-800 border border-gray-700"
+            >
+              <option value={15}>15</option>
+              <option value={25}>25</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+      )}
       {/* Beats list */}
       <div
-        className="beats-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        style={{ maxHeight: "70vh", overflowY: "auto" }}
+        className="beats-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700"
+        style={{ maxHeight: "70vh" }}
       >
         {currentBeats.map((beat, index) => (
           <div
             key={index}
-            className="beat-item bg-gray-900 bg-opacity-75 p-4 rounded flex items-center space-x-4 hover:shadow-lg transition-all cursor-pointer"
-            // Note: on clicking, only the beat URL is passed. The audio file isn’t loaded until the visualizer mounts.
+            className="beat-item bg-gradient-to-br from-indigo-900 via-blue-900 to-black p-4 rounded-lg flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 hover:shadow-[0_0_10px_2px_rgba(75,0,130,0.8)] cursor-pointer"
             onClick={() => onBeatSelect(beat.audioFile)}
           >
             {getBeatIcon(beat)}
             <div>
-              <h2 className="text-xl font-semibold">{beat.beatName}</h2>
+              <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600">
+                {beat.beatName}
+              </h2>
               <p className="text-sm">Key: {beat.beatKey || "N/A"}</p>
               <p className="text-sm">Producer: {beat.beatProducer}</p>
               <p className="text-sm">Date: {beat.beatDate}</p>
@@ -219,11 +221,11 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
+            className="px-4 py-2 rounded bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-900 text-white disabled:opacity-50"
           >
             Previous
           </button>
-          <span className="text-white">
+          <span className="text-white text-sm">
             Page {currentPage} of {totalPages}
           </span>
           <button
@@ -231,7 +233,7 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
               setCurrentPage((prev) => Math.min(prev + 1, totalPages))
             }
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
+            className="px-4 py-2 rounded bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-900 text-white disabled:opacity-50"
           >
             Next
           </button>

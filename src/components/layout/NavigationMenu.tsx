@@ -130,7 +130,7 @@ export default function NavigationMenu({
     { name: "MUSIC", route: "music", icon: FaMusic, position: [15, 0, 0] },
     { name: "ARTIST", route: "artist", icon: FaUser, position: [-15, 0, 0] },
     {
-      name: "BEATS FOR SALE",
+      name: "BEATS",
       route: "beats",
       icon: FaHeadphones,
       position: [0, 15, 0],
@@ -148,7 +148,7 @@ export default function NavigationMenu({
       position: [0, 0, 15],
     },
     {
-      name: "XAENEPTUNE'S WORLD",
+      name: "XAE NEPTUNE",
       route: "xaeneptunesworld",
       icon: GiPlanetCore,
       position: [0, 0, -15],
@@ -168,7 +168,7 @@ export default function NavigationMenu({
             occluder={occluder}
           >
             <IconComponent className="text-xl" />
-            <span className="text-[10px] mt-1 text-center">
+            <span className="text-[8px] mt-0 text-center">
               {item.name.split(" ").map((word, i) => (
                 <span key={i}>
                   {word}

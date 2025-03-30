@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       "i1.sndcdn.com",
       "open.spotify.com",
       "is1-ssl.mzstatic.com",
+      "xaeneptune.s3.us-east-2.amazonaws.com",
+      "i1.sndcdn.com",
+      "is1-ssl.mzstatic.com",
     ],
   },
 

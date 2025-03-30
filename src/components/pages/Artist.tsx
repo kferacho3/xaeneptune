@@ -91,7 +91,6 @@ const xoJuneAlbum: SpotifyAlbum & { tracks: SpotifyTrack[] } = {
 
 // ----------------------------------------------------------------------
 // HELPER: GET ARTIST IMAGE (with fallback for iann tyler, kyistt, statik)
-//        Accepts SpotifyArtist | null so we don't pass null inadvertently.
 // ----------------------------------------------------------------------
 function getArtistImageUrl(artist: SpotifyArtist | null): string {
   // If the "artist" is null or there's no artist.name, return a fallback.
@@ -111,7 +110,7 @@ function getArtistImageUrl(artist: SpotifyArtist | null): string {
   } else if (lowerName === "kyistt") {
     return "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5a/12/bc/5a12bc69-7832-d7c2-83d8-7fb3412c4f41/pr_source.png/190x190cc.webp";
   } else if (lowerName === "statik") {
-    return "https://via.placeholder.com/300?text=Vinyl+Record";
+    return "https://xaeneptune.s3.us-east-2.amazonaws.com/images/Artist/xaeneptune-no-profile.webp";
   }
 
   // Generic fallback
@@ -290,7 +289,7 @@ function getAhmadFallbackTopTracks(): SpotifyTrack[] {
 }
 
 // ----------------------------------------------------------------------
-// EXTRACT TRACKS FOR SELECTED ARTIST
+// UTILITY: EXTRACT TRACKS FOR SELECTED ARTIST
 // ----------------------------------------------------------------------
 async function extractTracksForArtist(
   artist: SpotifyArtist,
@@ -509,9 +508,6 @@ export default function Artist() {
   // ----------------
   // Fetch associated artists in parallel
   // ----------------
-  // ----------------
-  // Fetch associated artists in parallel
-  // ----------------
   useEffect(() => {
     const fetchAssociatedArtists = async () => {
       try {
@@ -703,7 +699,6 @@ export default function Artist() {
                   // Base fallback if no images:
                   const baseImageUrl =
                     images && images[0]?.url ? images[0].url : "";
-
                   // We'll do a lowercase name check for special artist fallback images:
                   const lowerName = name.toLowerCase();
                   const imageUrl =
@@ -712,10 +707,9 @@ export default function Artist() {
                       : lowerName === "kyistt"
                         ? "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5a/12/bc/5a12bc69-7832-d7c2-83d8-7fb3412c4f41/pr_source.png/190x190cc.webp"
                         : lowerName === "statik"
-                          ? "https://via.placeholder.com/150?text=Record+Label"
+                          ? "https://xaeneptune.s3.us-east-2.amazonaws.com/images/Artist/xaeneptune-no-profile.webp"
                           : baseImageUrl;
 
-                  // Then render
                   return (
                     <div
                       key={id}
@@ -731,7 +725,8 @@ export default function Artist() {
                         })
                       }
                     >
-                      <div className="relative w-full h-40 mb-4">
+                      {/* For mobile, use a larger image container; for desktop, revert to h-40 */}
+                      <div className="relative w-full h-64 md:h-40 mb-4">
                         <Image
                           src={imageUrl || "/fallback.png"}
                           alt={name}
@@ -739,7 +734,7 @@ export default function Artist() {
                           className="object-cover rounded"
                         />
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-gray-900">
+                      <h3 className="text-2xl md:text-xl font-bold mb-2 text-gray-900">
                         {name}
                       </h3>
                       <p className="text-sm text-gray-800">
@@ -792,7 +787,6 @@ export default function Artist() {
   // RENDER: SELECTED ARTIST
   // ----------------
   function renderSelectedArtistView() {
-    // Build a dynamic gradient if we have the extracted colors
     const backgroundStyle = gradientColors
       ? `linear-gradient(to bottom, ${gradientColors[0]}, ${gradientColors[1]}, white)`
       : "linear-gradient(to bottom, #000000, #FFFFFF)";
@@ -818,8 +812,6 @@ export default function Artist() {
         </button>
         <div className="max-w-4xl mx-auto text-center text-black">
           <h1 className="text-4xl font-bold mb-4">{selectedArtist?.name}</h1>
-
-          {/* Artist Image (with fallback if needed) */}
           <div className="relative w-40 h-40 mx-auto mb-4">
             <Image
               src={getArtistImageUrl(selectedArtist)}
@@ -829,15 +821,12 @@ export default function Artist() {
               sizes="(max-width: 768px) 40px, 80px"
             />
           </div>
-
           <p className="text-lg mb-2">
             Followers: {selectedArtist?.followers?.total ?? 0}
           </p>
           <p className="mb-6">
             Genres: {selectedArtist?.genres?.join(", ") ?? ""}
           </p>
-
-          {/* Tab Buttons */}
           <div className="flex justify-center mb-8 space-x-4">
             <button
               onClick={() => setActiveArtistTab("top-tracks")}
@@ -860,7 +849,6 @@ export default function Artist() {
               Discography
             </button>
           </div>
-
           {activeArtistTab === "top-tracks"
             ? renderArtistTopTracks()
             : renderArtistDiscography()}
@@ -933,7 +921,6 @@ export default function Artist() {
       );
     }
 
-    // grid of albums
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
         {artistDiscography.map((group) => (
@@ -1011,7 +998,7 @@ export default function Artist() {
                     if (url) window.open(url, "_blank");
                   }}
                 >
-                  <div className="relative w-12 h-12 flex-shrink-0 rounded overflow-hidden">
+                  <div className="relative w-12 h-20 flex-shrink-0 rounded overflow-hidden">
                     {selectedDiscographyAlbum.images?.[0]?.url && (
                       <Image
                         src={selectedDiscographyAlbum.images[0].url}

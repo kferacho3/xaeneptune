@@ -1,6 +1,6 @@
-// /src/app/page.tsx
 "use client";
 import GoBackButton from "@/components/layout/GoBackButton";
+import Sidebar from "@/components/layout/Sidebar";
 import TopBarNavbar from "@/components/layout/TopBarNavbar";
 import Albums from "@/components/pages/Albums";
 import Artist from "@/components/pages/Artist";
@@ -35,6 +35,7 @@ export default function HomePage() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [dpr, setDpr] = useState(1.5);
   const [mobile, setMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setMobile(window.innerWidth < 768);
@@ -83,11 +84,18 @@ export default function HomePage() {
           style={{ width: "100vw", height: "100vh" }}
           className="w-full h-full relative"
         >
+          {/* Top Navbar */}
           <div
             style={{ zIndex: 100, position: "absolute", top: 0, width: "100%" }}
           >
-            <TopBarNavbar />
+            <TopBarNavbar onHamburgerClick={() => setSidebarOpen(!sidebarOpen)} />
           </div>
+          {/* Sidebar */}
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            setActiveRoute={setActiveRoute}
+          />
           <Canvas
             style={{ position: "absolute", top: 0, left: 0, zIndex: 1 }}
             className="w-full h-screen"
@@ -170,7 +178,9 @@ export default function HomePage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.5 }}
-                className="text-4xl font-bold bg-gradient-to-r from-gray-300 via-white to-gray-500 bg-clip-text text-transparent animate-pulse"
+                className={`font-bold bg-gradient-to-r from-gray-300 via-white to-gray-500 bg-clip-text text-transparent animate-pulse ${
+                  mobile ? "text-2xl" : "text-4xl"
+                }`}
               >
                 {promptMessage}
               </motion.div>

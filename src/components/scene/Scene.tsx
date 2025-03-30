@@ -8,6 +8,7 @@ import AntiHero3D from "@/components/models/text3D/AntiHero3D";
 import BeatAudioVisualizerScene from "@/components/scene/BeatAudioVisualizerScene";
 import { useVisualizer } from "@/context/VisualizerContext";
 import { Route, useRouteStore } from "@/store/useRouteStore";
+import { a, useSpring } from "@react-spring/three";
 import {
   MeshReflectorMaterial,
   OrbitControls,
@@ -18,8 +19,6 @@ import { EffectComposer, GodRays } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-// Import react-spring for smooth animations in three.js
-import { a, useSpring } from "@react-spring/three";
 
 // Define an animated group so that the "group" element is correctly typed.
 const AnimatedGroup = a("group");
@@ -198,32 +197,37 @@ function CrescentMoonTransmissive({
   );
 }
 
-function EnvironmentParticles() {
+function EnvironmentParticles({ isMobile = false }: { isMobile?: boolean }) {
+  // Adjust sparkle counts based on device type for performance
+  const sparkleCount1 = isMobile ? 100 : 250;
+  const sparkleCount2 = isMobile ? 100 : 250;
+  const sparkleCount3 = isMobile ? 50 : 150;
+  const sparkleCount4 = isMobile ? 30 : 100;
   return (
     <group>
       <Sparkles
-        count={250}
+        count={sparkleCount1}
         scale={[300, 300, 300]}
         size={20}
         speed={0.5}
         color="#4b0082"
       />
       <Sparkles
-        count={250}
+        count={sparkleCount2}
         scale={[300, 300, 300]}
         size={20}
         speed={0.5}
         color="yellow"
       />
       <Sparkles
-        count={150}
+        count={sparkleCount3}
         scale={[300, 300, 300]}
         size={20}
         speed={0.5}
         color="#00008B"
       />
       <Sparkles
-        count={100}
+        count={sparkleCount4}
         scale={[300, 300, 300]}
         size={20}
         speed={0.5}
@@ -241,6 +245,7 @@ export default function Scene({
   visualizerMode = false,
   onBeatGoBack,
   onBeatShuffle,
+  isMobile = false,
 }: SceneProps) {
   const { camera, scene } = useThree();
   const { isBeatVisualizer } = useVisualizer();
@@ -346,7 +351,7 @@ export default function Scene({
       <pointLight position={[10, 10, 10]} />
 
       <group position={[0, 100, 0]}>
-        <EnvironmentParticles />
+        <EnvironmentParticles isMobile={isMobile} />
       </group>
 
       {showVisualizer ? (
@@ -440,19 +445,17 @@ export default function Scene({
         </EffectComposer>
       )}
 
-      {/* Instead of using Reflector, use a mesh with MeshReflectorMaterial */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -70, 0]}>
         <planeGeometry args={[10000, 10000]} />
         <MeshReflectorMaterial
-          blur={[512, 512]}
+          blur={isMobile ? [256, 256] : [512, 512]}
           mixBlur={0.75}
           mixStrength={0.25}
-          resolution={1024}
+          resolution={isMobile ? 512 : 1024}
           mirror={0.05}
           minDepthThreshold={0.25}
           maxDepthThreshold={1}
           depthScale={50}
-          //recursion={2}
           metalness={0.99}
           roughness={0.2}
         />

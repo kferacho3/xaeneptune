@@ -8,7 +8,7 @@ export default function XaeneptunesWorld() {
         <div className="absolute inset-0 bg-black opacity-30 backdrop-blur-sm z-0"></div>
         <div className="relative z-10 max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-6">
-            XAENEPTUNE&apos;S WORLD
+            XAE NEPTUNE
           </h1>
           <section className="mb-8">
             <h2 className="text-3xl font-semibold mb-4">

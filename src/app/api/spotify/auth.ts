@@ -13,7 +13,11 @@ export default async function handler(
 
   const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI;
+  const redirectUri =
+  process.env.NODE_ENV === 'production'
+    ? process.env.SPOTIFY_REDIRECT_URI_PROD
+    : process.env.SPOTIFY_REDIRECT_URI_DEV;
+
 
   const tokenEndpoint = "https://accounts.spotify.com/api/token";
 
