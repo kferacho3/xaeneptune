@@ -18,13 +18,13 @@ export async function getSpotifyToken(): Promise<string> {
     },
     body: new URLSearchParams({ grant_type: "client_credentials" }),
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`Error fetching Spotify token: ${response.status} ${errorText}`);
     throw new Error("Failed to fetch Spotify token");
   }
-  
+
   const data = await response.json();
   return data.access_token;
 }

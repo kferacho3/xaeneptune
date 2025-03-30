@@ -74,6 +74,17 @@ export default function HomePage() {
   return (
     <VisualizerProvider>
       <>
+              {/* Sidebar */}
+              <div
+            style={{ zIndex: 100, position: "absolute", top: 0, width: "100%" }}
+          >
+                <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            setActiveRoute={setActiveRoute}
+          />
+            </div>
+        
         <Head>
           <title>Futuristic Space Experience</title>
           <meta name="description" content="Immersive 3D space experience" />
@@ -86,16 +97,11 @@ export default function HomePage() {
         >
           {/* Top Navbar */}
           <div
-            style={{ zIndex: 100, position: "absolute", top: 0, width: "100%" }}
+            style={{ zIndex: 1000, position: "absolute", top: 0, width: "100%" }}
           >
             <TopBarNavbar onHamburgerClick={() => setSidebarOpen(!sidebarOpen)} />
           </div>
-          {/* Sidebar */}
-          <Sidebar
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-            setActiveRoute={setActiveRoute}
-          />
+    
           <Canvas
             style={{ position: "absolute", top: 0, left: 0, zIndex: 1 }}
             className="w-full h-screen"

@@ -1,5 +1,4 @@
 // /src/api/spotify/auth.ts
-
 import axios, { AxiosError } from "axios";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -14,13 +13,12 @@ export default async function handler(
 
   const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-
   const redirectUri =
     process.env.NODE_ENV === "production"
       ? process.env.SPOTIFY_REDIRECT_URI_PROD
       : process.env.SPOTIFY_REDIRECT_URI_DEV;
 
-  // Debug logging:
+  // Debug logging (server-side)
   console.log("=== /api/spotify/auth DEBUG INFO ===");
   console.log("NODE_ENV:", process.env.NODE_ENV);
   console.log("clientId:", clientId);
@@ -41,14 +39,16 @@ export default async function handler(
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization:
-            "Basic " +
-            Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
+            "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
         },
       },
     );
     res.status(200).json(response.data);
   } catch (error: unknown) {
-    console.error("Spotify Auth Error:", (error as AxiosError).response?.data || error);
+    console.error(
+      "Spotify Auth Error:",
+      (error as AxiosError).response?.data || error,
+    );
     res.status(400).json({ error: "Failed to fetch token" });
   }
 }

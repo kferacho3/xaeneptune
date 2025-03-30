@@ -46,7 +46,7 @@ export default function Sidebar({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed top-0 right-0 w-full h-full bg-gray-900 text-white z-50"
+          className="fixed top-0 right-0 w-full h-full bg-gray-900 text-white z-1000"
           initial="closed"
           animate="open"
           exit="closed"
