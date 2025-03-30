@@ -4,9 +4,11 @@ import { FaCompactDisc, FaHeadphones, FaMusic, FaSlidersH } from "react-icons/fa
 
 interface BeatsListProps {
   onBeatSelect: (audioUrl: string) => void;
+  isBeatVisualizer: boolean;
+  onTabChange: (tab: "beats" | "visualizer") => void;
 }
 
-const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
+const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect, isBeatVisualizer, onTabChange }) => {
   // Filter state
   const [filterBeatName, setFilterBeatName] = useState("");
   const [filterBeatKey, setFilterBeatKey] = useState("");
@@ -19,48 +21,40 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
   const [showFilters, setShowFilters] = useState(false);
 
   // Advanced filtering: we only filter metadata (no heavy audio is fetched here)
-  const filteredBeats = useMemo(() => {
-    return beatsData.filter((beat: BeatData) => {
-      const matchName = beat.beatName
-        .toLowerCase()
-        .includes(filterBeatName.toLowerCase());
-      const matchKey = beat.beatKey
-        .toLowerCase()
-        .includes(filterBeatKey.toLowerCase());
-      const matchProducer = beat.beatProducer
-        .toLowerCase()
-        .includes(filterBeatProducer.toLowerCase());
-      const matchDate = beat.beatDate
-        .toLowerCase()
-        .includes(filterBeatDate.toLowerCase());
-      let matchPerMin = true;
-      if (filterBeatPerMinMin !== "" && beat.beatPerMin !== null) {
-        matchPerMin = beat.beatPerMin >= Number(filterBeatPerMinMin);
-      }
-      if (
-        matchPerMin &&
-        filterBeatPerMinMax !== "" &&
-        beat.beatPerMin !== null
-      ) {
-        matchPerMin = beat.beatPerMin <= Number(filterBeatPerMinMax);
-      }
-      return matchName && matchKey && matchProducer && matchDate && matchPerMin;
-    });
-  }, [
-    filterBeatName,
-    filterBeatKey,
-    filterBeatProducer,
-    filterBeatDate,
-    filterBeatPerMinMin,
-    filterBeatPerMinMax,
-  ]);
+const filteredBeats = useMemo(() => {
+  const filtered = beatsData.filter((beat: BeatData) => {
+    const matchName = beat.beatName.toLowerCase().includes(filterBeatName.toLowerCase());
+    const matchKey = beat.beatKey.toLowerCase().includes(filterBeatKey.toLowerCase());
+    const matchProducer = beat.beatProducer.toLowerCase().includes(filterBeatProducer.toLowerCase());
+    const matchDate = beat.beatDate.toLowerCase().includes(filterBeatDate.toLowerCase());
+    let matchPerMin = true;
+    if (filterBeatPerMinMin !== "" && beat.beatPerMin !== null) {
+      matchPerMin = beat.beatPerMin >= Number(filterBeatPerMinMin);
+    }
+    if (matchPerMin && filterBeatPerMinMax !== "" && beat.beatPerMin !== null) {
+      matchPerMin = beat.beatPerMin <= Number(filterBeatPerMinMax);
+    }
+    return matchName && matchKey && matchProducer && matchDate && matchPerMin;
+  });
+  return filtered.slice().sort((a, b) => {
+    const yearA = parseInt(a.beatDate.match(/\d{4}/)?.[0] || "0", 10);
+    const yearB = parseInt(b.beatDate.match(/\d{4}/)?.[0] || "0", 10);
+    return yearB - yearA; // descending order: most recent first
+  });
+}, [
+  filterBeatName,
+  filterBeatKey,
+  filterBeatProducer,
+  filterBeatDate,
+  filterBeatPerMinMin,
+  filterBeatPerMinMax,
+]);
+
 
   // Pagination logic
   const totalBeats = filteredBeats.length;
   const totalPages =
-    beatsPerPage === "all"
-      ? 1
-      : Math.ceil(totalBeats / (beatsPerPage as number));
+    beatsPerPage === "all" ? 1 : Math.ceil(totalBeats / (beatsPerPage as number));
   const currentBeats =
     beatsPerPage === "all"
       ? filteredBeats
@@ -107,23 +101,43 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
   };
 
   return (
-    <div className="beats-list-container w-full min-h-screen mt-10 p-4 relative bg-black bg-opacity-80 text-white">
-      <h1 className="text-2xl md:text-4xl font-bold text-center mb-2">
-        Beats Available
-      </h1>
-      {/* Filter Dropdown Toggle */}
-      <div className="flex justify-center mb-4">
+    <div className="beats-list-container w-full h-screen p-4 bg-black bg-opacity-80 text-white flex flex-col">
+      <h1 className="text-2xl md:text-4xl font-bold text-center mt-10">Beats Available</h1>
+      
+      {/* Top Row: Filter toggle, Beats tab, and Audio Visualizer tab */}
+      <div className="flex justify-around items-center my-2">
         <button
           onClick={() => setShowFilters((prev) => !prev)}
-          className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-800 hover:from-indigo-700 hover:via-blue-700 hover:to-indigo-900 transition-colors duration-300 px-4 py-2 rounded"
+          className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-800 hover:from-indigo-700 hover:via-blue-700 hover:to-indigo-900 transition-colors duration-300 px-3 py-2 rounded text-sm"
         >
           <FaSlidersH />
-          <span className="text-sm font-medium">Filters</span>
+          <span>Filters</span>
+        </button>
+        <button
+          onClick={() => onTabChange("beats")}
+          className={`px-3 py-2 rounded text-sm ${
+            !isBeatVisualizer
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
+        >
+          Beats For Sale
+        </button>
+        <button
+          onClick={() => onTabChange("visualizer")}
+          className={`px-3 py-2 rounded text-sm ${
+            isBeatVisualizer
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
+        >
+          Audio Visualizer
         </button>
       </div>
+      
       {/* Filter Dropdown Content */}
       {showFilters && (
-        <div className="filters grid grid-cols-1 md:grid-cols-3 gap-2 mb-4 p-2 border border-gray-700 rounded bg-gray-900">
+        <div className="filters grid grid-cols-1 md:grid-cols-3 gap-2 mb-2 p-2 border border-gray-700 rounded bg-gray-900">
           <input
             type="text"
             placeholder="Beat Name"
@@ -191,49 +205,48 @@ const BeatsList: React.FC<BeatsListProps> = ({ onBeatSelect }) => {
           </div>
         </div>
       )}
-      {/* Beats list */}
-      <div
-        className="beats-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700"
-        style={{ maxHeight: "70vh" }}
-      >
-        {currentBeats.map((beat, index) => (
-          <div
-            key={index}
-            className="beat-item bg-gradient-to-br from-indigo-900 via-blue-900 to-black p-4 rounded-lg flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 hover:shadow-[0_0_10px_2px_rgba(75,0,130,0.8)] cursor-pointer"
-            onClick={() => onBeatSelect(beat.audioFile)}
-          >
-            {getBeatIcon(beat)}
-            <div>
-              <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600">
-                {beat.beatName}
-              </h2>
-              <p className="text-sm">Key: {beat.beatKey || "N/A"}</p>
-              <p className="text-sm">Producer: {beat.beatProducer}</p>
-              <p className="text-sm">Date: {beat.beatDate}</p>
-              <p className="text-sm">BPM: {beat.beatPerMin || "N/A"}</p>
+      
+      {/* Scrollable Beats Content */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {currentBeats.map((beat, index) => (
+            <div
+              key={index}
+              className="beat-item bg-gradient-to-br from-indigo-900 via-blue-900 to-black p-4 rounded-lg flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 hover:shadow-[0_0_10px_2px_rgba(75,0,130,0.8)] cursor-pointer"
+              onClick={() => onBeatSelect(beat.audioFile)}
+            >
+              {getBeatIcon(beat)}
+              <div>
+                <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600">
+                  {beat.beatName}
+                </h2>
+                <p className="text-sm">Key: {beat.beatKey || "N/A"}</p>
+                <p className="text-sm">Producer: {beat.beatProducer}</p>
+                <p className="text-sm">Date: {beat.beatDate}</p>
+                <p className="text-sm">BPM: {beat.beatPerMin || "N/A"}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-      {/* Pagination */}
+      
+      {/* Fixed Pagination at Bottom */}
       {beatsPerPage !== "all" && totalPages > 1 && (
-        <div className="pagination mt-6 flex justify-center space-x-4">
+        <div className="fixed bottom-0 left-0 w-full flex justify-center items-center p-2 bg-black bg-opacity-80">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-900 text-white disabled:opacity-50"
+            className="px-4 py-2 rounded bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-900 text-white disabled:opacity-50 text-sm"
           >
             Previous
           </button>
-          <span className="text-white text-sm">
+          <span className="text-white text-sm mx-2">
             Page {currentPage} of {totalPages}
           </span>
           <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-900 text-white disabled:opacity-50"
+            className="px-4 py-2 rounded bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-900 text-white disabled:opacity-50 text-sm"
           >
             Next
           </button>
