@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { createNoise2D, createNoise3D } from "simplex-noise";
 import * as THREE from "three";
 
+/* ====================================================================
+   Type Definitions
+==================================================================== */
 type VisualizerOneProps = {
   audioUrl: string;
   isPaused: boolean;
@@ -13,72 +16,82 @@ type VisualizerOneProps = {
 type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
 type ColorMode = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
 
-// Initialize noise functions
+/* ====================================================================
+   Initialize Noise Functions
+==================================================================== */
 const noise2D = createNoise2D();
 const noise3D = createNoise3D();
 
-// --- Shared audio objects ---
-// (Replace these with your useStore hook if desired)
+/* ====================================================================
+   Shared Audio Objects
+   (You can replace these with your useStore hook if desired.)
+==================================================================== */
 let sharedAudioElement: HTMLAudioElement | null = null;
 let sharedAudioContext: AudioContext | null = null;
 let sharedAnalyser: AnalyserNode | null = null;
 
+/* ====================================================================
+   VisualizerOneScene Component
+   This component creates the scene, camera, and all 3D objects.
+==================================================================== */
 function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
   console.log("VisualizerOne active");
+
+  /* ------------------------------------------------------------------
+     Mesh and Scene References
+  ------------------------------------------------------------------ */
   const groupRef = useRef<THREE.Group>(null);
-  const ballRef =
-    useRef<THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>>(
-      null,
-    );
-  const plane1Ref =
-    useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
-  const plane2Ref =
-    useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
+  // Note: Explicitly casting the ball mesh geometry to THREE.IcosahedronGeometry
+  const ballRef = useRef<THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>>(null);
+  // Casting plane geometries to THREE.PlaneGeometry for type correctness
+  const plane1Ref = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
+  const plane2Ref = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
+
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+
   const sceneRef = useRef<THREE.Scene>(new THREE.Scene());
   const cameraRef = useRef<THREE.PerspectiveCamera>(
     new THREE.PerspectiveCamera(
       45,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000,
-    ),
+      1000
+    )
   );
   const rendererRef = useRef<THREE.WebGLRenderer>(
-    new THREE.WebGLRenderer({ alpha: true, antialias: true }),
+    new THREE.WebGLRenderer({ alpha: true, antialias: true })
   );
-  const [renderingMode, setRenderingMode] =
-    useState<RenderingMode>("wireframe");
+
+  const [renderingMode, setRenderingMode] = useState<RenderingMode>("wireframe");
   const [colorMode, setColorMode] = useState<ColorMode>("default");
 
+  /* ------------------------------------------------------------------
+     Shared Audio and Scene Setup Effect
+  ------------------------------------------------------------------ */
   useEffect(() => {
-    // Use shared audio objects so that they persist across visualizer switches.
+    /* ---------- Shared Audio Setup ---------- */
     if (!sharedAudioElement) {
-      // Create new shared audio objects if they don't exist.
       sharedAudioElement = new Audio(audioUrl);
       sharedAudioElement.crossOrigin = "anonymous";
       sharedAudioElement.loop = true;
+
       sharedAudioContext = new AudioContext();
-      const src =
-        sharedAudioContext.createMediaElementSource(sharedAudioElement);
+      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
       sharedAnalyser = sharedAudioContext.createAnalyser();
       sharedAnalyser.fftSize = 512;
       src.connect(sharedAnalyser);
       sharedAnalyser.connect(sharedAudioContext.destination);
-    } else {
-      // If already created, update the source if a new file is uploaded.
-      if (sharedAudioElement.src !== audioUrl) {
-        sharedAudioElement.src = audioUrl;
-      }
+    } else if (sharedAudioElement.src !== audioUrl) {
+      // Update source if a new audio file is provided.
+      sharedAudioElement.src = audioUrl;
     }
-    // Assign shared objects to our local refs.
+
     audioRef.current = sharedAudioElement;
     audioContextRef.current = sharedAudioContext;
     analyserRef.current = sharedAnalyser;
 
-    // Attempt to play or pause based on isPaused.
     const tryPlay = async () => {
       if (isPaused) {
         sharedAudioElement?.pause();
@@ -93,9 +106,9 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
         }
       }
     };
-    tryPlay();
+    void tryPlay();
 
-    // THREE.js scene setup
+    /* ---------- THREE.js Scene Setup ---------- */
     const scene = sceneRef.current;
     const camera = cameraRef.current;
     const group = groupRef.current || new THREE.Group();
@@ -105,60 +118,69 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     camera.position.set(0, 0, 100);
     camera.lookAt(scene.position);
 
-    const planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
+    // Create a plane geometry and explicitly cast it as THREE.PlaneGeometry
+    const planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20) as THREE.PlaneGeometry;
     const planeMaterial = new THREE.MeshLambertMaterial({
       color: 0x6904ce,
       side: THREE.DoubleSide,
       wireframe: true,
     });
 
+    // Create plane1 mesh
     const plane1 = new THREE.Mesh(planeGeometry, planeMaterial);
     plane1.rotation.x = -0.5 * Math.PI;
     plane1.position.set(0, 30, 0);
     group.add(plane1);
     plane1Ref.current = plane1;
 
+    // Create plane2 mesh
     const plane2 = new THREE.Mesh(planeGeometry, planeMaterial);
     plane2.rotation.x = -0.5 * Math.PI;
     plane2.position.set(0, -30, 0);
     group.add(plane2);
     plane2Ref.current = plane2;
 
-    const icosahedronGeometry = new THREE.IcosahedronGeometry(10, 4);
-    const lambertMaterial = new THREE.MeshLambertMaterial({
+    // Create the ball (icosahedron) mesh
+    const ballGeometry = new THREE.IcosahedronGeometry(10, 4) as THREE.IcosahedronGeometry;
+    const ballMaterial = new THREE.MeshLambertMaterial({
       color: 0xff00ee,
       wireframe: true,
     });
-
-    const ball = new THREE.Mesh(icosahedronGeometry, lambertMaterial);
-    ball.position.set(0, 0, 0);
+    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
     group.add(ball);
     ballRef.current = ball;
 
-    const ambientLight = new THREE.AmbientLight(0xaaaaaa);
-    scene.add(ambientLight);
+    // Add ambient and spotlight to the scene
+    const ambient = new THREE.AmbientLight(0xaaaaaa);
+    scene.add(ambient);
 
-    const spotLight = new THREE.SpotLight(0xffffff);
-    spotLight.intensity = 0.9;
-    spotLight.position.set(-10, 40, 20);
-    spotLight.lookAt(ball.position);
-    spotLight.castShadow = true;
-    scene.add(spotLight);
+    const spot = new THREE.SpotLight(0xffffff, 0.9);
+    spot.position.set(-10, 40, 20);
+    spot.lookAt(ball.position);
+    spot.castShadow = true;
+    scene.add(spot);
 
+    /* ---------- Resize Handling ---------- */
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       rendererRef.current.setSize(window.innerWidth, window.innerHeight);
     };
-    window.addEventListener("resize", handleResize, false);
+    window.addEventListener("resize", handleResize);
 
+    /* ---------- Cleanup Function ---------- */
     return () => {
       window.removeEventListener("resize", handleResize);
-      // Note: We intentionally do not clean up the shared audio here so that the uploaded file persists.
+      if (sharedAudioElement) {
+        sharedAudioElement.pause();
+        sharedAudioElement.currentTime = 0;
+      }
     };
   }, [audioUrl, isPaused]);
 
-  // Handle pause/resume after initial creation.
+  /* ------------------------------------------------------------------
+     Handle Pause/Resume Updates
+  ------------------------------------------------------------------ */
   useEffect(() => {
     const audio = audioRef.current;
     const audioContext = audioContextRef.current;
@@ -179,15 +201,19 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     }
   }, [isPaused]);
 
-  // Preserve your FFT code and other computations.
+  /* ------------------------------------------------------------------
+     Helper Functions for FFT Processing & Geometry Modulation
+  ------------------------------------------------------------------ */
   const makeRoughBall = (
     mesh: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>,
     bassFr: number,
-    treFr: number,
+    treFr: number
   ) => {
     if (!mesh) return;
     const vertices = mesh.geometry.attributes.position.array as Float32Array;
-    const offset = mesh.geometry.parameters.radius as number;
+    // Cast geometry to THREE.IcosahedronGeometry to access the 'parameters' property
+    const ballGeom = mesh.geometry as THREE.IcosahedronGeometry;
+    const offset = ballGeom.parameters.radius as number;
     const amp = 7;
     const time = window.performance.now();
     const rf = 0.00001;
@@ -196,7 +222,7 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
       const vertex = new THREE.Vector3(
         vertices[i],
         vertices[i + 1],
-        vertices[i + 2],
+        vertices[i + 2]
       ).normalize();
       const distance =
         offset +
@@ -204,7 +230,7 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
         noise3D(
           vertex.x + time * rf * 7,
           vertex.y + time * rf * 8,
-          vertex.z + time * rf * 9,
+          vertex.z + time * rf * 9
         ) *
           amp *
           treFr;
@@ -213,17 +239,17 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
       vertices[i + 1] = vertex.y;
       vertices[i + 2] = vertex.z;
     }
-
     mesh.geometry.attributes.position.needsUpdate = true;
     mesh.geometry.computeVertexNormals();
   };
 
   const makeRoughGround = (
     mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>,
-    distortionFr: number,
+    distortionFr: number
   ) => {
     if (!mesh) return;
     const vertices = mesh.geometry.attributes.position.array as Float32Array;
+    // We explicitly cast geometry to THREE.PlaneGeometry if needed but we do not store it.
     const amp = 2;
     const time = Date.now();
 
@@ -236,12 +262,11 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
         amp;
       vertices[i + 2] = distance;
     }
-
     mesh.geometry.attributes.position.needsUpdate = true;
     mesh.geometry.computeVertexNormals();
   };
 
-  const fractionate = (val: number, minVal: number, maxVal: number) => {
+  const fractionate = (val: number, minVal: number, maxVal: number): number => {
     return (val - minVal) / (maxVal - minVal);
   };
 
@@ -250,22 +275,25 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     minVal: number,
     maxVal: number,
     outMin: number,
-    outMax: number,
-  ) => {
+    outMax: number
+  ): number => {
     const fr = fractionate(val, minVal, maxVal);
     const delta = outMax - outMin;
     return outMin + fr * delta;
   };
 
-  const avg = (arr: Uint8Array) => {
+  const avg = (arr: Uint8Array): number => {
     const total = Array.from(arr).reduce((sum, b) => sum + b, 0);
     return total / arr.length;
   };
 
-  const max = (arr: Uint8Array) => {
+  const max = (arr: Uint8Array): number => {
     return Array.from(arr).reduce((a, b) => Math.max(a, b), 0);
   };
 
+  /* ------------------------------------------------------------------
+     Render Loop (useFrame)
+  ------------------------------------------------------------------ */
   useFrame(() => {
     if (
       !analyserRef.current ||
@@ -282,11 +310,11 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
 
     const lowerHalfArray = dataArray.slice(
       0,
-      Math.floor(dataArray.length / 2) - 1,
+      Math.floor(dataArray.length / 2) - 1
     );
     const upperHalfArray = dataArray.slice(
       Math.floor(dataArray.length / 2) - 1,
-      dataArray.length - 1,
+      dataArray.length - 1
     );
 
     const overallAvg = avg(dataArray);
@@ -305,25 +333,23 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     makeRoughBall(
       ballRef.current,
       modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8),
-      modulate(upperAvgFr, 0, 1, 0, 4),
+      modulate(upperAvgFr, 0, 1, 0, 4)
     );
 
     groupRef.current.rotation.y += 0.005;
 
-    // Update materials based on rendering mode and color mode.
+    // Update materials based on rendering mode and color mode
     const ballMaterial = ballRef.current.material as THREE.MeshLambertMaterial;
-    const plane1Material = plane1Ref.current
-      .material as THREE.MeshLambertMaterial;
-    const plane2Material = plane2Ref.current
-      .material as THREE.MeshLambertMaterial;
+    const plane1Material = plane1Ref.current.material as THREE.MeshLambertMaterial;
+    const plane2Material = plane2Ref.current.material as THREE.MeshLambertMaterial;
 
     const baseColor = new THREE.Color(0x6904ce);
     const ballBaseColor = new THREE.Color(0xff00ee);
 
-    [ballMaterial, plane1Material, plane2Material].forEach((material) => {
-      material.wireframe = renderingMode === "wireframe";
-      material.transparent = renderingMode === "transparent";
-      material.opacity = renderingMode === "transparent" ? 0.5 : 1;
+    [ballMaterial, plane1Material, plane2Material].forEach((mat) => {
+      mat.wireframe = renderingMode === "wireframe";
+      mat.transparent = renderingMode === "transparent";
+      mat.opacity = renderingMode === "transparent" ? 0.5 : 1;
     });
 
     if (renderingMode === "rainbow") {
@@ -350,6 +376,9 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
     }
   });
 
+  /* ------------------------------------------------------------------
+     Render JSX
+  ------------------------------------------------------------------ */
   return (
     <>
       <scene ref={sceneRef}>
@@ -364,11 +393,7 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
               side={THREE.DoubleSide}
             />
           </mesh>
-          <mesh
-            ref={plane2Ref}
-            rotation-x={-Math.PI / 2}
-            position={[0, -30, 0]}
-          >
+          <mesh ref={plane2Ref} rotation-x={-Math.PI / 2} position={[0, -30, 0]}>
             <planeGeometry args={[800, 800, 20, 20]} />
             <meshLambertMaterial
               color={0x6904ce}
@@ -430,9 +455,14 @@ function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
   );
 }
 
-export default function VisualizerOne({
-  audioUrl,
-  isPaused,
-}: VisualizerOneProps) {
+/* ====================================================================
+   Exported VisualizerOne Component
+   (This simply wraps VisualizerOneScene.)
+==================================================================== */
+export default function VisualizerOne({ audioUrl, isPaused }: VisualizerOneProps) {
   return <VisualizerOneScene audioUrl={audioUrl} isPaused={isPaused} />;
 }
+
+/* ====================================================================
+   End of VisualizerOne Component Code
+==================================================================== */

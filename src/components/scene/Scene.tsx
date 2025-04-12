@@ -1,29 +1,23 @@
 "use client";
 
-import AntiHeroLogo from "@/components/models/AntiHeroMain";
-import { GalaxyModel } from "@/components/models/Galaxy";
-import { GalaxySkyboxModel } from "@/components/models/GalaxySkybox";
-import { NeptuneModel } from "@/components/models/Neptune";
-import AntiHero3D from "@/components/models/text3D/AntiHero3D";
 import BeatAudioVisualizerScene from "@/components/scene/BeatAudioVisualizerScene";
 import { useVisualizer } from "@/context/VisualizerContext";
 import { Route, useRouteStore } from "@/store/useRouteStore";
 import { a, useSpring } from "@react-spring/three";
 import {
-  MeshReflectorMaterial,
   OrbitControls,
   Sparkles,
 } from "@react-three/drei";
+
 import { useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, GodRays } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import EnvironmentLights from "../effects/EnvironmentLights";
+import AntiheroScene from "../models/AntiherosScene";
 
-// Define an animated group so that the "group" element is correctly typed.
 const AnimatedGroup = a("group");
 
-type SceneProps = {
+export type SceneProps = React.ComponentPropsWithoutRef<"group"> & {
   onLoaded?: () => void;
   isMobile?: boolean;
   onSelectRoute: (route: Route) => void;
@@ -32,23 +26,16 @@ type SceneProps = {
   visualizerMode?: boolean;
   onBeatGoBack?: () => void;
   onBeatShuffle?: () => void;
+  hoveredRoute?: Route | null;
+  environmentMode?: "day" | "night";
 };
 
-function AnimatedScale({
-  visible,
-  children,
-}: {
-  visible: boolean;
-  children: React.ReactNode;
-}) {
+/* ---------------- helper components (unchanged) ---------------- */
+function AnimatedScale({ visible, children }: { visible: boolean; children: React.ReactNode }) {
   const groupRef = useRef<THREE.Group>(null);
   useEffect(() => {
     if (groupRef.current) {
-      groupRef.current.scale.set(
-        visible ? 0 : 1,
-        visible ? 0 : 1,
-        visible ? 0 : 1,
-      );
+      groupRef.current.scale.set(visible ? 0 : 1, visible ? 0 : 1, visible ? 0 : 1);
     }
   }, [visible]);
   useFrame((_, delta) => {
@@ -62,47 +49,13 @@ function AnimatedScale({
   return <group ref={groupRef}>{children}</group>;
 }
 
-function FadingGalaxySkybox({ specialEffect }: { specialEffect?: boolean }) {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.traverse((child) => {
-        if (child instanceof THREE.Mesh && child.material) {
-          child.material.transparent = true;
-          child.material.opacity = specialEffect
-            ? THREE.MathUtils.lerp(child.material.opacity ?? 1, 0, delta * 0.2)
-            : THREE.MathUtils.lerp(child.material.opacity ?? 0, 1, delta * 0.2);
-        }
-      });
-    }
-  });
-  return (
-    <group ref={groupRef}>
-      <GalaxySkyboxModel scale={[500, 500, 500]} />
-    </group>
-  );
-}
 
-function NeptuneModelAnimated(
-  props: Omit<React.ComponentProps<typeof NeptuneModel>, "scale">,
-) {
-  return (
-    <group>
-      <NeptuneModel {...props} />
-    </group>
-  );
-}
-
-type TransmissiveSphereProps = {
-  sphereRef: React.MutableRefObject<THREE.Mesh | null>;
-};
-
+/* ------------- your emissive/transmissive spheres (unchanged) ------------- */
+type TransmissiveSphereProps = { sphereRef: React.MutableRefObject<THREE.Mesh | null> };
 function TransmissiveSphere({ sphereRef }: TransmissiveSphereProps) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.position.y = 80 + Math.sin(state.clock.elapsedTime) * 2;
-    }
+    if (groupRef.current) groupRef.current.position.y = 80 + Math.sin(state.clock.elapsedTime) * 2;
   });
   return (
     <group ref={groupRef} position={[0, 80, -100]}>
@@ -136,13 +89,8 @@ function TransmissiveSphere({ sphereRef }: TransmissiveSphereProps) {
   );
 }
 
-type CrescentMoonTransmissiveProps = {
-  moonRef?: React.MutableRefObject<THREE.Mesh | null>;
-};
-
-function CrescentMoonTransmissive({
-  moonRef,
-}: CrescentMoonTransmissiveProps = {}) {
+type CrescentMoonTransmissiveProps = { moonRef?: React.MutableRefObject<THREE.Mesh | null> };
+function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {}) {
   const material = new THREE.MeshPhysicalMaterial({
     emissive: "#4b0082",
     emissiveIntensity: 2,
@@ -153,27 +101,23 @@ function CrescentMoonTransmissive({
     transparent: true,
     opacity: 0.8,
   });
-
   material.onBeforeCompile = (shader) => {
     shader.uniforms.lightDir = { value: new THREE.Vector3(1, 0, 0) };
     shader.uniforms.threshold = { value: 0.3 };
     shader.fragmentShader =
-      `
-      uniform vec3 lightDir;
-      uniform float threshold;
-      ` + shader.fragmentShader;
+      `uniform vec3 lightDir;
+       uniform float threshold;` + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace(
       `#include <dithering_fragment>`,
       `
         float illumination = dot(normalize(vNormal), normalize(lightDir));
-        if(illumination < threshold) {
-          gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        if(illumination < threshold){
+          gl_FragColor = vec4(0.0,0.0,0.0,1.0);
         }
         #include <dithering_fragment>
-      `,
+      `
     );
   };
-
   return (
     <group position={[0, 20, 200]}>
       <mesh ref={moonRef}>
@@ -198,86 +142,57 @@ function CrescentMoonTransmissive({
 }
 
 function EnvironmentParticles({ isMobile = false }: { isMobile?: boolean }) {
-  // Adjust sparkle counts based on device type for performance
   const sparkleCount1 = isMobile ? 100 : 250;
   const sparkleCount2 = isMobile ? 100 : 250;
   const sparkleCount3 = isMobile ? 50 : 150;
   const sparkleCount4 = isMobile ? 30 : 100;
   return (
     <group>
-      <Sparkles
-        count={sparkleCount1}
-        scale={[300, 300, 300]}
-        size={20}
-        speed={0.5}
-        color="#4b0082"
-      />
-      <Sparkles
-        count={sparkleCount2}
-        scale={[300, 300, 300]}
-        size={20}
-        speed={0.5}
-        color="yellow"
-      />
-      <Sparkles
-        count={sparkleCount3}
-        scale={[300, 300, 300]}
-        size={20}
-        speed={0.5}
-        color="#00008B"
-      />
-      <Sparkles
-        count={sparkleCount4}
-        scale={[300, 300, 300]}
-        size={20}
-        speed={0.5}
-        color="red"
-      />
+      <Sparkles count={sparkleCount1} scale={[300, 300, 300]} size={20} speed={0.5} color="#4b0082" />
+      <Sparkles count={sparkleCount2} scale={[300, 300, 300]} size={20} speed={0.5} color="yellow" />
+      <Sparkles count={sparkleCount3} scale={[300, 300, 300]} size={20} speed={0.5} color="#00008B" />
+      <Sparkles count={sparkleCount4} scale={[300, 300, 300]} size={20} speed={0.5} color="red" />
     </group>
   );
 }
 
+/* ======================================================================== */
+/*                              MAIN SCENE                                */
+/* ======================================================================== */
 export default function Scene({
   onLoaded,
   onSelectRoute,
-  specialEffect = false,
   activeRoute,
   visualizerMode = false,
   onBeatGoBack,
   onBeatShuffle,
   isMobile = false,
+  hoveredRoute = null,
+  environmentMode = "night",
+  ...props
 }: SceneProps) {
   const { camera, scene } = useThree();
   const { isBeatVisualizer } = useVisualizer();
   const audioUrlForBeat = useRouteStore((state) => state.audioUrlForBeat);
   const showVisualizer = visualizerMode || isBeatVisualizer;
+
+  /* Camera animation (unchanged) */
   const animationFinishedRef = useRef(false);
   const elapsedTimeRef = useRef(0);
-  const [markersVisible, setMarkersVisible] = useState(false);
   const sphereRef = useRef<THREE.Mesh | null>(null);
   const crescentMoonRef = useRef<THREE.Mesh | null>(null);
-
-  // Replace the instantaneous scale state with a spring-based scale for smooth transitions.
   const [scaleFactor, setScaleFactor] = useState(1);
-  const { scale } = useSpring({
-    scale: scaleFactor,
-    config: { tension: 170, friction: 26 },
-  });
+  const { scale } = useSpring({ scale: scaleFactor, config: { tension: 170, friction: 26 } });
 
-  // Debounced resize handler to reduce flickering
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
         const width = window.innerWidth;
-        if (width < 768) {
-          setScaleFactor(0.65);
-        } else if (width < 1024) {
-          setScaleFactor(0.85);
-        } else {
-          setScaleFactor(1);
-        }
+        if (width < 768) setScaleFactor(0.65);
+        else if (width < 1024) setScaleFactor(0.85);
+        else setScaleFactor(1);
       }, 100);
     };
     window.addEventListener("resize", handleResize);
@@ -288,13 +203,9 @@ export default function Scene({
     };
   }, []);
 
-  // Memoize camera positions so their references remain constant across renders
-  const initialCameraPosition = useMemo(
-    () => new THREE.Vector3(-100, -50, 100),
-    [],
-  );
-  const targetCameraPosition = useMemo(() => new THREE.Vector3(-5, 0, 40), []);
-  const animationDuration = 1.25;
+  const initialCameraPosition = useMemo(() => new THREE.Vector3(0, 50, 20), []);
+  const targetCameraPosition = useMemo(() => new THREE.Vector3(0, 0, 10), []);
+  const animationDuration = 2;
 
   useEffect(() => {
     if (!showVisualizer) {
@@ -310,50 +221,61 @@ export default function Scene({
         camera.position.copy(targetCameraPosition);
         camera.lookAt(0, 0, 0);
         animationFinishedRef.current = true;
-        setMarkersVisible(true);
-        if (onLoaded) onLoaded();
+        onLoaded?.();
       } else {
         const t = elapsedTimeRef.current / animationDuration;
-        camera.position.lerpVectors(
-          initialCameraPosition,
-          targetCameraPosition,
-          t,
-        );
+        camera.position.lerpVectors(initialCameraPosition, targetCameraPosition, t);
         camera.lookAt(0, 0, 0);
       }
     }
   });
 
-  if (!showVisualizer) {
-    scene.fog = new THREE.FogExp2("#000000", 0.0015);
-  }
+  /* Global Fog */
+  scene.fog = new THREE.FogExp2(environmentMode === "day" ? "#ffffff" : "#000000", 0.0015);
 
-  const antiHeroConfig = {
-    text: "ANTI-HERO",
-    color: "#4210ae",
-    fontSize: 10,
-    fontDepth: 1,
-    uTwistSpeed: 15,
-    uRotateSpeed: 1.5,
-    uTwists: 0.5,
-    uRadius: 20,
-  };
-
+  /* ====================================================================== */
+  /*                           JSX  RETURN                                  */
+  /* ====================================================================== */
   return (
-    <group>
-      {/* Wrap models that need responsive scaling in an animated group */}
+    <group {...props}>
+      {/* ================= ENVIRONMENT MAP & LIGHTS ================= */}
+      <EnvironmentLights />
+      <directionalLight
+        position={[50, 80, 60]}
+        intensity={environmentMode === "day" ? 1.6 : 1.0}
+        color="#ffffff"
+        castShadow
+      />
+      <directionalLight
+        position={[-60, 40, -40]}
+        intensity={environmentMode === "day" ? 0.8 : 0.5}
+        color="#a0c8ff"
+      />
+      <directionalLight
+        position={[-30, 70, 100]}
+        intensity={environmentMode === "day" ? 0.9 : 0.7}
+        color="#ffddb1"
+      />
+      <hemisphereLight
+        color={environmentMode === "day" ? "#ffffe0" : "#222244"}
+        groundColor={environmentMode === "day" ? "#ffffff" : "#000000"}
+        intensity={environmentMode === "day" ? 0.6 : 0.35}
+      />
+
+      {/* ================= ORIGINAL EMISSIVE SPHERE & MOON ================= */}
       <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
         <TransmissiveSphere sphereRef={sphereRef} />
         <CrescentMoonTransmissive moonRef={crescentMoonRef} />
       </AnimatedGroup>
 
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
+      <ambientLight intensity={environmentMode === "day" ? 0.6 : 0.4} />
 
+      {/* ================= PARTICLES ================= */}
       <group position={[0, 100, 0]}>
         <EnvironmentParticles isMobile={isMobile} />
       </group>
 
+      {/* ===== ROUTE‑SPECIFIC CONTENT ===== */}
       {showVisualizer ? (
         <BeatAudioVisualizerScene
           audioUrl={audioUrlForBeat || "/audio/sample-beat.mp3"}
@@ -361,105 +283,27 @@ export default function Scene({
           onShuffle={onBeatShuffle || (() => console.log("Shuffle beat"))}
         />
       ) : (
-        <>
-          {activeRoute === "xaeneptunesworld" ? (
-            <group>
-              <FadingGalaxySkybox specialEffect={specialEffect} />
-              <AnimatedScale visible={activeRoute === "xaeneptunesworld"}>
-                <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
-                  <NeptuneModelAnimated onSelectRoute={onSelectRoute} />
-                </AnimatedGroup>
-              </AnimatedScale>
-              <AnimatedScale visible={activeRoute === "xaeneptunesworld"}>
-                <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
-                  <GalaxyModel />
-                </AnimatedGroup>
-              </AnimatedScale>
-            </group>
-          ) : (
-            <AnimatedScale visible={activeRoute === "home"}>
-              <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
-                <group rotation={[0, Math.PI, 0]}>
-                  <AntiHeroLogo
-                    showMarkers={markersVisible}
-                    onSelectRoute={onSelectRoute}
-                  />
-                </group>
-                <AntiHero3D
-                  config={antiHeroConfig}
-                  showMarkers={markersVisible}
-                  specialEffect={specialEffect}
-                  onSelectRoute={onSelectRoute}
-                  position={[0, -8, 0]}
-                />
-                <directionalLight
-                  intensity={0.8}
-                  position={[50, 50, 50]}
-                  color="#aaaaff"
-                />
-                <ambientLight intensity={0.4} color="#5555aa" />
-              </AnimatedGroup>
-            </AnimatedScale>
-          )}
-        </>
+        <AnimatedScale visible={activeRoute === "home"}>
+          <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
+            <AntiheroScene
+              hoveredRoute={
+                hoveredRoute === "home" || hoveredRoute === "beats-visualizer" ? null : hoveredRoute
+              }
+              showVisualizer={showVisualizer}
+            />
+          </AnimatedGroup>
+        </AnimatedScale>
       )}
 
-      <OrbitControls
+<OrbitControls
         autoRotate
         autoRotateSpeed={0.15}
         zoomSpeed={2}
-        maxDistance={75}
+        maxDistance={isMobile ? 12 : 20}
+        minDistance={isMobile ? 5 : 10}
         minPolarAngle={0}
         maxPolarAngle={Math.PI / 2}
       />
-      {(sphereRef.current || crescentMoonRef.current) && (
-        <EffectComposer>
-          {sphereRef.current ? (
-            <GodRays
-              key="sphere"
-              sun={sphereRef.current}
-              blendFunction={BlendFunction.SCREEN}
-              samples={120}
-              density={1.25}
-              decay={0.93}
-              weight={0.8}
-              exposure={0.2}
-            />
-          ) : (
-            <></>
-          )}
-          {crescentMoonRef.current ? (
-            <GodRays
-              key="crescentMoon"
-              sun={crescentMoonRef.current}
-              blendFunction={BlendFunction.SCREEN}
-              samples={120}
-              density={2.25}
-              decay={0.93}
-              weight={0.8} // less prominent effect for the crescent moon
-              exposure={0.1}
-            />
-          ) : (
-            <></>
-          )}
-        </EffectComposer>
-      )}
-
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -70, 0]}>
-        <planeGeometry args={[10000, 10000]} />
-        <MeshReflectorMaterial
-          blur={isMobile ? [256, 256] : [512, 512]}
-          mixBlur={0.75}
-          mixStrength={0.25}
-          resolution={isMobile ? 512 : 1024}
-          mirror={0.05}
-          minDepthThreshold={0.25}
-          maxDepthThreshold={1}
-          depthScale={50}
-          metalness={0.99}
-          roughness={0.2}
-        />
-      </mesh>
     </group>
   );
 }

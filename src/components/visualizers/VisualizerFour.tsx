@@ -1,15 +1,25 @@
+/* -----------------------------------------------------------------------
+ *  VisualizerFour.tsx  –  Cellular‑Automata + Orbiting‑Shapes visualizer
+ *  (updated: added proper clean‑up so the sharedAudioElement is stopped)
+ * -------------------------------------------------------------------- */
+
 "use client";
+
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-// --- SHARED AUDIO OBJECTS (Global) ---
+/* ────────────────────────────
+ *  Module‑scoped shared audio
+ * ──────────────────────────── */
 let sharedAudioElement: HTMLAudioElement | null = null;
 let sharedAudioContext: AudioContext | null = null;
 let sharedAnalyser: AnalyserNode | null = null;
 
-// 28 total color palettes (8 original + 20 new)
+/* ────────────────────────────
+ *  Color‑palettes (28 total)
+ * ──────────────────────────── */
 const colorPalettes = [
   ["#0077B6", "#00B4D8", "#90E0EF", "#CAF0F8"],
   ["#264653", "#2A9D8F", "#E9C46A", "#F4A261", "#E76F51"],
@@ -19,7 +29,7 @@ const colorPalettes = [
   ["#283618", "#606C38", "#B8B8B8", "#DDA15E", "#BC6C25"],
   ["#03045E", "#0077B6", "#00A6FB", "#B4D2E7", "#F1FAEE"],
   ["#6A040F", "#9D0208", "#D7263D", "#F48C06", "#FFBA08"],
-  // 20 brand-new ones
+  // 20 brand‑new palettes
   ["#2B2D42", "#3A86FF", "#FF006E", "#FB5607", "#FFBE0B"],
   ["#FAF3DD", "#C8D5B9", "#8FC0A9", "#68B0AB", "#4A7C59"],
   ["#0A0908", "#22333B", "#EAE0D5", "#C6AC8F", "#5E503F"],
@@ -42,36 +52,27 @@ const colorPalettes = [
   ["#110B11", "#2C2A4A", "#801BF2", "#B726FF", "#F5B8FF"],
 ];
 
-// --- Helper Functions ---
+/* ────────────────────────────
+ *  CA helper utilities
+ * ──────────────────────────── */
 function setRules(ruleValue: number): number[] {
-  // Convert "ruleValue" (e.g. 90) to binary => array of bits
-  const ruleSet = ruleValue.toString(2).padStart(8, "0");
-  return ruleSet.split("").map(Number);
+  return ruleValue.toString(2).padStart(8, "0").split("").map(Number);
+}
+function calculateState(ruleSet: number[], l: number, c: number, r: number) {
+  return ruleSet[7 - ((l << 2) | (c << 1) | r)];
 }
 
-function calculateState(
-  ruleSet: number[],
-  left: number,
-  current: number,
-  right: number,
-): number {
-  // Build a 3-bit number from left/current/right bits
-  const neighborhood = (left << 2) | (current << 1) | right;
-  // 7 - neighborhood indexes into ruleSet
-  const index = 7 - neighborhood;
-  return ruleSet[index];
-}
-
-// --- Interfaces ---
+/* ────────────────────────────
+ *  TS interfaces
+ * ──────────────────────────── */
 interface OrbitingShape {
-  orbitAngle: number; // orbit position
-  orbitRadius: number; // distance from main shape
-  orbitSpeed: number; // revolve speed
+  orbitAngle: number;
+  orbitRadius: number;
+  orbitSpeed: number;
   shapeGeo: "sphere" | "cone" | "cylinder" | "box";
   color: THREE.Color;
   scale: THREE.Vector3;
 }
-
 interface CellData {
   color: THREE.Color;
   state: number;
@@ -79,83 +80,80 @@ interface CellData {
   targetScale: THREE.Vector3;
   targetColor: THREE.Color;
   shapeSize: number;
-  orbits: OrbitingShape[]; // sub-shapes orbiting the main shape
+  orbits: OrbitingShape[];
 }
-
 interface CellProps {
   data: CellData;
 }
 
+/* ────────────────────────────
+ *  Re‑usable Cell component
+ * ──────────────────────────── */
 function Cell({ data }: CellProps) {
   const groupRef = useRef<THREE.Group>(null);
   const mainMeshRef = useRef<THREE.Mesh>(null);
 
-  // Memoize each orbit shape’s geometry to avoid re-creating geometry on every frame
+  // memoised orbit geometries
   const orbitGeometries = useMemo(() => {
-    // For performance, pre-create possible geometry you might use
-    const sphereGeo = new THREE.SphereGeometry(0.5, 16, 16);
-    const coneGeo = new THREE.ConeGeometry(0.5, 1, 16);
-    const cylinderGeo = new THREE.CylinderGeometry(0.5, 0.5, 1, 16);
-    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-
     return {
-      sphere: sphereGeo,
-      cone: coneGeo,
-      cylinder: cylinderGeo,
-      box: boxGeo,
+      sphere: new THREE.SphereGeometry(0.5, 16, 16),
+      cone: new THREE.ConeGeometry(0.5, 1, 16),
+      cylinder: new THREE.CylinderGeometry(0.5, 0.5, 1, 16),
+      box: new THREE.BoxGeometry(1, 1, 1),
     };
   }, []);
 
-  // Animate each frame (Three.js style)
-  useFrame((_state, delta) => {
+  // per‑frame animation
+  useFrame((_, delta) => {
     if (!groupRef.current || !mainMeshRef.current) return;
-    const group = groupRef.current;
     const mainMesh = mainMeshRef.current;
 
-    // Interpolate color and scale for the main shape
+    // Lerp colour & scale of main shape
     mainMesh.scale.lerp(data.targetScale, 0.1);
-    const mat = mainMesh.material as THREE.MeshStandardMaterial;
-    mat.color.lerp(data.color, 0.1);
+    (mainMesh.material as THREE.MeshStandardMaterial).color.lerp(
+      data.color,
+      0.1,
+    );
 
-    // Animate orbiting shapes
+    // Animate orbiters
     data.orbits.forEach((orbit, idx) => {
-      const child = group.children[idx + 1] as THREE.Mesh; // +1 because the first child is the main shape
-      if (!child) return;
-
+      const child = groupRef.current!.children[idx + 1] as THREE.Mesh;
       orbit.orbitAngle += orbit.orbitSpeed * delta;
-      const x = Math.cos(orbit.orbitAngle) * orbit.orbitRadius;
-      const z = Math.sin(orbit.orbitAngle) * orbit.orbitRadius;
-      child.position.set(x, 0, z);
-
-      // Lerp color & scale
-      const childMat = child.material as THREE.MeshStandardMaterial;
-      childMat.color.lerp(orbit.color, 0.1);
+      child.position.set(
+        Math.cos(orbit.orbitAngle) * orbit.orbitRadius,
+        0,
+        Math.sin(orbit.orbitAngle) * orbit.orbitRadius,
+      );
+      (child.material as THREE.MeshStandardMaterial).color.lerp(
+        orbit.color,
+        0.1,
+      );
       child.scale.lerp(orbit.scale, 0.1);
     });
   });
 
+  /* JSX */
   return (
     <group ref={groupRef} position={data.position}>
-      {/* Main shape */}
+      {/* central shape */}
       <mesh ref={mainMeshRef}>
         <boxGeometry args={[data.shapeSize, data.shapeSize, data.shapeSize]} />
         <meshStandardMaterial color={data.color} />
       </mesh>
 
-      {/* Orbiting shapes */}
-      {data.orbits.map((orbit, idx) => {
-        // Switch geometry from the memo
-        const geometry = orbitGeometries[orbit.shapeGeo];
-        return (
-          <mesh key={idx} geometry={geometry}>
-            <meshStandardMaterial color={orbit.color} />
-          </mesh>
-        );
-      })}
+      {/* orbiters */}
+      {data.orbits.map((o, i) => (
+        <mesh key={i} geometry={orbitGeometries[o.shapeGeo]}>
+          <meshStandardMaterial color={o.color} />
+        </mesh>
+      ))}
     </group>
   );
 }
 
+/* ────────────────────────────
+ *  VisualizerFour main component
+ * ──────────────────────────── */
 interface VisualizerFourProps {
   audioUrl: string;
   isPaused: boolean;
@@ -163,76 +161,51 @@ interface VisualizerFourProps {
 
 const CELL_SIZE = 5;
 const INITIAL_RULE = 45;
+const GRID_W = 3;
+const GRID_H = 10;
 
-// Grid sizes for your CA
-const MY_GRID_WIDTH = 3;
-const MY_GRID_HEIGHT = 10;
-
-export default function VisualizerFour({
-  audioUrl,
-  isPaused,
-}: VisualizerFourProps) {
-  // The “Rule 90” or whichever rule you choose
+export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourProps) {
+  /* ─────────── state & refs ─────────── */
   const [ruleSet] = useState<number[]>(() => setRules(INITIAL_RULE));
   const [generation, setGeneration] = useState(0);
 
-  // Current color palette and rendering settings
   const [currentPalette, setCurrentPalette] = useState<THREE.Color[]>(
     colorPalettes[0].map((c) => new THREE.Color(c)),
   );
-
   const [renderingMode, setRenderingMode] = useState<
     "solid" | "wireframe" | "rainbow" | "transparent"
   >("solid");
-
   const [colorMode, setColorMode] = useState<
     "default" | "audioAmplitude" | "frequencyBased" | "rainbow"
   >("default");
-
-  // The “intensity” multiplier for FFT-based effects:
   const [fftIntensity, setFftIntensity] = useState(0.5);
 
-  // Instead of storing audio data in React state, store it in a ref
-  // so we don’t re-render the entire component on every frame.
   const audioDataRef = useRef<Uint8Array | null>(null);
-
-  // Keep references to the shared audio
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnalyserRef = useRef<AnalyserNode | null>(null);
 
-  // Build initial cells in a memo, so they don’t get re-generated all the time
-  const memoizedInitialCells = useMemo<CellData[]>(() => {
+  /* ─────────── grid initialisation ─────────── */
+  const initialCells = useMemo<CellData[]>(() => {
     const arr: CellData[] = [];
-    for (let row = 0; row < MY_GRID_HEIGHT; row++) {
-      for (let col = 0; col < MY_GRID_WIDTH; col++) {
-        const randomIndex = Math.floor(Math.random() * currentPalette.length);
-
-        // Size from 0.5..4
+    for (let row = 0; row < GRID_H; row++) {
+      for (let col = 0; col < GRID_W; col++) {
+        const paletteIndex = Math.floor(Math.random() * currentPalette.length);
         const shapeSize = Math.random() * 3.5 + 0.5;
 
-        // 1..3 orbiting shapes
-        const orbitCount = Math.floor(Math.random() * 3) + 1;
+        // build orbiters
         const orbits: OrbitingShape[] = Array.from(
-          { length: orbitCount },
+          { length: Math.floor(Math.random() * 3) + 1 },
           () => {
-            const orbitShapeChoice: Array<
-              "sphere" | "cone" | "cylinder" | "box"
-            > = ["sphere", "cone", "cylinder", "box"];
-            const shapeGeo =
-              orbitShapeChoice[
-                Math.floor(Math.random() * orbitShapeChoice.length)
-              ];
-
+            const shapes = ["sphere", "cone", "cylinder", "box"] as const;
             return {
               orbitAngle: Math.random() * Math.PI * 2,
               orbitRadius: shapeSize * (0.75 + Math.random() * 1.5),
               orbitSpeed: 0.5 + Math.random() * 1.5,
-              shapeGeo,
-              color:
-                currentPalette[
-                  Math.floor(Math.random() * currentPalette.length)
-                ].clone(),
+              shapeGeo: shapes[Math.floor(Math.random() * shapes.length)],
+              color: currentPalette[
+                Math.floor(Math.random() * currentPalette.length)
+              ].clone(),
               scale: new THREE.Vector3(
                 Math.random() * 1 + 0.3,
                 Math.random() * 1 + 0.3,
@@ -243,15 +216,15 @@ export default function VisualizerFour({
         );
 
         arr.push({
-          color: currentPalette[randomIndex].clone(),
+          color: currentPalette[paletteIndex].clone(),
           state: Math.random() > 0.5 ? 1 : 0,
           position: new THREE.Vector3(
-            (col - MY_GRID_WIDTH / 2) * CELL_SIZE * 2,
+            (col - GRID_W / 2) * CELL_SIZE * 2,
             0,
-            (row - MY_GRID_HEIGHT / 2) * CELL_SIZE * 2,
+            (row - GRID_H / 2) * CELL_SIZE * 2,
           ),
           targetScale: new THREE.Vector3(shapeSize, shapeSize, shapeSize),
-          targetColor: currentPalette[randomIndex].clone(),
+          targetColor: currentPalette[paletteIndex].clone(),
           shapeSize,
           orbits,
         });
@@ -260,234 +233,166 @@ export default function VisualizerFour({
     return arr;
   }, [currentPalette]);
 
-  // Our Cells state
-  const [cells, setCells] = useState<CellData[]>(memoizedInitialCells);
+  const [cells, setCells] = useState<CellData[]>(initialCells);
 
-  // Re-init the grid whenever the palette changes
+  /* Reset grid when palette changes */
   useEffect(() => {
-    setCells(memoizedInitialCells);
+    setCells(initialCells);
     setGeneration(0);
-  }, [memoizedInitialCells]);
+  }, [initialCells]);
 
-  // Basic 1D CA update across each row
+  /* ─────────── CA update helper ─────────── */
   const updateCA = () => {
-    setCells((prevCells) => {
-      if (!prevCells) return [];
-      return prevCells.map((cell, i) => {
-        const col = i % MY_GRID_WIDTH;
-        const row = Math.floor(i / MY_GRID_WIDTH);
+    setCells((prev) =>
+      prev.map((cell, idx) => {
+        const col = idx % GRID_W;
+        const row = Math.floor(idx / GRID_W);
+        const L = prev[row * GRID_W + ((col - 1 + GRID_W) % GRID_W)].state;
+        const R = prev[row * GRID_W + ((col + 1) % GRID_W)].state;
+        const newState = calculateState(ruleSet, L, cell.state, R);
 
-        // Wrap around horizontally
-        const leftIndex =
-          row * MY_GRID_WIDTH + ((col - 1 + MY_GRID_WIDTH) % MY_GRID_WIDTH);
-        const rightIndex = row * MY_GRID_WIDTH + ((col + 1) % MY_GRID_WIDTH);
+        const nextColor =
+          newState === 0
+            ? new THREE.Color(0x000000)
+            : currentPalette[Math.floor(Math.random() * currentPalette.length)].clone();
 
-        const leftState = prevCells[leftIndex].state;
-        const rightState = prevCells[rightIndex].state;
-        const currentState = cell.state;
-
-        // Determine new state from the ruleSet
-        const newState = calculateState(
-          ruleSet,
-          leftState,
-          currentState,
-          rightState,
-        );
-
-        // If new state is 0, color black; else pick from the palette
-        let nextColor: THREE.Color;
-        if (newState === 0) {
-          nextColor = new THREE.Color(0x000000);
-        } else {
-          const rIndex = Math.floor(Math.random() * currentPalette.length);
-          nextColor = currentPalette[rIndex].clone();
-        }
-
-        return {
-          ...cell,
-          state: newState,
-          color: nextColor,
-          targetColor: nextColor,
-        };
-      });
-    });
-
+        return { ...cell, state: newState, color: nextColor, targetColor: nextColor };
+      }),
+    );
     setGeneration((g) => g + 1);
   };
 
-  // Let the user pick a random palette
+  /* ─────────── random palette button ─────────── */
   const handleRandomPalette = () => {
-    const randomIndex = Math.floor(Math.random() * colorPalettes.length);
-    setCurrentPalette(
-      colorPalettes[randomIndex].map((c) => new THREE.Color(c)),
-    );
+    const idx = Math.floor(Math.random() * colorPalettes.length);
+    setCurrentPalette(colorPalettes[idx].map((c) => new THREE.Color(c)));
   };
 
-  // Audio Setup (Shared)
+  /* ─────────── AUDIO set‑up (shared) ─────────── */
   useEffect(() => {
     if (!sharedAudioElement) {
-      // Create brand-new audio if none is shared yet
+      // create brand‑new shared audio
       sharedAudioElement = new Audio(audioUrl);
       sharedAudioElement.crossOrigin = "anonymous";
       sharedAudioElement.loop = true;
 
-      const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext;
-      if (!AudioContextClass) {
-        console.warn("Web Audio API not supported in this browser.");
-        return;
-      }
-      sharedAudioContext = new AudioContextClass();
-      const src =
-        sharedAudioContext.createMediaElementSource(sharedAudioElement);
+      sharedAudioContext = new AudioContext();
+      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
       sharedAnalyser = sharedAudioContext.createAnalyser();
       sharedAnalyser.fftSize = 32;
 
-      // Connect the chain: Source -> Analyser -> Destination
       src.connect(sharedAnalyser);
       sharedAnalyser.connect(sharedAudioContext.destination);
-    } else {
-      // If the shared audio already exists, just update its src if needed
-      if (sharedAudioElement.src !== audioUrl) {
-        sharedAudioElement.src = audioUrl;
-      }
+    } else if (sharedAudioElement.src !== audioUrl) {
+      sharedAudioElement.src = audioUrl;
     }
 
-    // Keep local references
+    // expose to local refs
     audioRef.current = sharedAudioElement;
     audioContextRef.current = sharedAudioContext;
     audioAnalyserRef.current = sharedAnalyser;
 
-    // Store FFT data in a ref to avoid re-renders:
-    if (sharedAnalyser) {
-      // Initialize the buffer once:
+    // init FFT buffer
+    if (sharedAnalyser && !audioDataRef.current) {
       audioDataRef.current = new Uint8Array(sharedAnalyser.frequencyBinCount);
+    }
 
-      // Launch a one-time RA loop that updates the ref but does NOT set state
-      const dataArray = audioDataRef.current;
-      const animate = () => {
-        if (sharedAnalyser && dataArray) {
-          sharedAnalyser.getByteFrequencyData(dataArray);
+    // play / pause logic
+    const startOrPause = async () => {
+      if (isPaused) {
+        sharedAudioElement!.pause();
+      } else {
+        if (sharedAudioContext && sharedAudioContext.state === "suspended") {
+          await sharedAudioContext.resume();
         }
-        requestAnimationFrame(animate);
-      };
-      animate();
-    }
+        try {
+          await sharedAudioElement!.play();
+        } catch (err) {
+          console.warn("Audio play error:", err);
+        }
+      }
+    };
+    void startOrPause();
 
-    // Start or stop audio
-    if (
-      !isPaused &&
-      sharedAudioContext &&
-      sharedAudioContext.state === "suspended"
-    ) {
-      sharedAudioContext.resume();
-    }
-    if (!isPaused) {
-      sharedAudioElement
-        .play()
-        .catch((err) => console.warn("Audio play error:", err));
-    } else {
-      sharedAudioElement.pause();
-    }
-
-    // We do NOT tear down the shared audio in this snippet
-    // so multiple visualizers can use it
+    /* ───────── CLEAN‑UP  (NEW) ───────── */
+    return () => {
+      if (sharedAudioElement) {
+        sharedAudioElement.pause();
+        sharedAudioElement.currentTime = 0;
+      }
+    };
   }, [audioUrl, isPaused]);
 
-  // Main animation loop using R3F’s useFrame
+  /* ─────────── per‑frame logic ─────────── */
   useFrame(() => {
-    if (isPaused || !cells) return;
+    if (isPaused) return;
 
-    // Update the cellular automaton every 10 frames
-    if (generation % 10 === 0) {
-      updateCA();
-    }
+    if (generation % 10 === 0) updateCA();
 
-    // Incorporate the FFT data every frame
     const dataArray = audioDataRef.current;
-    if (!dataArray) return;
+    if (!dataArray || !sharedAnalyser) return;
+    sharedAnalyser.getByteFrequencyData(dataArray);
 
-    // We do a single setCells at the end so we only cause 1 state update per frame
-    setCells((prevCells) => {
-      // If your grid is large, consider updating in place & returning the same array
-      // but be careful with React’s immutability patterns. For moderate sizes, this is fine:
-      return prevCells.map((cell, i) => {
-        const amplitude = dataArray[i % dataArray.length] / 255; // 0..1
+    setCells((prev) =>
+      prev.map((cell, idx) => {
+        const amp = dataArray[idx % dataArray.length] / 255;
 
-        // Some color modes
+        // colour modes
         if (colorMode === "audioAmplitude") {
-          // Lerp to white depending on amplitude
-          cell.targetColor.lerp(
-            new THREE.Color(0xffffff),
-            1 - amplitude * fftIntensity,
-          );
+          cell.targetColor.lerp(new THREE.Color(0xffffff), 1 - amp * fftIntensity);
         } else if (colorMode === "frequencyBased") {
-          // Frequency-based => direct HSL from amplitude
-          const h = amplitude * fftIntensity;
-          cell.targetColor.setHSL(h % 1, 0.8, 0.5);
+          cell.targetColor.setHSL((amp * fftIntensity) % 1, 0.8, 0.5);
         } else if (colorMode === "rainbow") {
-          // Rotating hue
-          const h = (amplitude + generation * 0.01) % 1;
-          cell.targetColor.setHSL(h, 0.7, 0.5);
+          cell.targetColor.setHSL((amp + generation * 0.01) % 1, 0.7, 0.5);
         }
 
-        // Make the shape scale respond to amplitude
-        // (0.5..4) range, plus a multiplier
-        const shapeScale = 0.5 + amplitude * 3.5 * fftIntensity;
-        cell.targetScale.set(shapeScale, shapeScale, shapeScale);
+        // scaling
+        const s = 0.5 + amp * 3.5 * fftIntensity;
+        cell.targetScale.set(s, s, s);
 
-        // Also scale the orbit shapes
-        cell.orbits.forEach((orbit) => {
-          const orbitScale = 0.2 + amplitude * fftIntensity;
-          orbit.scale.set(orbitScale, orbitScale, orbitScale);
-
-          // Optionally shift color based on orbitAngle + amplitude
-          const hueShift = (amplitude + orbit.orbitAngle) % 1;
-          orbit.color.setHSL(hueShift, 0.7, 0.5);
+        // orbiters
+        cell.orbits.forEach((o) => {
+          const os = 0.2 + amp * fftIntensity;
+          o.scale.set(os, os, os);
+          o.color.setHSL(((amp + o.orbitAngle) % 1), 0.7, 0.5);
         });
 
-        // Make the shape bounce in Y
-        const bounceOffset = amplitude * 2 * fftIntensity;
-        cell.position.y = bounceOffset;
+        // vertical bounce
+        cell.position.y = amp * 2 * fftIntensity;
 
         return { ...cell };
-      });
-    });
+      }),
+    );
   });
 
+  /* ─────────── JSX ─────────── */
   return (
     <>
       {cells.map((cell, i) => (
         <Cell key={i} data={cell} />
       ))}
 
-      {/* UI overlay (using @react-three/drei’s <Html>) */}
+      {/* UI Overlay */}
       <Html>
         <div
           style={{
             position: "absolute",
             top: 20,
             left: 20,
-            background: "rgba(0,0,0,0.5)",
             padding: 10,
+            background: "rgba(0,0,0,0.5)",
             color: "white",
             zIndex: 10,
           }}
         >
-          {/* Rendering mode dropdown */}
+          {/* Rendering mode */}
           <div>
-            <label>Rendering Mode:</label>
+            <label>Rendering Mode:&nbsp;</label>
             <select
               value={renderingMode}
               onChange={(e) =>
                 setRenderingMode(
-                  e.target.value as
-                    | "solid"
-                    | "wireframe"
-                    | "rainbow"
-                    | "transparent",
+                  e.target.value as "solid" | "wireframe" | "rainbow" | "transparent",
                 )
               }
             >
@@ -498,9 +403,9 @@ export default function VisualizerFour({
             </select>
           </div>
 
-          {/* Color mode dropdown */}
-          <div>
-            <label>Color Mode:</label>
+          {/* Colour mode */}
+          <div style={{ marginTop: 6 }}>
+            <label>Colour Mode:&nbsp;</label>
             <select
               value={colorMode}
               onChange={(e) =>
@@ -514,29 +419,29 @@ export default function VisualizerFour({
               }
             >
               <option value="default">Default</option>
-              <option value="audioAmplitude">Audio Amplitude</option>
-              <option value="frequencyBased">Frequency Based</option>
+              <option value="audioAmplitude">Audio Amplitude</option>
+              <option value="frequencyBased">Frequency Based</option>
               <option value="rainbow">Rainbow</option>
             </select>
           </div>
 
-          {/* Random palette button */}
+          {/* Random palette */}
           <button style={{ marginTop: 8 }} onClick={handleRandomPalette}>
-            Random Palette
+            Random Palette
           </button>
 
-          {/* FFT Intensity slider */}
+          {/* FFT intensity */}
           <div style={{ marginTop: 10 }}>
-            <label>FFT Intensity: </label>
+            <label>FFT Intensity:&nbsp;</label>
             <input
               type="range"
-              min="0"
-              max="5"
-              step="0.1"
+              min={0}
+              max={5}
+              step={0.1}
               value={fftIntensity}
               onChange={(e) => setFftIntensity(parseFloat(e.target.value))}
             />
-            <span style={{ marginLeft: 8 }}>{fftIntensity.toFixed(1)}</span>
+            <span style={{ marginLeft: 6 }}>{fftIntensity.toFixed(1)}</span>
           </div>
         </div>
       </Html>

@@ -31,6 +31,11 @@ import * as THREE from "three";
 /** ------------------------------------------------------------
  * 1) Condensed color palette object, to be replaced by your full version
  * ------------------------------------------------------------ */
+
+/* ──────────────────────────────────────────────────────────────
+ *  GLOBAL SHARED‑AUDIO OBJECTS  (new – needed for clean‑up)
+ * ──────────────────────────────────────────────────────────────*/
+
 const colorPalettes: Record<string, THREE.Color[]> = {
   default: [
     new THREE.Color(0xedae49),
@@ -671,46 +676,31 @@ const FFTVisualizerMaterial = shaderMaterial(
     }
   `,
 );
-
 type FFTVisualizerMaterialImpl = InstanceType<typeof FFTVisualizerMaterial>;
 
-// We define TS type for the rendering mode
+export type EnvironmentMode = "phantom" | "octagrams" | "raymarching";
 export type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
 
-// We define TS type for environment
-export type EnvironmentMode = "phantom" | "octagrams" | "raymarching";
-
-/**
- * The main React component that sets up the audio, FFT,
- * the uniforms, etc., and returns a mesh with a plane geometry
- * that is deformed by our custom shader.
- */
 interface VisualizerThreeProps {
   audioUrl: string;
   isPaused: boolean;
 }
 
-export default function VisualizerThree({
-  audioUrl,
-  isPaused,
-}: VisualizerThreeProps) {
+function VisualizerThreeScene({ audioUrl, isPaused }: VisualizerThreeProps) {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const fftTextureRef = useRef<THREE.DataTexture | null>(null);
 
-  // Create the combined material
   const customShaderMaterial = useMemo(() => new FFTVisualizerMaterial(), []);
   const shaderMaterialRef = useRef<FFTVisualizerMaterialImpl | null>(null);
 
-  // local states for environment, mode, palette, intensity
   const [envMode, setEnvMode] = useState<EnvironmentMode>("phantom");
   const [renderMode, setRenderMode] = useState<RenderingMode>("solid");
-  const [selectedPaletteName, setSelectedPaletteName] =
-    useState<keyof typeof colorPalettes>("default");
+  const [selectedPaletteName, setSelectedPaletteName] = useState<keyof typeof colorPalettes>("default");
   const [fftIntensity, setFftIntensity] = useState(0.1);
 
-  // Example LEVA controls: pick environment, renderMode, palette, intensity
+  // LEVA controls (if desired) would go here.
   useControls("Visualizer", {
     environment: {
       value: envMode,
@@ -737,26 +727,18 @@ export default function VisualizerThree({
     },
   });
 
-  // Audio initialization
   useEffect(() => {
     if (!audioRef.current) {
-      // first time
       audioRef.current = new Audio(audioUrl);
       audioRef.current.crossOrigin = "anonymous";
       audioRef.current.loop = true;
-
       audioContextRef.current = new AudioContext();
-      const src = audioContextRef.current.createMediaElementSource(
-        audioRef.current,
-      );
-
+      const src = audioContextRef.current.createMediaElementSource(audioRef.current);
       analyserRef.current = audioContextRef.current.createAnalyser();
       analyserRef.current.fftSize = 512;
-
       src.connect(analyserRef.current);
       analyserRef.current.connect(audioContextRef.current.destination);
 
-      // create DataTexture
       const bLen = analyserRef.current.frequencyBinCount;
       const array = new Uint8Array(bLen * 4);
       fftTextureRef.current = new THREE.DataTexture(
@@ -764,26 +746,21 @@ export default function VisualizerThree({
         bLen,
         1,
         THREE.RGBAFormat,
-        THREE.UnsignedByteType,
+        THREE.UnsignedByteType
       );
       fftTextureRef.current.needsUpdate = true;
     } else {
-      // might be a re-render with new audio url
       if (audioRef.current.src !== audioUrl) {
         audioRef.current.src = audioUrl;
       }
     }
 
-    // attempt to start or pause
     const tryPlay = async () => {
       if (!audioRef.current) return;
       if (isPaused) {
         audioRef.current.pause();
       } else {
-        if (
-          audioContextRef.current &&
-          audioContextRef.current.state === "suspended"
-        ) {
+        if (audioContextRef.current && audioContextRef.current.state === "suspended") {
           await audioContextRef.current.resume();
         }
         try {
@@ -796,12 +773,10 @@ export default function VisualizerThree({
     void tryPlay();
   }, [audioUrl, isPaused]);
 
-  // handle pause/unpause changes
   useEffect(() => {
     const audio = audioRef.current;
     const ctx = audioContextRef.current;
     if (!audio || !ctx) return;
-
     const doUpdate = async () => {
       if (isPaused) {
         audio.pause();
@@ -819,41 +794,33 @@ export default function VisualizerThree({
     void doUpdate();
   }, [isPaused]);
 
-  // once we have a valid fft texture, set it in the material
   useEffect(() => {
     if (fftTextureRef.current && customShaderMaterial.uniforms.fftTexture) {
       customShaderMaterial.uniforms.fftTexture.value = fftTextureRef.current;
     }
   }, [customShaderMaterial]);
 
-  // reference to the plane mesh
   const planeRef = useRef<THREE.Mesh>(null);
 
-  // animate each frame
   useFrame(({ clock, gl, camera, mouse }) => {
-    // optional: make plane always face camera
     if (planeRef.current) {
       planeRef.current.lookAt(camera.position);
     }
-
     const mat = customShaderMaterial;
     mat.uniforms.iTime.value = clock.elapsedTime;
-    mat.uniforms.iResolution.value.set(
-      gl.domElement.width,
-      gl.domElement.height,
-    );
+    mat.uniforms.iResolution.value.set(gl.domElement.width, gl.domElement.height);
     mat.uniforms.fftIntensity.value = fftIntensity;
 
-    // convert envMode => integer
+    // Set environment mode
     if (envMode === "phantom") {
       mat.uniforms.uEnvironment.value = 0;
     } else if (envMode === "octagrams") {
       mat.uniforms.uEnvironment.value = 1;
     } else {
-      mat.uniforms.uEnvironment.value = 2; // raymarching
+      mat.uniforms.uEnvironment.value = 2;
     }
 
-    // convert renderMode => integer
+    // Set render mode
     if (renderMode === "solid") {
       mat.uniforms.uRenderMode.value = 0;
     } else if (renderMode === "wireframe") {
@@ -861,26 +828,23 @@ export default function VisualizerThree({
     } else if (renderMode === "rainbow") {
       mat.uniforms.uRenderMode.value = 2;
     } else {
-      mat.uniforms.uRenderMode.value = 3; // transparent
+      mat.uniforms.uRenderMode.value = 3;
     }
 
-    // optionally pass in real mouse coords if needed
+    // Pass in mouse coords
     mat.uniforms.iMouse.value.x = mouse.x * gl.domElement.width;
     mat.uniforms.iMouse.value.y = mouse.y * gl.domElement.height;
-    mat.uniforms.iMouse.value.z = 0.0; // set to >0 if user is clicking
+    mat.uniforms.iMouse.value.z = 0.0;
 
-    // update color palette uniform
-    const chosenColors =
-      colorPalettes[selectedPaletteName] || colorPalettes.default;
+    // Update color palette uniform
+    const chosenColors = colorPalettes[selectedPaletteName] || colorPalettes.default;
     const asVec3 = chosenColors.map((c) => new THREE.Vector3(c.r, c.g, c.b));
     mat.uniforms.colorPalette.value = asVec3;
 
-    // if we have the analyser, update the FFT data texture
     if (analyserRef.current && fftTextureRef.current) {
       const bLen = analyserRef.current.frequencyBinCount;
       const dataArray = new Uint8Array(bLen);
       analyserRef.current.getByteFrequencyData(dataArray);
-
       const txData = fftTextureRef.current.image.data as Uint8Array;
       for (let i = 0; i < bLen; i++) {
         const val = dataArray[i];
@@ -893,20 +857,14 @@ export default function VisualizerThree({
     }
   });
 
-  // Final render: a plane geometry with many subdivisions
   return (
-    <mesh
-      ref={planeRef}
-      position={[0, 0, 0]}
-      scale={[15, 15, 1]}
-      frustumCulled={false}
-    >
+    <mesh ref={planeRef} position={[0, 0, 0]} scale={[15, 15, 1]} frustumCulled={false}>
       <planeGeometry args={[20, 20, 60, 60]} />
-      <primitive
-        object={customShaderMaterial}
-        ref={shaderMaterialRef}
-        attach="material"
-      />
+      <primitive object={customShaderMaterial} ref={shaderMaterialRef} attach="material" />
     </mesh>
   );
+}
+
+export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeProps) {
+  return <VisualizerThreeScene audioUrl={audioUrl} isPaused={isPaused} />;
 }

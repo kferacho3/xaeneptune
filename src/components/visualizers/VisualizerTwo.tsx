@@ -1,7 +1,13 @@
 "use client";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as THREE from "three";
 // Import only the necessary fractal geometry functions.
 import {
@@ -18,7 +24,9 @@ import {
   createSierpinskiTetrahedronSpheresGeometry,
 } from "./fractalHelpers";
 
-// Types for rendering mode, color mode, and fractal type.
+/* ================================================================
+   TYPE DEFINITIONS
+   ================================================================= */
 export type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
 export type ColorMode =
   | "default"
@@ -40,6 +48,9 @@ export type FractalType =
   | "pythagorasTree3D"
   | "apollonianGasket";
 
+/* ================================================================
+   CONSTANTS & INITIAL DATA
+   ================================================================= */
 const fractalTypes: FractalType[] = [
   "mandelbulb",
   "mandelbox",
@@ -66,12 +77,19 @@ interface FractalShaderProps {
   setLocalColorMode: (mode: ColorMode) => void;
 }
 
-// --- Shared Audio Objects ---
-// (These module-level variables simulate a shared audio store used by all visualizers.)
+/* ================================================================
+   SHARED AUDIO OBJECTS (GLOBAL)
+   (These simulate a shared audio store used by all visualizers)
+   ================================================================= */
 let sharedAudioElement: HTMLAudioElement | null = null;
 let sharedAudioContext: AudioContext | null = null;
 let sharedAnalyser: AnalyserNode | null = null;
 
+/* ================================================================
+   FRACRAL SHADER COMPONENT
+   This component creates the fractal (points or mesh) based on the
+   selected fractal type and updates its vertices by reading the FFT data.
+   ================================================================= */
 function FractalShader({
   audioData,
   renderingMode,
@@ -81,8 +99,11 @@ function FractalShader({
   setLocalRenderingMode,
   setLocalColorMode,
 }: FractalShaderProps) {
+  // Group reference for the fractal mesh/points.
   const groupRef = useRef<THREE.Group>(null);
 
+  // Build the fractal geometry based on the chosen fractal type.
+  // This is wrapped in a useMemo for performance.
   const fractalGeometry = useMemo<THREE.BufferGeometry>(() => {
     switch (fractalType) {
       case "mandelbulb":
@@ -130,6 +151,7 @@ function FractalShader({
     }
   }, [fractalType]);
 
+  // Save a copy of the original positions of the geometry vertices.
   const originalPositionsRef = useRef<Float32Array | null>(null);
   useEffect(() => {
     const posAttr = fractalGeometry.getAttribute("position");
@@ -138,6 +160,7 @@ function FractalShader({
     }
   }, [fractalGeometry]);
 
+  // Define three types of materials for different rendering modes.
   const wireframeMaterial = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -145,8 +168,9 @@ function FractalShader({
         wireframe: true,
         side: THREE.DoubleSide,
       }),
-    [],
+    []
   );
+
   const solidMaterial = useMemo(
     () =>
       new THREE.MeshPhongMaterial({
@@ -154,8 +178,9 @@ function FractalShader({
         flatShading: true,
         side: THREE.DoubleSide,
       }),
-    [],
+    []
   );
+
   const transparentMaterial = useMemo(
     () =>
       new THREE.MeshPhongMaterial({
@@ -164,10 +189,10 @@ function FractalShader({
         opacity: 0.5,
         side: THREE.DoubleSide,
       }),
-    [],
+    []
   );
 
-  // Wrap getMaterial in a useCallback so that it is stable across renders.
+  // Wrap getMaterial in a useCallback to ensure stability across renders.
   const getMaterial = useCallback(
     (mode: RenderingMode, color: ColorMode): THREE.Material => {
       if (mode === "wireframe") return wireframeMaterial;
@@ -201,17 +226,19 @@ function FractalShader({
       }
       return solidMaterial;
     },
-    [wireframeMaterial, transparentMaterial, solidMaterial, audioData],
+    [wireframeMaterial, transparentMaterial, solidMaterial, audioData]
   );
 
   const dynamicMaterial = useMemo(
     () => getMaterial(renderingMode, colorMode),
-    [renderingMode, colorMode, getMaterial],
+    [renderingMode, colorMode, getMaterial]
   );
 
+  // Set up the fractal mesh in the scene.
   useEffect(() => {
     const group = groupRef.current;
     if (!group) return;
+    // Dispose previous children materials and geometries.
     group.children.forEach((child) => {
       const mesh = child as THREE.Mesh;
       if (mesh.geometry) mesh.geometry.dispose();
@@ -225,6 +252,7 @@ function FractalShader({
       }
     });
     group.clear();
+
     if (dynamicMaterial instanceof THREE.PointsMaterial) {
       const pointsMesh = new THREE.Points(fractalGeometry, dynamicMaterial);
       group.add(pointsMesh);
@@ -233,7 +261,6 @@ function FractalShader({
       group.add(mesh);
     }
     return () => {
-      // Capture the group in a local variable for cleanup.
       const currentGroup = group;
       currentGroup.children.forEach((child) => {
         const mesh = child as THREE.Mesh;
@@ -251,6 +278,7 @@ function FractalShader({
     };
   }, [fractalGeometry, dynamicMaterial]);
 
+  // Update geometry vertices on each frame based on audio data.
   useFrame(() => {
     const posAttr = fractalGeometry.getAttribute("position");
     if (
@@ -310,6 +338,7 @@ function FractalShader({
     "frequencyBased",
     "rainbow",
   ];
+
   return (
     <group ref={groupRef}>
       <Html>
@@ -406,12 +435,17 @@ function FractalShader({
   );
 }
 
+/* ================================================================
+   Exported VisualizerTwo Component
+   This wrapper sets up local state for fractalType, renderingMode, and colorMode,
+   and also sets up the shared audio that is used by the FractalShader component.
+   ================================================================= */
 export default function VisualizerTwo({
   audioUrl,
+  isPaused,
   renderingMode: propRenderingMode,
   colorMode: propColorMode,
   fractalType: propFractalType,
-  isPaused,
 }: {
   audioUrl: string;
   isPaused: boolean;
@@ -419,29 +453,30 @@ export default function VisualizerTwo({
   colorMode?: ColorMode;
   fractalType?: FractalType;
 }) {
-  // Parent already provides a Canvas.
   const [currentFractalType, setCurrentFractalType] = useState<FractalType>(
-    propFractalType ?? "mandelbox",
+    propFractalType ?? "mandelbox"
   );
   const [localRenderingMode, setLocalRenderingMode] = useState<RenderingMode>(
-    propRenderingMode ?? "transparent",
+    propRenderingMode ?? "solid"
   );
   const [localColorMode, setLocalColorMode] = useState<ColorMode>(
-    propColorMode ?? "frequencyBased",
+    propColorMode ?? "default"
   );
+
   const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(0));
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const audioElementRef = useRef<HTMLAudioElement | null>(null);
-  const animationFrameIdRef = useRef<number>(0);
+  const animationIdRef = useRef<number>(0);
 
-  // Use shared audio objects so that the same uploaded file is used across visualizers.
+  /* ------------------------------------------------------------------
+     FIRST useEffect – set up shared audio (for VisualizerTwo)
+  ------------------------------------------------------------------ */
   useEffect(() => {
     if (!sharedAudioElement) {
       sharedAudioElement = new Audio(audioUrl);
       sharedAudioElement.crossOrigin = "anonymous";
       sharedAudioElement.loop = true;
+
       sharedAudioContext = new AudioContext();
       const src =
         sharedAudioContext.createMediaElementSource(sharedAudioElement);
@@ -449,61 +484,30 @@ export default function VisualizerTwo({
       sharedAnalyser.fftSize = 64;
       src.connect(sharedAnalyser);
       sharedAnalyser.connect(sharedAudioContext.destination);
-    } else {
-      if (sharedAudioElement.src !== audioUrl) {
-        sharedAudioElement.src = audioUrl;
-      }
+    } else if (sharedAudioElement.src !== audioUrl) {
+      sharedAudioElement.src = audioUrl;
     }
-    audioElementRef.current = sharedAudioElement;
+
     audioContextRef.current = sharedAudioContext;
     analyserRef.current = sharedAnalyser;
-    // Use audioSourceRef if possible (do not remove it)
-    if (!audioSourceRef.current && sharedAudioContext && sharedAudioElement) {
-      try {
-        audioSourceRef.current =
-          sharedAudioContext.createMediaElementSource(sharedAudioElement);
-      } catch {
-        // If already created, ignore.
-      }
-    }
 
+    // Fixing the "sharedAnalyser is possibly null" error:
+    // Use non-null assertion operator (!) when accessing sharedAnalyser properties in tick.
     if (sharedAnalyser) {
-      const bufferLength = sharedAnalyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      setAudioData(dataArray);
-      const animate = () => {
-        if (sharedAnalyser) {
-          sharedAnalyser.getByteFrequencyData(dataArray);
-          setAudioData(new Uint8Array(dataArray));
-        }
-        animationFrameIdRef.current = requestAnimationFrame(animate);
+      const buffer = new Uint8Array(sharedAnalyser.frequencyBinCount);
+      const tick = () => {
+        sharedAnalyser!.getByteFrequencyData(buffer);
+        setAudioData(new Uint8Array(buffer));
+        animationIdRef.current = requestAnimationFrame(tick);
       };
-      animate();
+      tick();
     }
-    if (!isPaused) {
-      if (sharedAudioContext && sharedAudioContext.state === "suspended") {
-        sharedAudioContext.resume();
-      }
-      sharedAudioElement
-        .play()
-        .catch((err) =>
-          console.warn("Audio play interrupted or blocked:", err),
-        );
-    } else {
-      sharedAudioElement.pause();
-    }
-    return () => {
-      cancelAnimationFrame(animationFrameIdRef.current);
-    };
-  }, [audioUrl, isPaused]);
 
-  // Handle pause/resume changes.
-  useEffect(() => {
-    if (!sharedAudioElement || !sharedAudioContext) return;
-    if (isPaused) {
-      sharedAudioElement.pause();
-    } else {
-      (async () => {
+    const handlePlayState = async () => {
+      if (!sharedAudioElement || !sharedAudioContext) return;
+      if (isPaused) {
+        sharedAudioElement.pause();
+      } else {
         if (sharedAudioContext.state === "suspended") {
           await sharedAudioContext.resume();
         }
@@ -512,9 +516,19 @@ export default function VisualizerTwo({
         } catch (err) {
           console.warn("Audio play error:", err);
         }
-      })();
-    }
-  }, [isPaused]);
+      }
+    };
+    void handlePlayState();
+
+    /* ---------------- CLEAN‑UP ---------------- */
+    return () => {
+      cancelAnimationFrame(animationIdRef.current);
+      if (sharedAudioElement) {
+        sharedAudioElement.pause();
+        sharedAudioElement.currentTime = 0;
+      }
+    };
+  }, [audioUrl, isPaused]);
 
   return (
     <FractalShader
@@ -528,3 +542,7 @@ export default function VisualizerTwo({
     />
   );
 }
+
+/* ================================================================
+   End of VisualizerTwo Component Code
+==================================================================== */

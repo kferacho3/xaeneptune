@@ -35,14 +35,14 @@ export default function TopBarNavbar({ onHamburgerClick }: TopBarNavbarProps) {
 
   if (isMobile) {
     return (
-      <div className="fixed top-0 inset-x-0 flex items-center justify-between py-2 px-4 bg-black bg-opacity-60 backdrop-blur-md border-b border-white z-10">
+      <div className="fixed top-0 inset-x-0 flex items-center justify-between py-2 px-4 bg-black bg-opacity-60 backdrop-blur-md border-b border-white z-99999">
         {/* Left: Logo only */}
         <div className="flex items-center">
           <Image
             src="/AntiHeroLogo.png"
             alt="AntiHero Logo"
-            width={40}
-            height={40}
+            width={20}
+            height={20}
             priority
           />
         </div>
@@ -90,8 +90,8 @@ export default function TopBarNavbar({ onHamburgerClick }: TopBarNavbarProps) {
         <Image
           src="/AntiHeroLogo.png"
           alt="AntiHero Logo"
-          width={40}
-          height={40}
+          width={25}
+          height={25}
           priority
         />
         <div

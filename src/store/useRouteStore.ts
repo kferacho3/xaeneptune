@@ -7,7 +7,7 @@ export type Route =
   | "beats"
   | "beats-visualizer"
   | "albums"
-  | "xaeneptunesworld"
+  | "xaeneptune"
   | "connect";
 
 interface RouteStore {
@@ -21,18 +21,28 @@ interface RouteStore {
   setOnBeatGoBack: (cb?: () => void) => void;
   onBeatShuffle?: () => void;
   setOnBeatShuffle: (cb?: () => void) => void;
+  hoveredRoute?: Route;
+  setHoveredRoute: (route?: Route) => void;
+  // New nightMode state for environment mode.
+  nightMode: boolean;
+  setNightMode: (mode: boolean) => void;
 }
 
 export const useRouteStore = create<RouteStore>((set) => ({
   activeRoute: "home",
-  setActiveRoute: (route: Route) => set({ activeRoute: route }),
+  setActiveRoute: (route) => set({ activeRoute: route }),
   visualizerMode: false,
-  setVisualizerMode: (mode: boolean) => set({ visualizerMode: mode }),
+  setVisualizerMode: (mode) => set({ visualizerMode: mode }),
   audioUrlForBeat:
     "https://xaeneptune.s3.us-east-2.amazonaws.com/beats/2024/SEP+2024/Xae+x+VGS+Midnight+x+beatsbylmc+-+doumissme+126+(C+minor).mp3",
   setAudioUrlForBeat: (url: string) => set({ audioUrlForBeat: url }),
   onBeatGoBack: undefined,
-  setOnBeatGoBack: (cb?: () => void) => set({ onBeatGoBack: cb }),
+  setOnBeatGoBack: (cb) => set({ onBeatGoBack: cb }),
   onBeatShuffle: undefined,
-  setOnBeatShuffle: (cb?: () => void) => set({ onBeatShuffle: cb }),
+  setOnBeatShuffle: (cb) => set({ onBeatShuffle: cb }),
+  hoveredRoute: undefined,
+  setHoveredRoute: (route) => set({ hoveredRoute: route }),
+  // Set default mode to night mode (true means "night")
+  nightMode: true,
+  setNightMode: (mode: boolean) => set({ nightMode: mode }),
 }));

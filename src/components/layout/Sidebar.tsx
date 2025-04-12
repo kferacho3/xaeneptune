@@ -113,7 +113,7 @@ export default function Sidebar({
               <li
                 className="cursor-pointer hover:text-red-500"
                 onClick={() => {
-                  setActiveRoute("xaeneptunesworld");
+                  setActiveRoute("xaeneptune");
                   onClose();
                 }}
               >

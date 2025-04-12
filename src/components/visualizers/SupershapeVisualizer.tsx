@@ -1,4 +1,5 @@
 "use client";
+
 import {
   MakeMeshParams,
   ParametricCode9Params,
@@ -18,20 +19,30 @@ import {
   createSupershapeMeshGeometry,
 } from "./geometryHelpers";
 
+/* ---------- CONSTANTS ---------- */
 const SEGMENTS = 100;
 const MORPH_FACTOR = 0.7;
 const BASE_RADIUS = 12.5;
-// Precompute (u,v) grid for certain shapes:
+
+// Precompute (u,v) grid for certain shapes
 const precomputedParams = computeParams(SEGMENTS);
 
-// --- SHARED AUDIO OBJECTS (Global) ---
+/* ---------- SHARED AUDIO OBJECTS ---------- */
 let sharedAudioElement: HTMLAudioElement | null = null;
 let sharedAudioContext: AudioContext | null = null;
 let sharedAnalyser: AnalyserNode | null = null;
 
+/* ---------- TYPES ---------- */
 type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
-type ColorMode = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
+type ColorMode =
+  | "default"
+  | "audioAmplitude"
+  | "frequencyBased"
+  | "rainbow";
 
+/* ===================================================================== */
+/*                       SUPERSHAPE VISUALIZER COMPONENT                   */
+/* ===================================================================== */
 export default function SupershapeVisualizer({
   audioUrl,
   isPaused = false,
@@ -39,56 +50,54 @@ export default function SupershapeVisualizer({
   audioUrl: string;
   isPaused?: boolean;
 }) {
-  // References for audio and mesh
-  const meshRef = useRef<THREE.Mesh>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null); // Keeping these to avoid removing original lines
-  const audioContextRef = useRef<AudioContext | null>(null); //
-  const analyserRef = useRef<AnalyserNode | null>(null); //
+  /* ---------------- STATE & REFS ---------------- */
+  // Note: We explicitly type the refs so that the geometries are cast to the proper types.
+  const meshRef = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.Material>>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const audioDataRef = useRef<Uint8Array | null>(null);
 
-  // Store the user-selected shape config (and its parameters)
+  // Config state for the supershape and its parameters.
   const [currentConfig, setCurrentConfig] = useState<SupershapeConfig>(
-    allSupershapeConfigs[0],
+    allSupershapeConfigs[0]
   );
   const [_currentParams, setCurrentParams] = useState<
-    | SupershapeParams
-    | SupershapeMeshParams
-    | ParametricCode9Params
-    | MakeMeshParams
+    SupershapeParams | SupershapeMeshParams | ParametricCode9Params | MakeMeshParams
   >(currentConfig.params);
   const [targetParams, setTargetParams] = useState<typeof currentConfig.params>(
-    currentConfig.params,
+    currentConfig.params
   );
 
-  // Rendering and color modes
+  // Rendering and color mode state.
   const [renderingMode, setRenderingMode] = useState<RenderingMode>("solid");
   const [colorMode, setColorMode] = useState<ColorMode>("default");
 
-  /**
-   * Allows user to switch the shape config from a <select> dropdown.
-   */
-  const handleConfigChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedIndex = parseInt(e.target.value);
+  /* ---------- HANDLE CONFIG CHANGE ---------- */
+  // This function is now defined to fix the error "Cannot find name 'handleConfigChange'".
+  const handleConfigChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    const selectedIndex = parseInt(e.target.value, 10);
     const newConfig = allSupershapeConfigs[selectedIndex];
     setCurrentConfig(newConfig);
     setCurrentParams(newConfig.params);
     setTargetParams(newConfig.params);
   };
 
-  /**
-   * On mount, pick a random Supershape config so that each load is different.
-   */
+  /* ---------- RANDOMIZE CONFIG ON MOUNT ---------- */
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * allSupershapeConfigs.length);
+    const randomIndex = Math.floor(
+      Math.random() * allSupershapeConfigs.length
+    );
     const randomConfig = allSupershapeConfigs[randomIndex];
     setCurrentConfig(randomConfig);
     setCurrentParams(randomConfig.params);
     setTargetParams(randomConfig.params);
   }, []);
 
+  /* ---------- GEOMETRY & MATERIAL ---------- */
   /**
    * Build the geometry from the current config.
-   * If the config changes, we'll re-generate the geometry.
+   * If the config changes, re-generate the geometry.
    */
   const geometry = useMemo(() => {
     switch (currentConfig.type) {
@@ -97,11 +106,11 @@ export default function SupershapeVisualizer({
           SEGMENTS,
           currentConfig.params as SupershapeParams,
           BASE_RADIUS,
-          precomputedParams,
+          precomputedParams
         );
       case "supershape_mesh":
         return createSupershapeMeshGeometry(
-          currentConfig.params as SupershapeMeshParams,
+          currentConfig.params as SupershapeMeshParams
         );
       case "parametric_code9":
         // Provide your own parametric geometry if needed
@@ -109,7 +118,7 @@ export default function SupershapeVisualizer({
       case "make_mesh":
         return createMakeMeshGeometry(
           currentConfig.params as MakeMeshParams,
-          100,
+          100
         );
       default:
         return new THREE.BufferGeometry();
@@ -117,9 +126,8 @@ export default function SupershapeVisualizer({
   }, [currentConfig]);
 
   /**
-   * Build the material based on the renderingMode.
-   * If the user selects "rainbow" in renderingMode, we'll do per-vertex coloring below,
-   * but we still need a base material.
+   * Build the material based on the rendering mode.
+   * "Solid" and "rainbow" modes use a default standard material.
    */
   const material = useMemo(() => {
     if (renderingMode === "wireframe") {
@@ -138,72 +146,66 @@ export default function SupershapeVisualizer({
         clearcoatRoughness: 0.1,
       });
     } else {
-      // "solid" or "rainbow" share a default standard material
       return new THREE.MeshStandardMaterial({ side: THREE.DoubleSide });
     }
   }, [renderingMode]);
 
-  /**
-   * First effect: set up the SHARED audio (or update it), just like VisualizerOne–Four
-   * We do NOT create a local audio each time, we rely on sharedAudioElement, etc.
-   */
+  /* =================================================================== */
+  /*  SHARED AUDIO SETUP & CLEAN‑UP                                      */
+  /* =================================================================== */
   useEffect(() => {
     if (!sharedAudioElement) {
-      // Create new shared audio if it doesn't exist yet
       sharedAudioElement = new Audio(audioUrl);
       sharedAudioElement.crossOrigin = "anonymous";
       sharedAudioElement.loop = true;
 
-      // Create context
       sharedAudioContext = new AudioContext();
-      const src =
-        sharedAudioContext.createMediaElementSource(sharedAudioElement);
+      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
       sharedAnalyser = sharedAudioContext.createAnalyser();
       sharedAnalyser.fftSize = 2048;
       src.connect(sharedAnalyser);
       sharedAnalyser.connect(sharedAudioContext.destination);
-    } else {
-      // If we already have shared audio, update src if it changed
-      if (sharedAudioElement.src !== audioUrl) {
-        sharedAudioElement.src = audioUrl;
-      }
+    } else if (sharedAudioElement.src !== audioUrl) {
+      sharedAudioElement.src = audioUrl;
     }
 
-    // Assign them to local refs so the rest of the code sees them
     audioRef.current = sharedAudioElement;
     audioContextRef.current = sharedAudioContext;
     analyserRef.current = sharedAnalyser;
 
-    // Prepare our audio data array
-    if (sharedAnalyser) {
+    if (sharedAnalyser && !audioDataRef.current) {
       audioDataRef.current = new Uint8Array(sharedAnalyser.frequencyBinCount);
     }
 
-    // If not paused, attempt to resume & play
-    if (
-      !isPaused &&
-      sharedAudioContext &&
-      sharedAudioContext.state === "suspended"
-    ) {
-      sharedAudioContext.resume();
-    }
     if (!isPaused) {
-      sharedAudioElement
-        .play()
-        .catch((err) => console.warn("Audio play error:", err));
+      if (sharedAudioContext?.state === "suspended")
+        sharedAudioContext.resume();
+      sharedAudioElement.play().catch(console.warn);
     } else {
       sharedAudioElement.pause();
     }
 
-    // Cleanup: we do NOT tear down shared audio so the file persists across modes
+    // Dummy handleResize function (in case you attach a resize event elsewhere)
+    const handleResize = () => {
+      if (cameraRef.current) {
+        cameraRef.current.aspect = window.innerWidth / window.innerHeight;
+        cameraRef.current.updateProjectionMatrix();
+        rendererRef.current.setSize(window.innerWidth, window.innerHeight);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+
+    // CLEAN‑UP: Remove event listener and cleanup the shared audio.
     return () => {
-      // no cleanup for shared audio
+      window.removeEventListener("resize", handleResize);
+      if (sharedAudioElement) {
+        sharedAudioElement.pause();
+        sharedAudioElement.currentTime = 0;
+      }
     };
   }, [audioUrl, isPaused]);
 
-  /**
-   * Another effect: if isPaused changes, handle it
-   */
+  /* ---------- HANDLE isPaused CHANGES ---------- */
   useEffect(() => {
     if (!sharedAudioElement || !sharedAudioContext) return;
     if (isPaused) {
@@ -222,26 +224,37 @@ export default function SupershapeVisualizer({
     }
   }, [isPaused]);
 
-  /**
-   * In the render loop, we read the shared analyser data, compute new shape morph
-   * and color changes, and apply them to the mesh.
-   */
+  /* ---------- CAMERA & RENDERER REFS (for potential resize) ---------- */
+  const cameraRef = useRef<THREE.PerspectiveCamera>(
+    new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    )
+  );
+  const rendererRef = useRef<THREE.WebGLRenderer>(
+    new THREE.WebGLRenderer({ alpha: true, antialias: true })
+  );
+
+  /* =================================================================== */
+  /*  useFrame: ANIMATION LOOP                                             */
+  /* =================================================================== */
   useFrame(() => {
     if (!sharedAnalyser || !audioDataRef.current || !meshRef.current) return;
 
-    // Get frequency data from the shared analyser
+    // Update shared audio frequency data.
     sharedAnalyser.getByteFrequencyData(audioDataRef.current);
     const normData = Array.from(audioDataRef.current).map((val) => val / 255);
     const overallAmplitude =
       normData.reduce((sum, v) => sum + v, 0) / normData.length;
 
-    // Lerp from current to target shape params
+    // Lerp parameters from current to target.
     setCurrentParams((prev) => {
       if (currentConfig.type === "supershape") {
         const p = prev as SupershapeParams;
         const t = targetParams as SupershapeParams;
         if (!p.params1 || !t.params1) return prev;
-
         return {
           params1: {
             m: THREE.MathUtils.lerp(p.params1.m, t.params1.m, MORPH_FACTOR),
@@ -266,7 +279,6 @@ export default function SupershapeVisualizer({
         currentConfig.type === "parametric_code9" ||
         currentConfig.type === "make_mesh"
       ) {
-        // Flatten, lerp each numeric key
         const flatPrev = prev as unknown as { [key: string]: number };
         const flatTarget = targetParams as unknown as { [key: string]: number };
         const newParams: { [key: string]: number } = {};
@@ -275,7 +287,7 @@ export default function SupershapeVisualizer({
             newParams[k] = THREE.MathUtils.lerp(
               flatPrev[k],
               flatTarget[k] ?? flatPrev[k],
-              MORPH_FACTOR,
+              MORPH_FACTOR
             );
           }
         }
@@ -284,12 +296,12 @@ export default function SupershapeVisualizer({
       return prev;
     });
 
-    // Spin and scale the mesh
+    // Rotate and scale the mesh.
     meshRef.current.rotation.y += 0.003;
     meshRef.current.rotation.x += 0.002;
     meshRef.current.scale.setScalar(1 + overallAmplitude * 0.5);
 
-    // Simple color responses
+    // Update material colors based on the chosen color mode.
     const mat = meshRef.current.material as THREE.MeshStandardMaterial;
     if (colorMode === "audioAmplitude") {
       mat.color.setHSL(overallAmplitude, 0.8, 0.5);
@@ -303,7 +315,7 @@ export default function SupershapeVisualizer({
       mat.color.setHSL((t * 0.2 + overallAmplitude * 0.3) % 1, 0.7, 0.6);
     }
 
-    // If "rainbow" rendering mode, we do per-vertex color
+    // If in rainbow rendering mode, compute per-vertex colors.
     if (renderingMode === "rainbow" && geometry.attributes.position) {
       const positions = geometry.attributes.position.array as Float32Array;
       const colors = new Float32Array(positions.length);
@@ -312,7 +324,6 @@ export default function SupershapeVisualizer({
       for (let i = 0; i < positions.length / 3; i++) {
         const x = positions[i * 3];
         const y = positions[i * 3 + 1];
-        // A polar color approach
         const hue = (Math.atan2(y, x) / (2 * Math.PI) + 0.5 + time * 0.1) % 1;
         const saturation = 0.7 + overallAmplitude * 0.3;
         const lightness = 0.5;
@@ -323,14 +334,12 @@ export default function SupershapeVisualizer({
       }
       geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     } else if (geometry.attributes.color) {
-      // Remove the color attribute if no longer in rainbow
+      // If not in rainbow mode, remove per-vertex colors.
       geometry.deleteAttribute("color");
     }
   });
 
-  /**
-   * As a final step, we render the mesh + UI controls in <Html>.
-   */
+  /* ---------- RENDER JSX ---------- */
   return (
     <>
       <mesh ref={meshRef} geometry={geometry} material={material} />
@@ -410,7 +419,9 @@ export default function SupershapeVisualizer({
             <select
               id="colorMode"
               value={colorMode}
-              onChange={(e) => setColorMode(e.target.value as ColorMode)}
+              onChange={(e) =>
+                setColorMode(e.target.value as ColorMode)
+              }
               style={{ padding: "8px", borderRadius: "4px", width: "100%" }}
             >
               <option value="default">Default</option>

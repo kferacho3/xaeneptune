@@ -102,7 +102,7 @@ const filteredBeats = useMemo(() => {
 
   return (
     <div className="beats-list-container w-full h-screen p-4 bg-black bg-opacity-80 text-white flex flex-col">
-      <h1 className="text-2xl md:text-4xl font-bold text-center mt-10">Beats Available</h1>
+      <h1 className="text-2xl md:text-3xl font-bold text-center mt-12">Beats Available</h1>
       
       {/* Top Row: Filter toggle, Beats tab, and Audio Visualizer tab */}
       <div className="flex justify-around items-center my-2">
@@ -207,28 +207,29 @@ const filteredBeats = useMemo(() => {
       )}
       
       {/* Scrollable Beats Content */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 mb-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
           {currentBeats.map((beat, index) => (
             <div
               key={index}
-              className="beat-item bg-gradient-to-br from-indigo-900 via-blue-900 to-black p-4 rounded-lg flex items-center space-x-4 transform transition-transform duration-300 hover:scale-105 hover:shadow-[0_0_10px_2px_rgba(75,0,130,0.8)] cursor-pointer"
+              className="beat-item bg-gradient-to-br from-indigo-900 via-blue-900 to-black p-2 rounded-lg flex items-center space-x-2 transform transition-transform duration-300 hover:scale-105 hover:shadow-[0_0_5px_1px_rgba(75,0,130,0.8)] cursor-pointer"
               onClick={() => onBeatSelect(beat.audioFile)}
             >
               {getBeatIcon(beat)}
               <div>
-                <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600">
+                <h2 className="text-base font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600">
                   {beat.beatName}
                 </h2>
-                <p className="text-sm">Key: {beat.beatKey || "N/A"}</p>
-                <p className="text-sm">Producer: {beat.beatProducer}</p>
-                <p className="text-sm">Date: {beat.beatDate}</p>
-                <p className="text-sm">BPM: {beat.beatPerMin || "N/A"}</p>
+                <p className="text-xs">Key: {beat.beatKey || "N/A"}</p>
+                <p className="text-xs">Producer: {beat.beatProducer}</p>
+                <p className="text-xs">Date: {beat.beatDate}</p>
+                <p className="text-xs">BPM: {beat.beatPerMin || "N/A"}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
+
       
       {/* Fixed Pagination at Bottom */}
       {beatsPerPage !== "all" && totalPages > 1 && (
