@@ -8,9 +8,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#000000", // black
-        secondary: "#013a63", // dark blue (Neptune-like)
-        tertiary: "#ffffff", // white
+        primary: "#000000",
+        secondary: "#013a63",
+        tertiary: "#ffffff",
+
+        /* accent used in component – Spotify green */
+        brand: "#1db954",
       },
     },
   },
