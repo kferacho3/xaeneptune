@@ -58,7 +58,7 @@ function TransmissiveSphere({ sphereRef }: TransmissiveSphereProps) {
     if (groupRef.current) groupRef.current.position.y = 80 + Math.sin(state.clock.elapsedTime) * 2;
   });
   return (
-    <group ref={groupRef} position={[0, 80, -100]}>
+    <group ref={groupRef} position={[0, 150, 200]}>
       <mesh ref={sphereRef}>
         <sphereGeometry args={[30, 64, 64]} />
         <meshPhysicalMaterial
@@ -89,57 +89,7 @@ function TransmissiveSphere({ sphereRef }: TransmissiveSphereProps) {
   );
 }
 
-type CrescentMoonTransmissiveProps = { moonRef?: React.MutableRefObject<THREE.Mesh | null> };
-function CrescentMoonTransmissive({ moonRef }: CrescentMoonTransmissiveProps = {}) {
-  const material = new THREE.MeshPhysicalMaterial({
-    emissive: "#4b0082",
-    emissiveIntensity: 2,
-    transmission: 1,
-    roughness: 0,
-    metalness: 0,
-    clearcoat: 1,
-    transparent: true,
-    opacity: 0.8,
-  });
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.lightDir = { value: new THREE.Vector3(1, 0, 0) };
-    shader.uniforms.threshold = { value: 0.3 };
-    shader.fragmentShader =
-      `uniform vec3 lightDir;
-       uniform float threshold;` + shader.fragmentShader;
-    shader.fragmentShader = shader.fragmentShader.replace(
-      `#include <dithering_fragment>`,
-      `
-        float illumination = dot(normalize(vNormal), normalize(lightDir));
-        if(illumination < threshold){
-          gl_FragColor = vec4(0.0,0.0,0.0,1.0);
-        }
-        #include <dithering_fragment>
-      `
-    );
-  };
-  return (
-    <group position={[0, 20, 200]}>
-      <mesh ref={moonRef}>
-        <sphereGeometry args={[10, 64, 64]} />
-        <primitive object={material} attach="material" />
-      </mesh>
-      <pointLight intensity={3} distance={100} color="#4b0082" />
-      {[...Array(3)].map((_, i) => (
-        <mesh key={i}>
-          <sphereGeometry args={[10 + (i + 1) * 2, 64, 64]} />
-          <meshBasicMaterial
-            color="#4b0082"
-            opacity={0.2 / (i + 1)}
-            transparent
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-}
+
 
 function EnvironmentParticles({ isMobile = false }: { isMobile?: boolean }) {
   const sparkleCount1 = isMobile ? 100 : 250;
@@ -180,7 +130,6 @@ export default function Scene({
   const animationFinishedRef = useRef(false);
   const elapsedTimeRef = useRef(0);
   const sphereRef = useRef<THREE.Mesh | null>(null);
-  const crescentMoonRef = useRef<THREE.Mesh | null>(null);
   const [scaleFactor, setScaleFactor] = useState(1);
   const { scale } = useSpring({ scale: scaleFactor, config: { tension: 170, friction: 26 } });
 
@@ -265,7 +214,6 @@ export default function Scene({
       {/* ================= ORIGINAL EMISSIVE SPHERE & MOON ================= */}
       <AnimatedGroup scale={scale.to((s) => [s, s, s])}>
         <TransmissiveSphere sphereRef={sphereRef} />
-        <CrescentMoonTransmissive moonRef={crescentMoonRef} />
       </AnimatedGroup>
 
       <ambientLight intensity={environmentMode === "day" ? 0.6 : 0.4} />
