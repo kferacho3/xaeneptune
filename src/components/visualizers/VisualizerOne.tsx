@@ -1,468 +1,243 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   VisualizerOne.tsx  —  Perlin-sphere & dual-plane audio visualizer
+   Completely refactored to use the shared-audio singleton hook so that
+   ONE — and only one — <audio> / AudioContext / AnalyserNode exists
+   across the entire application.
+──────────────────────────────────────────────────────────────────────────── */
 "use client";
+
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { createNoise2D, createNoise3D } from "simplex-noise";
 import * as THREE from "three";
 
-/* ====================================================================
+import useSharedAudio from "./useSharedAudio"; // ← NEW shared-audio hook
+
+/* =======================================================================
    Type Definitions
-==================================================================== */
+======================================================================= */
 type VisualizerOneProps = {
-  audioUrl: string;
-  isPaused: boolean;
+  audioUrl : string;
+  isPaused : boolean;
 };
 
 type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
-type ColorMode = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
+type ColorMode     = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
 
-/* ====================================================================
-   Initialize Noise Functions
-==================================================================== */
+/* =======================================================================
+   Noise Generators
+======================================================================= */
 const noise2D = createNoise2D();
 const noise3D = createNoise3D();
 
-/* ====================================================================
-   Shared Audio Objects
-   (You can replace these with your useStore hook if desired.)
-==================================================================== */
-let sharedAudioElement: HTMLAudioElement | null = null;
-let sharedAudioContext: AudioContext | null = null;
-let sharedAnalyser: AnalyserNode | null = null;
+/* =======================================================================
+   Main Component
+======================================================================= */
+export default function VisualizerOne({ audioUrl, isPaused }: VisualizerOneProps) {
+  /* 🎧  audio analyser -- shared across all visualisers */
+  const analyserRef = useSharedAudio(audioUrl, isPaused);
 
-/* ====================================================================
-   VisualizerOneScene Component
-   This component creates the scene, camera, and all 3D objects.
-==================================================================== */
-function VisualizerOneScene({ audioUrl, isPaused }: VisualizerOneProps) {
-  console.log("VisualizerOne active");
+  /* ---------- geometry / material refs ---------- */
+  const groupRef  = useRef<THREE.Group>(null!);
+  const ballRef   = useRef<THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>>(null!);
+  const plane1Ref = useRef<THREE.Mesh<THREE.PlaneGeometry,      THREE.MeshLambertMaterial>>(null!);
+  const plane2Ref = useRef<THREE.Mesh<THREE.PlaneGeometry,      THREE.MeshLambertMaterial>>(null!);
 
-  /* ------------------------------------------------------------------
-     Mesh and Scene References
-  ------------------------------------------------------------------ */
-  const groupRef = useRef<THREE.Group>(null);
-  // Note: Explicitly casting the ball mesh geometry to THREE.IcosahedronGeometry
-  const ballRef = useRef<THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>>(null);
-  // Casting plane geometries to THREE.PlaneGeometry for type correctness
-  const plane1Ref = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
-  const plane2Ref = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>>(null);
-
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-
-  const sceneRef = useRef<THREE.Scene>(new THREE.Scene());
-  const cameraRef = useRef<THREE.PerspectiveCamera>(
-    new THREE.PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    )
-  );
-  const rendererRef = useRef<THREE.WebGLRenderer>(
-    new THREE.WebGLRenderer({ alpha: true, antialias: true })
-  );
-
+  /* ---------- UI state ---------- */
   const [renderingMode, setRenderingMode] = useState<RenderingMode>("wireframe");
-  const [colorMode, setColorMode] = useState<ColorMode>("default");
+  const [colorMode,     setColorMode]     = useState<ColorMode>("default");
 
-  /* ------------------------------------------------------------------
-     Shared Audio and Scene Setup Effect
-  ------------------------------------------------------------------ */
-  useEffect(() => {
-    /* ---------- Shared Audio Setup ---------- */
-    if (!sharedAudioElement) {
-      sharedAudioElement = new Audio(audioUrl);
-      sharedAudioElement.crossOrigin = "anonymous";
-      sharedAudioElement.loop = true;
+  /* =====================================================================
+     Helper maths
+  ==================================================================== */
+  const fractionate = (val:number, min:number, max:number) => (val - min) / (max - min);
+  const modulate    = (val:number, min:number, max:number, outMin:number, outMax:number) =>
+    outMin + fractionate(val, min, max) * (outMax - outMin);
+  const avg = (a:Uint8Array) => a.reduce((s,b) => s + b, 0) / a.length;
+  const max = (a:Uint8Array) => a.reduce((m,b) => Math.max(m,b), 0);
 
-      sharedAudioContext = new AudioContext();
-      const src = sharedAudioContext.createMediaElementSource(sharedAudioElement);
-      sharedAnalyser = sharedAudioContext.createAnalyser();
-      sharedAnalyser.fftSize = 512;
-      src.connect(sharedAnalyser);
-      sharedAnalyser.connect(sharedAudioContext.destination);
-    } else if (sharedAudioElement.src !== audioUrl) {
-      // Update source if a new audio file is provided.
-      sharedAudioElement.src = audioUrl;
+  /* =====================================================================
+     Geometry deformation helpers
+  ==================================================================== */
+  const makeRoughGround = (mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>,
+                           distortionFr:number) => {
+    const verts = mesh.geometry.attributes.position.array as Float32Array;
+    const amp   = 2;
+    const time  = Date.now();
+    for (let i=0;i<verts.length;i+=3){
+      const x = verts[i];
+      const y = verts[i+1];
+      const dist = (noise2D(x + time*0.0003, y + time*0.0001)) * distortionFr * amp;
+      verts[i+2] = dist;
     }
+    mesh.geometry.attributes.position.needsUpdate = true;
+    mesh.geometry.computeVertexNormals();
+  };
 
-    audioRef.current = sharedAudioElement;
-    audioContextRef.current = sharedAudioContext;
-    analyserRef.current = sharedAnalyser;
-
-    const tryPlay = async () => {
-      if (isPaused) {
-        sharedAudioElement?.pause();
-      } else {
-        if (sharedAudioContext && sharedAudioContext.state === "suspended") {
-          await sharedAudioContext.resume();
-        }
-        try {
-          await sharedAudioElement?.play();
-        } catch (err) {
-          console.error("Audio play error:", err);
-        }
-      }
-    };
-    void tryPlay();
-
-    /* ---------- THREE.js Scene Setup ---------- */
-    const scene = sceneRef.current;
-    const camera = cameraRef.current;
-    const group = groupRef.current || new THREE.Group();
-    groupRef.current = group;
-    scene.add(group);
-
-    camera.position.set(0, 0, 100);
-    camera.lookAt(scene.position);
-
-    // Create a plane geometry and explicitly cast it as THREE.PlaneGeometry
-    const planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20) as THREE.PlaneGeometry;
-    const planeMaterial = new THREE.MeshLambertMaterial({
-      color: 0x6904ce,
-      side: THREE.DoubleSide,
-      wireframe: true,
-    });
-
-    // Create plane1 mesh
-    const plane1 = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane1.rotation.x = -0.5 * Math.PI;
-    plane1.position.set(0, 30, 0);
-    group.add(plane1);
-    plane1Ref.current = plane1;
-
-    // Create plane2 mesh
-    const plane2 = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane2.rotation.x = -0.5 * Math.PI;
-    plane2.position.set(0, -30, 0);
-    group.add(plane2);
-    plane2Ref.current = plane2;
-
-    // Create the ball (icosahedron) mesh
-    const ballGeometry = new THREE.IcosahedronGeometry(10, 4) as THREE.IcosahedronGeometry;
-    const ballMaterial = new THREE.MeshLambertMaterial({
-      color: 0xff00ee,
-      wireframe: true,
-    });
-    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    group.add(ball);
-    ballRef.current = ball;
-
-    // Add ambient and spotlight to the scene
-    const ambient = new THREE.AmbientLight(0xaaaaaa);
-    scene.add(ambient);
-
-    const spot = new THREE.SpotLight(0xffffff, 0.9);
-    spot.position.set(-10, 40, 20);
-    spot.lookAt(ball.position);
-    spot.castShadow = true;
-    scene.add(spot);
-
-    /* ---------- Resize Handling ---------- */
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener("resize", handleResize);
-
-    /* ---------- Cleanup Function ---------- */
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (sharedAudioElement) {
-        sharedAudioElement.pause();
-        sharedAudioElement.currentTime = 0;
-      }
-    };
-  }, [audioUrl, isPaused]);
-
-  /* ------------------------------------------------------------------
-     Handle Pause/Resume Updates
-  ------------------------------------------------------------------ */
-  useEffect(() => {
-    const audio = audioRef.current;
-    const audioContext = audioContextRef.current;
-    if (!audio || !audioContext) return;
-    if (isPaused) {
-      audio.pause();
-    } else {
-      (async () => {
-        if (audioContext.state === "suspended") {
-          await audioContext.resume();
-        }
-        try {
-          await audio.play();
-        } catch (err) {
-          console.error("Audio play error:", err);
-        }
-      })();
-    }
-  }, [isPaused]);
-
-  /* ------------------------------------------------------------------
-     Helper Functions for FFT Processing & Geometry Modulation
-  ------------------------------------------------------------------ */
-  const makeRoughBall = (
-    mesh: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>,
-    bassFr: number,
-    treFr: number
-  ) => {
-    if (!mesh) return;
-    const vertices = mesh.geometry.attributes.position.array as Float32Array;
-    // Cast geometry to THREE.IcosahedronGeometry to access the 'parameters' property
-    const ballGeom = mesh.geometry as THREE.IcosahedronGeometry;
-    const offset = ballGeom.parameters.radius as number;
+  const makeRoughBall = (mesh: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>,
+                         bassFr:number,
+                         treFr:number) => {
+    const verts = mesh.geometry.attributes.position.array as Float32Array;
+    const offset = (mesh.geometry as THREE.IcosahedronGeometry).parameters.radius as number;
     const amp = 7;
-    const time = window.performance.now();
+    const time = performance.now();
     const rf = 0.00001;
-
-    for (let i = 0; i < vertices.length; i += 3) {
-      const vertex = new THREE.Vector3(
-        vertices[i],
-        vertices[i + 1],
-        vertices[i + 2]
-      ).normalize();
-      const distance =
-        offset +
-        bassFr +
-        noise3D(
-          vertex.x + time * rf * 7,
-          vertex.y + time * rf * 8,
-          vertex.z + time * rf * 9
-        ) *
-          amp *
-          treFr;
-      vertex.multiplyScalar(distance);
-      vertices[i] = vertex.x;
-      vertices[i + 1] = vertex.y;
-      vertices[i + 2] = vertex.z;
+    for (let i=0;i<verts.length;i+=3){
+      const v = new THREE.Vector3(verts[i],verts[i+1],verts[i+2]).normalize();
+      const dist = offset + bassFr +
+        noise3D(v.x + time*rf*7, v.y + time*rf*8, v.z + time*rf*9) * amp * treFr;
+      v.multiplyScalar(dist);
+      verts[i]   = v.x;
+      verts[i+1] = v.y;
+      verts[i+2] = v.z;
     }
     mesh.geometry.attributes.position.needsUpdate = true;
     mesh.geometry.computeVertexNormals();
   };
 
-  const makeRoughGround = (
-    mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>,
-    distortionFr: number
-  ) => {
-    if (!mesh) return;
-    const vertices = mesh.geometry.attributes.position.array as Float32Array;
-    // We explicitly cast geometry to THREE.PlaneGeometry if needed but we do not store it.
-    const amp = 2;
-    const time = Date.now();
-
-    for (let i = 0; i < vertices.length; i += 3) {
-      const x = vertices[i];
-      const y = vertices[i + 1];
-      const distance =
-        (noise2D(x + time * 0.0003, y + time * 0.0001) + 0) *
-        distortionFr *
-        amp;
-      vertices[i + 2] = distance;
-    }
-    mesh.geometry.attributes.position.needsUpdate = true;
-    mesh.geometry.computeVertexNormals();
-  };
-
-  const fractionate = (val: number, minVal: number, maxVal: number): number => {
-    return (val - minVal) / (maxVal - minVal);
-  };
-
-  const modulate = (
-    val: number,
-    minVal: number,
-    maxVal: number,
-    outMin: number,
-    outMax: number
-  ): number => {
-    const fr = fractionate(val, minVal, maxVal);
-    const delta = outMax - outMin;
-    return outMin + fr * delta;
-  };
-
-  const avg = (arr: Uint8Array): number => {
-    const total = Array.from(arr).reduce((sum, b) => sum + b, 0);
-    return total / arr.length;
-  };
-
-  const max = (arr: Uint8Array): number => {
-    return Array.from(arr).reduce((a, b) => Math.max(a, b), 0);
-  };
-
-  /* ------------------------------------------------------------------
-     Render Loop (useFrame)
-  ------------------------------------------------------------------ */
+  /* =====================================================================
+     Animation loop
+  ==================================================================== */
   useFrame(() => {
-    if (
-      !analyserRef.current ||
-      !ballRef.current ||
-      !plane1Ref.current ||
-      !plane2Ref.current ||
-      !groupRef.current
-    )
-      return;
+    if (!analyserRef.current) return;
 
-    const bufferLength = analyserRef.current.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyserRef.current.getByteFrequencyData(dataArray);
+    /* -------- FFT data -------- */
+    const bufLen = analyserRef.current.frequencyBinCount;
+    const data   = new Uint8Array(bufLen);
+    analyserRef.current.getByteFrequencyData(data);
 
-    const lowerHalfArray = dataArray.slice(
-      0,
-      Math.floor(dataArray.length / 2) - 1
-    );
-    const upperHalfArray = dataArray.slice(
-      Math.floor(dataArray.length / 2) - 1,
-      dataArray.length - 1
-    );
+    const lower   = data.slice(0, Math.floor(data.length/2));
+    const upper   = data.slice(lower.length);
 
-    const overallAvg = avg(dataArray);
-    const lowerMax = max(lowerHalfArray);
-    const lowerAvgVal = avg(lowerHalfArray);
-    const upperMax = max(upperHalfArray);
-    const upperAvgVal = avg(upperHalfArray);
+    const overallAvg = avg(data);
+    const lowerMaxFr = max(lower)   / lower.length;
+    const upperAvgFr = avg(upper)   / upper.length;
 
-    const lowerMaxFr = lowerMax / lowerHalfArray.length;
-    const lowerAvgFr = lowerAvgVal / lowerHalfArray.length;
-    const upperMaxFr = upperMax / upperHalfArray.length;
-    const upperAvgFr = upperAvgVal / upperHalfArray.length;
+    /* -------- deform geometry -------- */
+    if (plane1Ref.current && plane2Ref.current && ballRef.current){
+      makeRoughGround(plane1Ref.current, modulate(upperAvgFr,0,1,0.5,4));
+      makeRoughGround(plane2Ref.current, modulate(lowerMaxFr,0,1,0.5,4));
+      makeRoughBall  (ballRef.current,
+                      modulate(Math.pow(lowerMaxFr,0.8),0,1,0,8),
+                      modulate(upperAvgFr,0,1,0,4));
+    }
 
-    makeRoughGround(plane1Ref.current, modulate(upperAvgFr, 0, 1, 0.5, 4));
-    makeRoughGround(plane2Ref.current, modulate(lowerMaxFr, 0, 1, 0.5, 4));
-    makeRoughBall(
-      ballRef.current,
-      modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8),
-      modulate(upperAvgFr, 0, 1, 0, 4)
-    );
+    /* -------- rotate group -------- */
+    if (groupRef.current) groupRef.current.rotation.y += 0.005;
 
-    groupRef.current.rotation.y += 0.005;
+    /* -------- dynamic colour / material updates -------- */
+    if (ballRef.current && plane1Ref.current && plane2Ref.current){
+      const [ballMat, p1Mat, p2Mat] = [
+        ballRef.current.material,
+        plane1Ref.current.material,
+        plane2Ref.current.material,
+      ] as THREE.MeshLambertMaterial[];
 
-    // Update materials based on rendering mode and color mode
-    const ballMaterial = ballRef.current.material as THREE.MeshLambertMaterial;
-    const plane1Material = plane1Ref.current.material as THREE.MeshLambertMaterial;
-    const plane2Material = plane2Ref.current.material as THREE.MeshLambertMaterial;
+      /** wireframe / transparency toggles */
+      [ballMat,p1Mat,p2Mat].forEach(m=>{
+        m.wireframe   = renderingMode==="wireframe";
+        m.transparent = renderingMode==="transparent";
+        m.opacity     = renderingMode==="transparent" ? 0.5 : 1;
+      });
 
-    const baseColor = new THREE.Color(0x6904ce);
-    const ballBaseColor = new THREE.Color(0xff00ee);
+      const basePlaneClr = new THREE.Color(0x6904ce);
+      const baseBallClr  = new THREE.Color(0xff00ee);
 
-    [ballMaterial, plane1Material, plane2Material].forEach((mat) => {
-      mat.wireframe = renderingMode === "wireframe";
-      mat.transparent = renderingMode === "transparent";
-      mat.opacity = renderingMode === "transparent" ? 0.5 : 1;
-    });
-
-    if (renderingMode === "rainbow") {
-      ballMaterial.color.setHSL(upperAvgFr, 1, 0.5);
-      plane1Material.color.setHSL(upperAvgFr, 1, 0.5);
-      plane2Material.color.setHSL(lowerMaxFr, 1, 0.5);
-    } else if (colorMode === "audioAmplitude") {
-      const intensity = overallAvg / 255;
-      ballMaterial.color.lerp(ballBaseColor, intensity);
-      plane1Material.color.lerp(baseColor, intensity);
-      plane2Material.color.lerp(baseColor, intensity);
-    } else if (colorMode === "frequencyBased") {
-      ballMaterial.color.setHSL(upperAvgFr, 0.7, 0.6);
-      plane1Material.color.setHSL(lowerAvgFr, 0.7, 0.6);
-      plane2Material.color.setHSL(upperMaxFr, 0.7, 0.6);
-    } else if (colorMode === "rainbow") {
-      ballMaterial.color.setHSL(upperAvgFr, 1, 0.5);
-      plane1Material.color.setHSL(lowerAvgFr, 1, 0.5);
-      plane2Material.color.setHSL(upperMaxFr, 1, 0.5);
-    } else {
-      ballMaterial.color.copy(ballBaseColor);
-      plane1Material.color.copy(baseColor);
-      plane2Material.color.copy(baseColor);
+      if (renderingMode==="rainbow" || colorMode==="rainbow"){
+        ballMat.color.setHSL(upperAvgFr,1,0.5);
+        p1Mat.color.setHSL(upperAvgFr,1,0.5);
+        p2Mat.color.setHSL(lowerMaxFr,1,0.5);
+      } else if (colorMode==="audioAmplitude"){
+        const it = overallAvg/255;
+        ballMat.color.copy(baseBallClr).lerp(new THREE.Color(0xffffff), it);
+        p1Mat.color .copy(basePlaneClr).lerp(new THREE.Color(0xffffff), it);
+        p2Mat.color .copy(basePlaneClr).lerp(new THREE.Color(0xffffff), it);
+      } else if (colorMode==="frequencyBased"){
+        ballMat.color.setHSL(upperAvgFr ,0.7,0.6);
+        p1Mat.color .setHSL(lowerMaxFr  ,0.7,0.6);
+        p2Mat.color .setHSL(upperAvgFr  ,0.7,0.6);
+      } else {
+        ballMat.color.copy(baseBallClr);
+        p1Mat.color .copy(basePlaneClr);
+        p2Mat.color .copy(basePlaneClr);
+      }
     }
   });
 
-  /* ------------------------------------------------------------------
-     Render JSX
-  ------------------------------------------------------------------ */
+  /* =====================================================================
+     JSX
+  ==================================================================== */
   return (
     <>
-      <scene ref={sceneRef}>
-        <group ref={groupRef}>
-          <ambientLight intensity={0.9} />
-          <spotLight position={[-10, 40, 20]} intensity={0.9} castShadow />
-          <mesh ref={plane1Ref} rotation-x={-Math.PI / 2} position={[0, 30, 0]}>
-            <planeGeometry args={[800, 800, 20, 20]} />
-            <meshLambertMaterial
-              color={0x6904ce}
-              wireframe={renderingMode === "wireframe"}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-          <mesh ref={plane2Ref} rotation-x={-Math.PI / 2} position={[0, -30, 0]}>
-            <planeGeometry args={[800, 800, 20, 20]} />
-            <meshLambertMaterial
-              color={0x6904ce}
-              wireframe={renderingMode === "wireframe"}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-          <mesh ref={ballRef} position={[0, 0, 0]}>
-            <icosahedronGeometry args={[10, 4]} />
-            <meshLambertMaterial
-              color={0xff00ee}
-              wireframe={renderingMode === "wireframe"}
-            />
-          </mesh>
-        </group>
-        <perspectiveCamera ref={cameraRef} position={[0, 0, 100]} />
-      </scene>
+      {/* 3-D scene graph */}
+      <group ref={groupRef}>
+        {/* ground plane 1 */}
+        <mesh ref={plane1Ref} rotation-x={-Math.PI/2} position={[0,30,0]}>
+          <planeGeometry args={[800,800,20,20]} />
+          <meshLambertMaterial color={0x6904ce} wireframe />
+        </mesh>
+
+        {/* ground plane 2 */}
+        <mesh ref={plane2Ref} rotation-x={-Math.PI/2} position={[0,-30,0]}>
+          <planeGeometry args={[800,800,20,20]} />
+          <meshLambertMaterial color={0x6904ce} wireframe />
+        </mesh>
+
+        {/* perlin-distorted ball */}
+        <mesh ref={ballRef}>
+          <icosahedronGeometry args={[10,4]} />
+          <meshLambertMaterial color={0xff00ee} wireframe />
+        </mesh>
+
+        {/* basic lights */}
+        <ambientLight intensity={0.9}/>
+        <spotLight   position={[-10,40,20]} intensity={0.9}/>
+      </group>
+
+      {/* UI overlays */}
       <Html>
         <div
           style={{
-            position: "absolute",
-            top: 20,
-            left: 20,
-            display: "flex",
+            position   : "absolute",
+            top        : 20,
+            left       : 20,
+            display    : "flex",
             flexDirection: "column",
-            gap: "10px",
-            color: "white",
+            gap        : 10,
+            color      : "white",
+            fontFamily : "sans-serif",
+            fontSize   : 14,
+            userSelect : "none",
           }}
         >
-          <div>
-            Rendering Mode:
+          <label>
+            Rendering&nbsp;Mode:&nbsp;
             <select
               value={renderingMode}
-              onChange={(e) =>
-                setRenderingMode(e.target.value as RenderingMode)
-              }
+              onChange={e=>setRenderingMode(e.target.value as RenderingMode)}
             >
               <option value="solid">Solid</option>
               <option value="wireframe">Wireframe</option>
               <option value="rainbow">Rainbow</option>
               <option value="transparent">Transparent</option>
             </select>
-          </div>
-          <div>
-            Color Mode:
+          </label>
+
+          <label>
+            Color&nbsp;Mode:&nbsp;
             <select
               value={colorMode}
-              onChange={(e) => setColorMode(e.target.value as ColorMode)}
+              onChange={e=>setColorMode(e.target.value as ColorMode)}
             >
               <option value="default">Default</option>
               <option value="audioAmplitude">Audio Amplitude</option>
-              <option value="frequencyBased">Frequency Based</option>
+              <option value="frequencyBased">Frequency-based</option>
               <option value="rainbow">Rainbow</option>
             </select>
-          </div>
+          </label>
         </div>
       </Html>
     </>
   );
 }
-
-/* ====================================================================
-   Exported VisualizerOne Component
-   (This simply wraps VisualizerOneScene.)
-==================================================================== */
-export default function VisualizerOne({ audioUrl, isPaused }: VisualizerOneProps) {
-  return <VisualizerOneScene audioUrl={audioUrl} isPaused={isPaused} />;
-}
-
-/* ====================================================================
-   End of VisualizerOne Component Code
-==================================================================== */

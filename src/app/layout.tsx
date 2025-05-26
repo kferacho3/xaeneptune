@@ -7,7 +7,7 @@ import "../../styles/globals.css";
 const orbitron = Orbitron({ weight: ["400", "700"], subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Xaeneptune Official Website",
+  title: "ANTIHEROES Official Website",
   description: "Collection of golden tracks",
 };
 

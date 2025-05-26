@@ -1,10 +1,13 @@
 "use client";
 
-import { shaderMaterial } from "@react-three/drei";
+import { Html, shaderMaterial } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useControls } from "leva";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import useSharedAudio from "./useSharedAudio"; // <- make sure this hook exists
+export type EnvironmentMode = "phantom" | "octagrams" | "raymarching";
+export type RenderingMode   = "solid"   | "wireframe" | "rainbow" | "transparent";
+
 
 /**
  * This code has:
@@ -676,195 +679,164 @@ const FFTVisualizerMaterial = shaderMaterial(
     }
   `,
 );
-type FFTVisualizerMaterialImpl = InstanceType<typeof FFTVisualizerMaterial>;
 
-export type EnvironmentMode = "phantom" | "octagrams" | "raymarching";
-export type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
 
-interface VisualizerThreeProps {
-  audioUrl: string;
-  isPaused: boolean;
-}
+interface VisualizerThreeProps { audioUrl: string; isPaused: boolean }
 
+/* ======================================================================== */
+/*                            Scene component                               */
+/* ======================================================================== */
 function VisualizerThreeScene({ audioUrl, isPaused }: VisualizerThreeProps) {
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const fftTextureRef = useRef<THREE.DataTexture | null>(null);
+  /* ===== shared analyser (single audio across app) ===== */
+  const analyserRef = useSharedAudio(audioUrl, isPaused);
 
-  const customShaderMaterial = useMemo(() => new FFTVisualizerMaterial(), []);
-  const shaderMaterialRef = useRef<FFTVisualizerMaterialImpl | null>(null);
-
-  const [envMode, setEnvMode] = useState<EnvironmentMode>("phantom");
-  const [renderMode, setRenderMode] = useState<RenderingMode>("solid");
-  const [selectedPaletteName, setSelectedPaletteName] = useState<keyof typeof colorPalettes>("default");
-  const [fftIntensity, setFftIntensity] = useState(0.1);
-
-  // LEVA controls (if desired) would go here.
-  useControls("Visualizer", {
-    environment: {
-      value: envMode,
-      options: ["phantom", "octagrams", "raymarching"],
-      onChange: (v: EnvironmentMode) => setEnvMode(v),
-    },
-    renderMode: {
-      value: renderMode,
-      options: ["solid", "wireframe", "rainbow", "transparent"],
-      onChange: (v: RenderingMode) => setRenderMode(v),
-    },
-    palette: {
-      value: selectedPaletteName,
-      options: Object.keys(colorPalettes),
-      onChange: (val: string) =>
-        setSelectedPaletteName(val as keyof typeof colorPalettes),
-    },
-    fftIntensity: {
-      value: fftIntensity,
-      min: 0.0,
-      max: 1.0,
-      step: 0.01,
-      onChange: (val: number) => setFftIntensity(val),
-    },
-  });
-
-  useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio(audioUrl);
-      audioRef.current.crossOrigin = "anonymous";
-      audioRef.current.loop = true;
-      audioContextRef.current = new AudioContext();
-      const src = audioContextRef.current.createMediaElementSource(audioRef.current);
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 512;
-      src.connect(analyserRef.current);
-      analyserRef.current.connect(audioContextRef.current.destination);
-
-      const bLen = analyserRef.current.frequencyBinCount;
-      const array = new Uint8Array(bLen * 4);
-      fftTextureRef.current = new THREE.DataTexture(
-        array,
-        bLen,
-        1,
-        THREE.RGBAFormat,
-        THREE.UnsignedByteType
-      );
-      fftTextureRef.current.needsUpdate = true;
-    } else {
-      if (audioRef.current.src !== audioUrl) {
-        audioRef.current.src = audioUrl;
-      }
-    }
-
-    const tryPlay = async () => {
-      if (!audioRef.current) return;
-      if (isPaused) {
-        audioRef.current.pause();
-      } else {
-        if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-          await audioContextRef.current.resume();
-        }
-        try {
-          await audioRef.current.play();
-        } catch (err) {
-          console.warn("Audio play error:", err);
-        }
-      }
-    };
-    void tryPlay();
-  }, [audioUrl, isPaused]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    const ctx = audioContextRef.current;
-    if (!audio || !ctx) return;
-    const doUpdate = async () => {
-      if (isPaused) {
-        audio.pause();
-      } else {
-        if (ctx.state === "suspended") {
-          await ctx.resume();
-        }
-        try {
-          await audio.play();
-        } catch (e) {
-          console.warn("Audio play error:", e);
-        }
-      }
-    };
-    void doUpdate();
-  }, [isPaused]);
-
-  useEffect(() => {
-    if (fftTextureRef.current && customShaderMaterial.uniforms.fftTexture) {
-      customShaderMaterial.uniforms.fftTexture.value = fftTextureRef.current;
-    }
-  }, [customShaderMaterial]);
-
+  /* ===== shader & geometry refs ===== */
+  const material = useMemo(() => new FFTVisualizerMaterial(), []);
   const planeRef = useRef<THREE.Mesh>(null);
+  const fftTexRef = useRef<THREE.DataTexture | null>(null);
 
+  /* ===== user-controlled state (now with setters) ===== */
+  const [envMode, setEnvMode]                     = useState<EnvironmentMode>("phantom");
+  const [renderMode, setRenderMode]               = useState<RenderingMode>("solid");
+  const [paletteName, setPaletteName]             =
+    useState<keyof typeof colorPalettes>("default");
+  const [fftIntensity, setFftIntensity]           = useState(0.2);
+
+  /* ===== allocate FFT DataTexture once analyser ready ===== */
+  useEffect(() => {
+    if (!analyserRef.current) return;
+    const bins = analyserRef.current.frequencyBinCount;
+    fftTexRef.current = new THREE.DataTexture(new Uint8Array(bins * 4), bins, 1, THREE.RGBAFormat);
+    fftTexRef.current.needsUpdate = true;
+    material.uniforms.fftTexture.value = fftTexRef.current;
+
+    return () => { fftTexRef.current?.dispose(); fftTexRef.current = null; };
+  }, [analyserRef, material]);
+
+  /* ===== per-frame uniforms update ===== */
   useFrame(({ clock, gl, camera, mouse }) => {
-    if (planeRef.current) {
-      planeRef.current.lookAt(camera.position);
-    }
-    const mat = customShaderMaterial;
-    mat.uniforms.iTime.value = clock.elapsedTime;
-    mat.uniforms.iResolution.value.set(gl.domElement.width, gl.domElement.height);
-    mat.uniforms.fftIntensity.value = fftIntensity;
+    planeRef.current?.lookAt(camera.position);
 
-    // Set environment mode
-    if (envMode === "phantom") {
-      mat.uniforms.uEnvironment.value = 0;
-    } else if (envMode === "octagrams") {
-      mat.uniforms.uEnvironment.value = 1;
-    } else {
-      mat.uniforms.uEnvironment.value = 2;
-    }
+    material.uniforms.iTime.value        = clock.elapsedTime;
+    material.uniforms.iResolution.value.set(gl.domElement.width, gl.domElement.height);
+    material.uniforms.iMouse.value.set(mouse.x * gl.domElement.width,
+                                       mouse.y * gl.domElement.height, 0);
+    material.uniforms.fftIntensity.value = fftIntensity;
 
-    // Set render mode
-    if (renderMode === "solid") {
-      mat.uniforms.uRenderMode.value = 0;
-    } else if (renderMode === "wireframe") {
-      mat.uniforms.uRenderMode.value = 1;
-    } else if (renderMode === "rainbow") {
-      mat.uniforms.uRenderMode.value = 2;
-    } else {
-      mat.uniforms.uRenderMode.value = 3;
-    }
+    /* env + render */
+    material.uniforms.uEnvironment.value =
+      envMode === "phantom" ? 0 : envMode === "octagrams" ? 1 : 2;
+    material.uniforms.uRenderMode.value  =
+      renderMode === "solid" ? 0 : renderMode === "wireframe" ? 1 :
+      renderMode === "rainbow" ? 2 : 3;
 
-    // Pass in mouse coords
-    mat.uniforms.iMouse.value.x = mouse.x * gl.domElement.width;
-    mat.uniforms.iMouse.value.y = mouse.y * gl.domElement.height;
-    mat.uniforms.iMouse.value.z = 0.0;
+    /* palette */
+    const pal = colorPalettes[paletteName] ?? colorPalettes.default;
+    material.uniforms.colorPalette.value = pal.map(c => new THREE.Vector3(c.r, c.g, c.b));
 
-    // Update color palette uniform
-    const chosenColors = colorPalettes[selectedPaletteName] || colorPalettes.default;
-    const asVec3 = chosenColors.map((c) => new THREE.Vector3(c.r, c.g, c.b));
-    mat.uniforms.colorPalette.value = asVec3;
+    /* FFT texture */
+    if (analyserRef.current && fftTexRef.current) {
+      const bins  = analyserRef.current.frequencyBinCount;
+      const data  = new Uint8Array(bins);
+      analyserRef.current.getByteFrequencyData(data);
 
-    if (analyserRef.current && fftTextureRef.current) {
-      const bLen = analyserRef.current.frequencyBinCount;
-      const dataArray = new Uint8Array(bLen);
-      analyserRef.current.getByteFrequencyData(dataArray);
-      const txData = fftTextureRef.current.image.data as Uint8Array;
-      for (let i = 0; i < bLen; i++) {
-        const val = dataArray[i];
-        txData[i * 4 + 0] = val;
-        txData[i * 4 + 1] = val;
-        txData[i * 4 + 2] = val;
-        txData[i * 4 + 3] = 255;
+      const img = fftTexRef.current.image.data as Uint8Array;
+      for (let i = 0; i < bins; i++) {
+        img.set([data[i], data[i], data[i], 255], i * 4);
       }
-      fftTextureRef.current.needsUpdate = true;
+      fftTexRef.current.needsUpdate = true;
     }
   });
 
+  /* ===== JSX ===== */
   return (
-    <mesh ref={planeRef} position={[0, 0, 0]} scale={[15, 15, 1]} frustumCulled={false}>
-      <planeGeometry args={[20, 20, 60, 60]} />
-      <primitive object={customShaderMaterial} ref={shaderMaterialRef} attach="material" />
-    </mesh>
+    <>
+      {/* shader-driven plane */}
+      <mesh ref={planeRef} position={[0, 0, 0]} scale={[15, 15, 1]} frustumCulled={false}>
+        <planeGeometry args={[20, 20, 60, 60]} />
+        <primitive object={material} attach="material" />
+      </mesh>
+
+      {/* selector UI */}
+<Html >
+    <div
+    style={{
+
+     
+    }}
+  >
+  <div
+    style={{
+      position: "fixed",
+       background: "white",
+      top: "20px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",    // center children horizontally
+      gap: "2px",
+      color: "white",
+      fontSize: "14px",
+      userSelect: "none",
+      cursor: "pointer",
+      width: "30vw",
+      height: "30vh",
+      zIndex: 999,
+    }}
+  >
+          {/* Env mode */}
+          <div>
+            <label className="block mb-1">Environment</label>
+            <select value={envMode} onChange={e => setEnvMode(e.target.value as EnvironmentMode)}
+                    className="w-full bg-gray-800 p-1 rounded">
+              <option value="phantom">Phantom Star</option>
+              <option value="octagrams">Octagrams</option>
+              <option value="raymarching">Raymarching</option>
+            </select>
+          </div>
+
+          {/* Render mode */}
+          <div>
+            <label className="block mb-1">Render mode</label>
+            <select value={renderMode} onChange={e => setRenderMode(e.target.value as RenderingMode)}
+                    className="w-full bg-gray-800 p-1 rounded">
+              <option value="solid">Solid</option>
+              <option value="wireframe">Wireframe</option>
+              <option value="rainbow">Rainbow</option>
+              <option value="transparent">Transparent</option>
+            </select>
+          </div>
+
+          {/* Palette */}
+          <div>
+            <label className="block mb-1">Palette</label>
+            <select value={paletteName} onChange={e => setPaletteName(e.target.value as keyof typeof colorPalettes)}
+                    className="w-full bg-gray-800 p-1 rounded">
+              {Object.keys(colorPalettes).map(key => (
+                <option key={key} value={key}>{key}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* FFT intensity */}
+          <div>
+            <label className="block mb-1">FFT intensity&nbsp;({fftIntensity.toFixed(2)})</label>
+            <input type="range" min={0} max={1} step={0.01}
+                   value={fftIntensity}
+                   onChange={e => setFftIntensity(parseFloat(e.target.value))}
+                   className="w-full" />
+          </div>
+          </div>
+        </div>
+      </Html>
+    </>
   );
 }
 
+/* ======================================================================== */
+/*                             Wrapper export                               */
+/* ======================================================================== */
 export default function VisualizerThree({ audioUrl, isPaused }: VisualizerThreeProps) {
   return <VisualizerThreeScene audioUrl={audioUrl} isPaused={isPaused} />;
 }

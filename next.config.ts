@@ -1,11 +1,11 @@
 // next.config.ts
-import { NextConfig } from "next";
+import type { NextConfig } from "next";
+import type { Configuration } from "webpack";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    // @ts-expect-error: appDir is experimental and may not be defined in the current type definitions
-    appDir: true,
-  },
+  // ← appDir at top‐level, not under `experimental`
+  appDir: true,
+
   images: {
     domains: [
       "i.scdn.co",
@@ -14,8 +14,6 @@ const nextConfig: NextConfig = {
       "open.spotify.com",
       "is1-ssl.mzstatic.com",
       "xaeneptune.s3.us-east-2.amazonaws.com",
-      "i1.sndcdn.com",
-      "is1-ssl.mzstatic.com",
     ],
   },
 
@@ -23,8 +21,9 @@ const nextConfig: NextConfig = {
     // Only run ESLint on files in the 'src' directory.
     dirs: ["src"],
   },
-  webpack(config) {
-    config.module.rules.push({
+
+  webpack(config: Configuration): Configuration {
+    config.module?.rules?.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
       exclude: /node_modules/,
       type: "asset/source", // loads shader files as raw text

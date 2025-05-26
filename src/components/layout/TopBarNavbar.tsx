@@ -1,12 +1,18 @@
 "use client";
+
 import { useVisualizer } from "@/context/VisualizerContext";
 import { useRouteStore } from "@/store/useRouteStore";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { FaBars, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 
-type TopBarNavbarProps = {
-  onHamburgerClick?: () => void;
+type TopBarNavbarProps = { onHamburgerClick?: () => void };
+
+/** slide-in animation */
+const barAnim = {
+  hidden: { y: -60, opacity: 0 },
+  show:   { y:   0, opacity: 1, transition: { duration: 0.4, ease: "easeOut" } },
 };
 
 export default function TopBarNavbar({ onHamburgerClick }: TopBarNavbarProps) {
@@ -15,10 +21,10 @@ export default function TopBarNavbar({ onHamburgerClick }: TopBarNavbarProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const handle = () => setIsMobile(window.innerWidth < 768);
+    handle();
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
   }, []);
 
   const handleVisualizerClick = () => {
@@ -26,119 +32,62 @@ export default function TopBarNavbar({ onHamburgerClick }: TopBarNavbarProps) {
     setIsBeatVisualizer(true);
     setActiveRoute("beats-visualizer");
   };
-
   const handleBeatsClick = () => {
     setVisualizerMode(false);
     setIsBeatVisualizer(false);
     setActiveRoute("beats");
   };
 
-  if (isMobile) {
+  /* ---------- MOBILE ---------- */
+  if (isMobile)
     return (
-      <div className="fixed top-0 inset-x-0 flex items-center justify-between py-2 px-4 bg-black bg-opacity-60 backdrop-blur-md border-b border-white z-99999">
-        {/* Left: Logo only */}
-        <div className="flex items-center">
-          <Image
-            src="/AntiHeroLogo.png"
-            alt="AntiHero Logo"
-            width={20}
-            height={20}
-            priority
-          />
-        </div>
-        {/* Center: Social Media Icons */}
+      <motion.div
+        className="fixed top-0 inset-x-0 flex items-center justify-between py-2 px-4
+                   bg-black/60 backdrop-blur-md border-b border-white z-[99999]"
+        variants={barAnim}
+        initial="hidden"
+        animate="show"
+      >
+        <Image src="/AntiHeroLogo.png" alt="AntiHero Logo" width={20} height={20} priority />
         <div className="flex space-x-3">
-          <a
-            href="https://twitter.com/xaeneptune"
-            className="text-white hover:text-secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <FaTwitter size={18} />
-          </a>
-          <a
-            href="https://www.instagram.com/xaeneptune/"
-            className="text-white hover:text-secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <FaInstagram size={18} />
-          </a>
-          <a
-            href="https://youtube.com/@xaeneptune"
-            className="text-white hover:text-secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <FaYoutube size={18} />
-          </a>
+          <a href="https://twitter.com/xaeneptune"  target="_blank" className="text-white hover:text-secondary"><FaTwitter  size={18} /></a>
+          <a href="https://www.instagram.com/xaeneptune/" target="_blank" className="text-white hover:text-secondary"><FaInstagram size={18} /></a>
+          <a href="https://youtube.com/@xaeneptune" target="_blank" className="text-white hover:text-secondary"><FaYoutube   size={18} /></a>
         </div>
-        {/* Right: Hamburger Menu */}
-        <div className="flex items-center">
-          <button onClick={onHamburgerClick} className="text-white">
-            <FaBars size={24} />
-          </button>
-        </div>
-      </div>
+        <button onClick={onHamburgerClick} className="text-white"><FaBars size={24} /></button>
+      </motion.div>
     );
-  }
 
-  // Desktop view layout
+  /* ---------- DESKTOP ---------- */
   return (
-    <div className="fixed top-0 inset-x-0 flex justify-between items-center p-4 bg-black bg-opacity-60 backdrop-blur-md border-b border-white z-50">
+    <motion.div
+      className="fixed top-0 inset-x-0 flex justify-between items-center p-4
+                 bg-black/60 backdrop-blur-md border-b border-white z-[99999]"
+      variants={barAnim}
+      initial="hidden"
+      animate="show"
+    >
       <div className="flex items-center space-x-2">
-        <Image
-          src="/AntiHeroLogo.png"
-          alt="AntiHero Logo"
-          width={25}
-          height={25}
-          priority
-        />
-        <div
-          className="text-white text-2xl font-bold"
-          style={{ fontFamily: '"Devil2", sans-serif' }}
-        >
+        <Image src="/AntiHeroLogo.png" alt="AntiHero Logo" width={25} height={25} priority />
+        <div className="text-white text-2xl font-bold" style={{ fontFamily: '"Devil2", sans-serif' }}>
           ANTI HERO
         </div>
       </div>
+
       <div className="flex items-center space-x-3">
-        <a
-          href="https://twitter.com/xaeneptune"
-          className="text-white hover:text-secondary"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FaTwitter size={18} />
-        </a>
-        <a
-          href="https://www.instagram.com/xaeneptune/"
-          className="text-white hover:text-secondary"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FaInstagram size={18} />
-        </a>
-        <a
-          href="https://youtube.com/@xaeneptune"
-          className="text-white hover:text-secondary"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FaYoutube size={18} />
-        </a>
-        <button
-          onClick={handleBeatsClick}
-          className="px-2 py-1 rounded bg-gradient-to-r from-indigo-800 via-purple-700 to-yellow-500 text-white font-bold"
-        >
+        <a href="https://twitter.com/xaeneptune"        target="_blank" className="text-white hover:text-secondary"><FaTwitter  size={18} /></a>
+        <a href="https://www.instagram.com/xaeneptune/" target="_blank" className="text-white hover:text-secondary"><FaInstagram size={18} /></a>
+        <a href="https://youtube.com/@xaeneptune"       target="_blank" className="text-white hover:text-secondary"><FaYoutube   size={18} /></a>
+
+        <button onClick={handleBeatsClick}
+                className="px-2 py-1 rounded bg-gradient-to-r from-indigo-800 via-purple-700 to-yellow-500 text-white font-bold">
           BEATS
         </button>
-        <button
-          onClick={handleVisualizerClick}
-          className="px-2 py-1 rounded bg-gradient-to-r from-indigo-800 via-red-700 to-indigo-900 text-white font-bold"
-        >
+        <button onClick={handleVisualizerClick}
+                className="px-2 py-1 rounded bg-gradient-to-r from-indigo-800 via-red-700 to-indigo-900 text-white font-bold">
           VISUALIZER
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -81,9 +81,6 @@ interface FractalShaderProps {
    SHARED AUDIO OBJECTS (GLOBAL)
    (These simulate a shared audio store used by all visualizers)
    ================================================================= */
-let sharedAudioElement: HTMLAudioElement | null = null;
-let sharedAudioContext: AudioContext | null = null;
-let sharedAnalyser: AnalyserNode | null = null;
 
 /* ================================================================
    FRACRAL SHADER COMPONENT
@@ -440,96 +437,43 @@ function FractalShader({
    This wrapper sets up local state for fractalType, renderingMode, and colorMode,
    and also sets up the shared audio that is used by the FractalShader component.
    ================================================================= */
+/* ================================================================
+   Exported VisualizerTwo Component
+   Uses the shared-audio singleton hook instead of ad-hoc globals.
+==================================================================== */
+import useSharedAudio from "./useSharedAudio"; // ← new
+
 export default function VisualizerTwo({
   audioUrl,
   isPaused,
-  renderingMode: propRenderingMode,
-  colorMode: propColorMode,
-  fractalType: propFractalType,
 }: {
   audioUrl: string;
   isPaused: boolean;
-  renderingMode?: RenderingMode;
-  colorMode?: ColorMode;
-  fractalType?: FractalType;
 }) {
-  const [currentFractalType, setCurrentFractalType] = useState<FractalType>(
-    propFractalType ?? "mandelbox"
-  );
-  const [localRenderingMode, setLocalRenderingMode] = useState<RenderingMode>(
-    propRenderingMode ?? "solid"
-  );
-  const [localColorMode, setLocalColorMode] = useState<ColorMode>(
-    propColorMode ?? "default"
-  );
+  /* -------- UI dropdown state -------- */
+  const [currentFractalType, setCurrentFractalType] = useState<FractalType>("mandelbox");
+  const [localRenderingMode, setLocalRenderingMode] = useState<RenderingMode>("solid");
+  const [localColorMode,     setLocalColorMode]     = useState<ColorMode>("default");
 
+  /* -------- shared analyser -------- */
+  const analyserRef            = useSharedAudio(audioUrl, isPaused);
   const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(0));
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationIdRef = useRef<number>(0);
 
-  /* ------------------------------------------------------------------
-     FIRST useEffect – set up shared audio (for VisualizerTwo)
-  ------------------------------------------------------------------ */
+  /* pull FFT data on every rAF tick */
   useEffect(() => {
-    if (!sharedAudioElement) {
-      sharedAudioElement = new Audio(audioUrl);
-      sharedAudioElement.crossOrigin = "anonymous";
-      sharedAudioElement.loop = true;
-
-      sharedAudioContext = new AudioContext();
-      const src =
-        sharedAudioContext.createMediaElementSource(sharedAudioElement);
-      sharedAnalyser = sharedAudioContext.createAnalyser();
-      sharedAnalyser.fftSize = 64;
-      src.connect(sharedAnalyser);
-      sharedAnalyser.connect(sharedAudioContext.destination);
-    } else if (sharedAudioElement.src !== audioUrl) {
-      sharedAudioElement.src = audioUrl;
-    }
-
-    audioContextRef.current = sharedAudioContext;
-    analyserRef.current = sharedAnalyser;
-
-    // Fixing the "sharedAnalyser is possibly null" error:
-    // Use non-null assertion operator (!) when accessing sharedAnalyser properties in tick.
-    if (sharedAnalyser) {
-      const buffer = new Uint8Array(sharedAnalyser.frequencyBinCount);
-      const tick = () => {
-        sharedAnalyser!.getByteFrequencyData(buffer);
-        setAudioData(new Uint8Array(buffer));
-        animationIdRef.current = requestAnimationFrame(tick);
-      };
-      tick();
-    }
-
-    const handlePlayState = async () => {
-      if (!sharedAudioElement || !sharedAudioContext) return;
-      if (isPaused) {
-        sharedAudioElement.pause();
-      } else {
-        if (sharedAudioContext.state === "suspended") {
-          await sharedAudioContext.resume();
-        }
-        try {
-          await sharedAudioElement.play();
-        } catch (err) {
-          console.warn("Audio play error:", err);
-        }
-      }
+    if (!analyserRef.current) return;
+    const buffer = new Uint8Array(analyserRef.current.frequencyBinCount);
+    let id = 0;
+    const tick = () => {
+      analyserRef.current!.getByteFrequencyData(buffer);
+      setAudioData(new Uint8Array(buffer));
+      id = requestAnimationFrame(tick);
     };
-    void handlePlayState();
+    tick();
+    return () => cancelAnimationFrame(id);
+  }, [analyserRef]);
 
-    /* ---------------- CLEAN‑UP ---------------- */
-    return () => {
-      cancelAnimationFrame(animationIdRef.current);
-      if (sharedAudioElement) {
-        sharedAudioElement.pause();
-        sharedAudioElement.currentTime = 0;
-      }
-    };
-  }, [audioUrl, isPaused]);
-
+  /* -------- render -------- */
   return (
     <FractalShader
       audioData={audioData}
