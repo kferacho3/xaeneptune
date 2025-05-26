@@ -117,6 +117,14 @@ export default function Scene({
   /* which branch? */
   const showVisualizer = activeRoute === "beats-visualizer";
   const showHomeScene  = !showVisualizer && activeRoute === "home";
+  /* base distances */
+  const baseMax = isMobile ? 12 : 20;
+  const baseMin = isMobile ?  5 : 10;
+
+  /* bump factors when the visualizer is active */
+  const maxDistance = showVisualizer ? baseMax * 5 : baseMax;
+  const minDistance = showVisualizer ? baseMin / 3 : baseMin;
+  const zoomSpeed   = showVisualizer ? 2 * 3 : 2;    // original 2  →  6
 
   /* ---------------- Camera intro pan ---------------- */
   const animationDoneRef = useRef(false);
@@ -164,6 +172,10 @@ export default function Scene({
 
   /* Fog colour per environment */
   scene.fog = new THREE.FogExp2(environmentMode === "day" ? "#ffffff" : "#000000", 0.0015);
+
+
+  /* ------- put this just above the return so we can reuse the values -------- */
+
 
   /* ---------------- JSX ---------------- */
   return (
@@ -213,7 +225,15 @@ export default function Scene({
       ) : null /* nothing extra for other routes */ }
 
       {/* OrbitControls for debugging / free-look */}
-      <OrbitControls />
+<OrbitControls
+  autoRotate
+  autoRotateSpeed={0.15}
+  zoomSpeed={zoomSpeed}
+  maxDistance={maxDistance}
+  minDistance={minDistance}
+  minPolarAngle={0}
+  maxPolarAngle={Math.PI / 2}
+/>
     </group>
   );
 }
