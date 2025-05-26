@@ -1,9 +1,8 @@
 // next.config.ts
 import type { NextConfig } from "next";
-import type { Configuration } from "webpack";
 
 const nextConfig: NextConfig = {
-  // ← appDir at top‐level, not under `experimental`
+  // ← appDir at top-level, not under `experimental`
   appDir: true,
 
   images: {
@@ -22,7 +21,8 @@ const nextConfig: NextConfig = {
     dirs: ["src"],
   },
 
-  webpack(config: Configuration): Configuration {
+  // We omit the explicit webpack type import so CI won't complain
+  webpack(config) {
     config.module?.rules?.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
       exclude: /node_modules/,
