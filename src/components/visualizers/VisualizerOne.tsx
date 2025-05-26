@@ -1,241 +1,255 @@
-/* ────────────────────────────────────────────────────────────────────────────
-   VisualizerOne.tsx  —  Perlin-sphere & dual-plane audio visualizer
-   Completely refactored to use the shared-audio singleton hook so that
-   ONE — and only one — <audio> / AudioContext / AnalyserNode exists
-   across the entire application.
-──────────────────────────────────────────────────────────────────────────── */
+// src/components/scene/BeatAudioVisualizerScene.tsx
+/* --------------------------------------------------------------------------
+   BeatAudioVisualizerScene – immersive audio-reactive visualizer playground
+--------------------------------------------------------------------------- */
 "use client";
 
+import {
+  FractalIcon,
+  GridPatternIcon,
+  PerlinSphereIcon,
+  PlanetMoonsIcon,
+  SupershapeIcon,
+} from "@/components/icons/VisualizerIcons";
+import { TextureName, useMonitorStore } from "@/store/useMonitorStore";
+import { pauseAllAudio } from "@/utils/pauseAllAudio";
 import { Html } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { useRef, useState } from "react";
-import { createNoise2D, createNoise3D } from "simplex-noise";
-import * as THREE from "three";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import React, { useEffect, useState } from "react";
+import { HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 
-import useSharedAudio from "./useSharedAudio"; // ← NEW shared-audio hook
+/* ---------- lazy-loaded visualizers (SSR-off) ---------- */
+const VisualizerOne   = dynamic(() => import("@/components/visualizers/VisualizerOne"),   { ssr: false });
+const VisualizerTwo   = dynamic(() => import("@/components/visualizers/VisualizerTwo"),   { ssr: false });
+const VisualizerThree = dynamic(() => import("@/components/visualizers/VisualizerThree"), { ssr: false });
+const VisualizerFour  = dynamic(() => import("@/components/visualizers/VisualizerFour"),  { ssr: false });
+const SupershapeVis   = dynamic(() => import("@/components/visualizers/SupershapeVisualizer"), { ssr: false });
 
-/* =======================================================================
-   Type Definitions
-======================================================================= */
-type VisualizerOneProps = {
+/* ---------- props & types ---------- */
+export type VisualizerType = "one" | "two" | "three" | "four" | "supershape";
+
+export interface BeatAudioVisualizerSceneProps {
   audioUrl : string;
-  isPaused : boolean;
-};
+  onGoBack : () => void;
+  onShuffle: () => void;
+}
 
-type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
-type ColorMode     = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
+/* ---------- helpers ---------- */
+const randomCover = () =>
+  `https://xaeneptune.s3.us-east-2.amazonaws.com/beats/Beat+Album+Covers/xaeneptuneBeats${
+    Math.floor(Math.random() * 100) + 1
+  }.png`;
 
-/* =======================================================================
-   Noise Generators
-======================================================================= */
-const noise2D = createNoise2D();
-const noise3D = createNoise3D();
+const prettify = (name: string) =>
+  name.replace(/[-_]/g, " ").replace(/\.[^/.]+$/, "");
 
-/* =======================================================================
-   Main Component
-======================================================================= */
-export default function VisualizerOne({ audioUrl, isPaused }: VisualizerOneProps) {
-  /* 🎧  audio analyser -- shared across all visualisers */
-  const analyserRef = useSharedAudio(audioUrl, isPaused);
+/* -------------------------------------------------------------------------- */
+export default function BeatAudioVisualizerScene({
+  audioUrl: propAudioUrl,
+  onGoBack,
+  onShuffle,
+}: BeatAudioVisualizerSceneProps) {
+  const [type,     setType    ] = useState<VisualizerType>("one");
+  const [visKey,   setVisKey  ] = useState(0);
+  const [audioUrl, setAudioUrl] = useState(propAudioUrl);
+  const [paused,   setPaused  ] = useState(false);
+  const [uiHidden, setUiHidden] = useState(false);
 
-  /* ---------- geometry / material refs ---------- */
-  const groupRef  = useRef<THREE.Group>(null!);
-  const ballRef   = useRef<THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>>(null!);
-  const plane1Ref = useRef<THREE.Mesh<THREE.PlaneGeometry,      THREE.MeshLambertMaterial>>(null!);
-  const plane2Ref = useRef<THREE.Mesh<THREE.PlaneGeometry,      THREE.MeshLambertMaterial>>(null!);
+  /* now-playing info */
+  const [title,  setTitle ] = useState<string>("Unknown Title");
+  const [artist, setArtist] = useState<string>("Xaeneptune");
+  const [cover,  setCover ] = useState<string>(randomCover());
 
-  /* ---------- UI state ---------- */
-  const [renderingMode, setRenderingMode] = useState<RenderingMode>("wireframe");
-  const [colorMode,     setColorMode]     = useState<ColorMode>("default");
-
-  /* =====================================================================
-     Helper maths
-  ==================================================================== */
-  const fractionate = (val:number, min:number, max:number) => (val - min) / (max - min);
-  const modulate    = (val:number, min:number, max:number, outMin:number, outMax:number) =>
-    outMin + fractionate(val, min, max) * (outMax - outMin);
-  const avg = (a:Uint8Array) => a.reduce((s,b) => s + b, 0) / a.length;
-  const max = (a:Uint8Array) => a.reduce((m,b) => Math.max(m,b), 0);
-
-  /* =====================================================================
-     Geometry deformation helpers
-  ==================================================================== */
-  const makeRoughGround = (mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>,
-                           distortionFr:number) => {
-    const verts = mesh.geometry.attributes.position.array as Float32Array;
-    const amp   = 2;
-    const time  = Date.now();
-    for (let i=0;i<verts.length;i+=3){
-      const x = verts[i];
-      const y = verts[i+1];
-      const dist = (noise2D(x + time*0.0003, y + time*0.0001)) * distortionFr * amp;
-      verts[i+2] = dist;
-    }
-    mesh.geometry.attributes.position.needsUpdate = true;
-    mesh.geometry.computeVertexNormals();
+  /* monitor texture swap */
+  const setScreen = useMonitorStore((s) => s.setScreenName);
+  const tex: Record<VisualizerType, TextureName> = {
+    one: "antiheroesPerlinNoise",
+    two: "antiheroesFractals",
+    three: "antiheroesSand",
+    four: "antiheroesCellular",
+    supershape: "antiheroesSuperShape",
   };
 
-  const makeRoughBall = (mesh: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshLambertMaterial>,
-                         bassFr:number,
-                         treFr:number) => {
-    const verts = mesh.geometry.attributes.position.array as Float32Array;
-    const offset = (mesh.geometry as THREE.IcosahedronGeometry).parameters.radius as number;
-    const amp = 7;
-    const time = performance.now();
-    const rf = 0.00001;
-    for (let i=0;i<verts.length;i+=3){
-      const v = new THREE.Vector3(verts[i],verts[i+1],verts[i+2]).normalize();
-      const dist = offset + bassFr +
-        noise3D(v.x + time*rf*7, v.y + time*rf*8, v.z + time*rf*9) * amp * treFr;
-      v.multiplyScalar(dist);
-      verts[i]   = v.x;
-      verts[i+1] = v.y;
-      verts[i+2] = v.z;
+  /* ---------------- lifecycle ---------------- */
+  useEffect(() => {
+    /* 1. stop whatever is playing */
+    pauseAllAudio();
+
+    /* 2. reset UI state */
+    setPaused(false);
+
+    /* 3. load / play the new URL */
+    setAudioUrl(propAudioUrl);
+    setVisKey((k) => k + 1); // key bump → remount audio & play
+
+    /* 4. derive meta for now-playing card */
+    const file = propAudioUrl.split("/").pop() ?? "unknown";
+    setTitle(prettify(decodeURIComponent(file)));
+    setArtist("Xaeneptune");
+    setCover(randomCover());
+
+    /* pause when component unmounts */
+    return pauseAllAudio;
+  }, [propAudioUrl]);
+
+  /* ---------------- helpers ---------------- */
+  function loadNewAudio(url: string) {
+    pauseAllAudio();
+    setPaused(false);
+    setAudioUrl(url);
+    setVisKey((k) => k + 1);
+    const filename = url.split("/").pop() || "";
+    setTitle(prettify(filename));
+    setArtist("Xaeneptune");
+    setCover(randomCover());
+  }
+
+  const resetAudio = () =>
+    loadNewAudio(`${audioUrl.split("?")[0]}?t=${Date.now()}`);
+
+  function switchVis(v: VisualizerType) {
+    setType(v);
+    setVisKey((k) => k + 1);
+    resetAudio();
+    setScreen(tex[v]);
+  }
+
+  function randomVis() {
+    const pool: VisualizerType[] = ["one", "two", "three", "four", "supershape"];
+    switchVis(pool[Math.floor(Math.random() * pool.length)]);
+  }
+
+  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      loadNewAudio(url);
     }
-    mesh.geometry.attributes.position.needsUpdate = true;
-    mesh.geometry.computeVertexNormals();
-  };
+  }
 
-  /* =====================================================================
-     Animation loop
-  ==================================================================== */
-  useFrame(() => {
-    if (!analyserRef.current) return;
+  function handleGoBack() {
+    pauseAllAudio();
+    requestAnimationFrame(onGoBack);
+  }
 
-    /* -------- FFT data -------- */
-    const bufLen = analyserRef.current.frequencyBinCount;
-    const data   = new Uint8Array(bufLen);
-    analyserRef.current.getByteFrequencyData(data);
+  const VisComponent = {
+    one: VisualizerOne,
+    two: VisualizerTwo,
+    three: VisualizerThree,
+    four: VisualizerFour,
+    supershape: SupershapeVis,
+  }[type] as React.ComponentType<{ audioUrl: string; isPaused: boolean }>;
 
-    const lower   = data.slice(0, Math.floor(data.length/2));
-    const upper   = data.slice(lower.length);
-
-    const overallAvg = avg(data);
-    const lowerMaxFr = max(lower)   / lower.length;
-    const upperAvgFr = avg(upper)   / upper.length;
-
-    /* -------- deform geometry -------- */
-    if (plane1Ref.current && plane2Ref.current && ballRef.current){
-      makeRoughGround(plane1Ref.current, modulate(upperAvgFr,0,1,0.5,4));
-      makeRoughGround(plane2Ref.current, modulate(lowerMaxFr,0,1,0.5,4));
-      makeRoughBall  (ballRef.current,
-                      modulate(Math.pow(lowerMaxFr,0.8),0,1,0,8),
-                      modulate(upperAvgFr,0,1,0,4));
-    }
-
-    /* -------- rotate group -------- */
-    if (groupRef.current) groupRef.current.rotation.y += 0.005;
-
-    /* -------- dynamic colour / material updates -------- */
-    if (ballRef.current && plane1Ref.current && plane2Ref.current){
-      const [ballMat, p1Mat, p2Mat] = [
-        ballRef.current.material,
-        plane1Ref.current.material,
-        plane2Ref.current.material,
-      ] as THREE.MeshLambertMaterial[];
-
-      /** wireframe / transparency toggles */
-      [ballMat,p1Mat,p2Mat].forEach(m=>{
-        m.wireframe   = renderingMode==="wireframe";
-        m.transparent = renderingMode==="transparent";
-        m.opacity     = renderingMode==="transparent" ? 0.5 : 1;
-      });
-
-      const basePlaneClr = new THREE.Color(0x6904ce);
-      const baseBallClr  = new THREE.Color(0xff00ee);
-
-      if (renderingMode==="rainbow" || colorMode==="rainbow"){
-        ballMat.color.setHSL(upperAvgFr,1,0.5);
-        p1Mat.color.setHSL(upperAvgFr,1,0.5);
-        p2Mat.color.setHSL(lowerMaxFr,1,0.5);
-      } else if (colorMode==="audioAmplitude"){
-        const it = overallAvg/255;
-        ballMat.color.copy(baseBallClr).lerp(new THREE.Color(0xffffff), it);
-        p1Mat.color .copy(basePlaneClr).lerp(new THREE.Color(0xffffff), it);
-        p2Mat.color .copy(basePlaneClr).lerp(new THREE.Color(0xffffff), it);
-      } else if (colorMode==="frequencyBased"){
-        ballMat.color.setHSL(upperAvgFr ,0.7,0.6);
-        p1Mat.color .setHSL(lowerMaxFr  ,0.7,0.6);
-        p2Mat.color .setHSL(upperAvgFr  ,0.7,0.6);
-      } else {
-        ballMat.color.copy(baseBallClr);
-        p1Mat.color .copy(basePlaneClr);
-        p2Mat.color .copy(basePlaneClr);
-      }
-    }
-  });
-
-  /* =====================================================================
-     JSX
-  ==================================================================== */
+  /* ---------------------------------------------------------------- render */
   return (
     <>
-      {/* 3-D scene graph */}
-      <group ref={groupRef}>
-        {/* ground plane 1 */}
-        <mesh ref={plane1Ref} rotation-x={-Math.PI/2} position={[0,30,0]}>
-          <planeGeometry args={[800,800,20,20]} />
-          <meshLambertMaterial color={0x6904ce} wireframe />
-        </mesh>
+      <VisComponent key={visKey} audioUrl={audioUrl} isPaused={paused} />
 
-        {/* ground plane 2 */}
-        <mesh ref={plane2Ref} rotation-x={-Math.PI/2} position={[0,-30,0]}>
-          <planeGeometry args={[800,800,20,20]} />
-          <meshLambertMaterial color={0x6904ce} wireframe />
-        </mesh>
+      <Html fullscreen style={{ pointerEvents: "auto", zIndex: 9999 }}>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-end gap-6 select-none">
 
-        {/* perlin-distorted ball */}
-        <mesh ref={ballRef}>
-          <icosahedronGeometry args={[10,4]} />
-          <meshLambertMaterial color={0xff00ee} wireframe />
-        </mesh>
+          {/* ------------ Now-playing card ------------ */}
+          {!uiHidden && (
+            <div className="flex items-center min-w-72 gap-3 px-4 py-2 bg-neutral-900/70 backdrop-blur rounded-lg">
+              <Image
+                src={cover}
+                alt="Album cover"
+                width={48}
+                height={48}
+                className="rounded object-cover"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">{title}</span>
+                <span className="text-xs text-neutral-400">{artist}</span>
+              </div>
+            </div>
+          )}
 
-        {/* basic lights */}
-        <ambientLight intensity={0.9}/>
-        <spotLight   position={[-10,40,20]} intensity={0.9}/>
-      </group>
+          {/* ------------ main UI cluster ------------ */}
+          {!uiHidden && (
+            <div className="flex flex-col gap-3">
+              {/* row 1 – text buttons */}
+              <div className="flex gap-3 bg-neutral-900/70 px-4 py-2 rounded-full backdrop-blur">
+                <button onClick={handleGoBack} className="btn-main">
+                  Go Back
+                </button>
+                <button onClick={onShuffle} className="btn-main">
+                  Shuffle Beat
+                </button>
+                <button
+                  onClick={() => setPaused((p) => !p)}
+                  className="btn-main"
+                >
+                  {paused ? "Resume" : "Pause"}
+                </button>
+                <label className="btn-main cursor-pointer">
+                  Upload
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
 
-      {/* UI overlays */}
-      <Html>
-        <div
-          style={{
-            position   : "absolute",
-            top        : 20,
-            left       : 20,
-            display    : "flex",
-            flexDirection: "column",
-            gap        : 10,
-            color      : "white",
-            fontFamily : "sans-serif",
-            fontSize   : 14,
-            userSelect : "none",
-          }}
-        >
-          <label>
-            Rendering&nbsp;Mode:&nbsp;
-            <select
-              value={renderingMode}
-              onChange={e=>setRenderingMode(e.target.value as RenderingMode)}
-            >
-              <option value="solid">Solid</option>
-              <option value="wireframe">Wireframe</option>
-              <option value="rainbow">Rainbow</option>
-              <option value="transparent">Transparent</option>
-            </select>
-          </label>
+              {/* row 2 – icon buttons */}
+              <div className="flex gap-4 bg-neutral-900/70 px-4 py-2 rounded-full backdrop-blur">
+                <button
+                  className={`btn-vis ${type === "one" && "ring-2 ring-brand"}`}
+                  onMouseEnter={() => setScreen(tex.one)}
+                  onClick={() => switchVis("one")}
+                >
+                  <PerlinSphereIcon size={28} />
+                </button>
+                <button
+                  className={`btn-vis ${type === "two" && "ring-2 ring-brand"}`}
+                  onMouseEnter={() => setScreen(tex.two)}
+                  onClick={() => switchVis("two")}
+                >
+                  <FractalIcon size={28} />
+                </button>
+                <button
+                  className={`btn-vis ${type === "three" && "ring-2 ring-brand"}`}
+                  onMouseEnter={() => setScreen(tex.three)}
+                  onClick={() => switchVis("three")}
+                >
+                  <GridPatternIcon size={28} />
+                </button>
+                <button
+                  className={`btn-vis ${type === "four" && "ring-2 ring-brand"}`}
+                  onMouseEnter={() => setScreen(tex.four)}
+                  onClick={() => switchVis("four")}
+                >
+                  <PlanetMoonsIcon size={28} />
+                </button>
+                <button
+                  className={`btn-vis ${type === "supershape" && "ring-2 ring-brand"}`}
+                  onMouseEnter={() => setScreen(tex.supershape)}
+                  onClick={() => switchVis("supershape")}
+                >
+                  <SupershapeIcon size={28} />
+                </button>
+                <button onClick={randomVis} className="btn-main">
+                  Random Vis
+                </button>
+              </div>
+            </div>
+          )}
 
-          <label>
-            Color&nbsp;Mode:&nbsp;
-            <select
-              value={colorMode}
-              onChange={e=>setColorMode(e.target.value as ColorMode)}
-            >
-              <option value="default">Default</option>
-              <option value="audioAmplitude">Audio Amplitude</option>
-              <option value="frequencyBased">Frequency-based</option>
-              <option value="rainbow">Rainbow</option>
-            </select>
-          </label>
+          {/* ------------ hide / show toggle ------------ */}
+          <button
+            onClick={() => setUiHidden((h) => !h)}
+            className="bg-neutral-800/70 backdrop-blur rounded-full p-2 text-neutral-200
+                       hover:bg-brand hover:scale-105 transition-all"
+          >
+            {uiHidden ? (
+              <HiOutlineEye className="w-6 h-6" />
+            ) : (
+              <HiOutlineEyeSlash className="w-6 h-6" />
+            )}
+          </button>
         </div>
       </Html>
     </>
