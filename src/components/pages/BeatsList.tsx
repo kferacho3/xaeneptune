@@ -1,14 +1,11 @@
 /* --------------------------------------------------------------------------
    BeatsList.tsx  – modern Spotify-style UI  (preview + visualizer buttons)
 --------------------------------------------------------------------------- */
+"use client";
 
 import { BeatData, beatsData } from "@/data/beatData";
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import Image from "next/image";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -42,7 +39,7 @@ const BeatsList: React.FC<BeatsListProps> = ({
   isBeatVisualizer,
   onTabChange,
 }) => {
-  /* ──────────────── filters / paging / view ──────────────── */
+  /* ───────────── filters / paging / view ───────────── */
   const [filterBeatName, setFilterBeatName] = useState("");
   const [filterBeatKey, setFilterBeatKey] = useState("");
   const [filterBeatProducer, setFilterBeatProducer] = useState("");
@@ -58,16 +55,17 @@ const BeatsList: React.FC<BeatsListProps> = ({
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid" | "card">("grid");
 
-  /* ──────────────── 30-second preview helpers ──────────────── */
+  /* ───────────── 30-second preview helpers ─────────── */
   const [previewBeat, setPreviewBeat] = useState<{
     name: string;
     cover: string;
   } | null>(null);
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-  const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const previewAudioRef   = useRef<HTMLAudioElement | null>(null);
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopPreview = () => {
-    if (previewAudioRef.current) previewAudioRef.current.pause();
+    previewAudioRef.current?.pause();
     if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
     previewAudioRef.current = null;
     previewTimeoutRef.current = null;
@@ -83,9 +81,10 @@ const BeatsList: React.FC<BeatsListProps> = ({
     previewTimeoutRef.current = setTimeout(stopPreview, 30_000);
   };
 
-  useEffect(() => () => stopPreview(), []);
+  /* cleanup on unmount */
+  useEffect(() => stopPreview, []);
 
-  /* ──────────────── dataset w/ covers ──────────────── */
+  /* ───────────── dataset w/ covers ───────────── */
   const beatsWithCovers = useMemo(
     () =>
       beatsData.map((b) => ({
@@ -95,7 +94,7 @@ const BeatsList: React.FC<BeatsListProps> = ({
     []
   ) as Array<BeatData & { cover: string }>;
 
-  /* ──────────────── filtering ──────────────── */
+  /* ───────────── filtering ───────────── */
   const filteredBeats = useMemo(() => {
     const f = beatsWithCovers.filter((beat) => {
       const matchName = beat.beatName
@@ -135,7 +134,7 @@ const BeatsList: React.FC<BeatsListProps> = ({
     filterBeatPerMinMax,
   ]);
 
-  /* ──────────────── pagination ──────────────── */
+  /* ───────────── pagination ───────────── */
   const totalBeats = filteredBeats.length;
   const totalPages =
     beatsPerPage === "all" ? 1 : Math.ceil(totalBeats / beatsPerPage);
@@ -147,20 +146,20 @@ const BeatsList: React.FC<BeatsListProps> = ({
           currentPage * beatsPerPage
         );
 
-
-
-  /* ──────────────── render helpers ──────────────── */
+  /* ───────────── render helpers ───────────── */
   const BeatRow = (beat: BeatData & { cover: string }) => (
     <tr
       key={beat.audioFile}
       className="group cursor-pointer hover:bg-neutral-800/60"
-      onClick={() => onBeatSelect(beat.audioFile)}  
+      onClick={() => onBeatSelect(beat.audioFile)}
     >
       <td className="py-2 pr-4">
-        <img
+        <Image
           src={beat.cover}
           alt=""
-          className="h-12 w-12 rounded object-cover group-hover:scale-105 transition-transform"
+          width={48}
+          height={48}
+          className="rounded object-cover group-hover:scale-105 transition-transform"
         />
       </td>
       <td className="py-2 font-medium">{beat.beatName}</td>
@@ -179,13 +178,13 @@ const BeatsList: React.FC<BeatsListProps> = ({
         >
           <FaPlay />
         </button>
-<button
-  title="Full beat + visualizer"
-  onClick={() => onBeatSelect(beat.audioFile)}   // ← changed
-  className="p-1 rounded hover:bg-brand/20 text-emerald-400"
->
-  <FaWaveSquare />
-</button>
+        <button
+          title="Full beat + visualizer"
+          onClick={() => onBeatSelect(beat.audioFile)}
+          className="p-1 rounded hover:bg-brand/20 text-emerald-400"
+        >
+          <FaWaveSquare />
+        </button>
       </td>
     </tr>
   );
@@ -194,7 +193,7 @@ const BeatsList: React.FC<BeatsListProps> = ({
     <div
       key={beat.audioFile}
       className="group relative flex flex-col gap-2 p-3 bg-neutral-900 rounded hover:bg-neutral-800/80 transition-colors cursor-pointer"
-      onClick={() => onBeatSelect(beat.audioFile)}  
+      onClick={() => onBeatSelect(beat.audioFile)}
     >
       <div className="absolute bottom-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
@@ -207,18 +206,20 @@ const BeatsList: React.FC<BeatsListProps> = ({
         >
           <FaPlay />
         </button>
-  <button
-  onClick={() => onBeatSelect(beat.audioFile)}   // ← changed
-  className="p-1 bg-neutral-800/70 rounded hover:text-emerald-400"
-  title="Full beat + visualizer"
->
-  <FaWaveSquare />
-</button>
+        <button
+          onClick={() => onBeatSelect(beat.audioFile)}
+          className="p-1 bg-neutral-800/70 rounded hover:text-emerald-400"
+          title="Full beat + visualizer"
+        >
+          <FaWaveSquare />
+        </button>
       </div>
 
-      <img
+      <Image
         src={beat.cover}
         alt=""
+        width={512}
+        height={512}
         className="w-full rounded object-cover aspect-square"
       />
       <h3 className="font-semibold truncate">{beat.beatName}</h3>
@@ -230,11 +231,13 @@ const BeatsList: React.FC<BeatsListProps> = ({
     <div
       key={beat.audioFile}
       className="group flex items-center gap-4 p-4 bg-neutral-900 rounded-xl shadow hover:shadow-lg/30 transition-all hover:bg-neutral-800/70 cursor-pointer"
-      onClick={() => onBeatSelect(beat.audioFile)}  
+      onClick={() => onBeatSelect(beat.audioFile)}
     >
-      <img
+      <Image
         src={beat.cover}
         alt=""
+        width={64}
+        height={64}
         className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
       />
 
@@ -256,18 +259,18 @@ const BeatsList: React.FC<BeatsListProps> = ({
         >
           <FaPlay />
         </button>
- <button
-  onClick={() => onBeatSelect(beat.audioFile)}   // ← changed
-  className="p-2 rounded hover:bg-brand/20 text-emerald-400"
-  title="Full beat + visualizer"
->
-  <FaWaveSquare />
-</button>
+        <button
+          onClick={() => onBeatSelect(beat.audioFile)}
+          className="p-2 rounded hover:bg-brand/20 text-emerald-400"
+          title="Full beat + visualizer"
+        >
+          <FaWaveSquare />
+        </button>
       </div>
     </div>
   );
 
-  /* ──────────────── JSX ──────────────── */
+  /* ───────────── JSX ───────────── */
   return (
     <section className="w-full h-screen flex flex-col bg-neutral-950 text-neutral-100">
       {/* header */}
@@ -354,7 +357,6 @@ const BeatsList: React.FC<BeatsListProps> = ({
       {/* filters panel */}
       {showFilters && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 px-4 pb-4">
-          {/* inputs… */}
           <input
             type="text"
             placeholder="Name"
@@ -416,11 +418,13 @@ const BeatsList: React.FC<BeatsListProps> = ({
               <tr>
                 <th className="py-2"></th>
                 <th className="py-2 text-left">Title</th>
-                <th className="py-2 text-left hidden md:table-cell">Producer</th>
+                <th className="py-2 text-left hidden md:table-cell">
+                  Producer
+                </th>
                 <th className="py-2 text-left hidden lg:table-cell">Key</th>
                 <th className="py-2 text-left hidden lg:table-cell">BPM</th>
                 <th className="py-2 text-left hidden xl:table-cell">Date</th>
-                <th className="py-2 text-right w-20"> </th>
+                <th className="py-2 text-right w-20"></th>
               </tr>
             </thead>
             <tbody>{currentBeats.map(BeatRow)}</tbody>
@@ -466,10 +470,12 @@ const BeatsList: React.FC<BeatsListProps> = ({
       {/* 30-sec preview popup */}
       {previewBeat && (
         <div className="fixed bottom-4 right-4 flex items-center gap-3 bg-neutral-900/90 backdrop-blur rounded-lg shadow-lg p-3">
-          <img
+          <Image
             src={previewBeat.cover}
             alt=""
-            className="h-10 w-10 rounded object-cover"
+            width={40}
+            height={40}
+            className="rounded object-cover"
           />
           <span className="text-sm">
             Playing preview:&nbsp;
