@@ -25,7 +25,7 @@ export const VisualizerProvider = ({ children }: { children: ReactNode }) => {
 export const useVisualizer = (): VisualizerContextType => {
   const context = useContext(VisualizerContext);
   if (!context) {
-    throw new Error("useVisualizer must be used within a VisualizerProvider");
+    throw new Error("useVisualizer must  be used within a VisualizerProvider");
   }
   return context;
 };
