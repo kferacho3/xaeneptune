@@ -4,7 +4,7 @@
 "use client";
 
 import { Loader, PerformanceMonitor } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { Bloom, EffectComposer, SMAA, Vignette } from "@react-three/postprocessing";
 import Head from "next/head";
 import { Suspense, useEffect, useState } from "react";
@@ -19,7 +19,7 @@ import GoBackButton from "@/components/layout/GoBackButton";
 import NavigationOverlay from "@/components/layout/NavigationOverlay";
 import Sidebar from "@/components/layout/Sidebar";
 import TopBarNavbar from "@/components/layout/TopBarNavbar";
-import { AntiHeroMonitor } from "@/components/models/AntiheroMonitor";
+//import { AntiHeroMonitor } from "@/components/models/AntiheroMonitor";
 import Scene from "@/components/scene/Scene";
 
 import Albums from "@/components/pages/Albums";
@@ -122,7 +122,7 @@ export default function HomePage() {
   const showScene      = isSceneRoute && (!covered || route === "home") && !(phase === "fill" && waiting);
   const showHtmlOverlay = route !== "home" && route !== "beats-visualizer";
   const showNavOverlay  = route === "home" && phase === "none" && transitionDone && hasInteracted;
-  const showMonitor     = route === "beats-visualizer";
+ // const showMonitor     = route === "beats-visualizer";
 /* show the top-bar once Fluid is done & user has interacted */
 const showTopbar = phase === "none" && transitionDone && hasInteracted && route !== "beats";
 
@@ -225,7 +225,7 @@ const showTopbar = phase === "none" && transitionDone && hasInteracted && route 
             />
 
             {/* Monitor fixed to camera bottom-right */}
-            {showMonitor && <FixedMonitor />}
+            {/* {showMonitor && <FixedMonitor />} */}
           </Canvas>
 
           {/* ---------- HTML overlay ---------- */}
@@ -291,13 +291,36 @@ const showTopbar = phase === "none" && transitionDone && hasInteracted && route 
 /* --------------------------------------------------------------------------
    Fixed monitor – parented to the camera so it stays in the same corner
 --------------------------------------------------------------------------- */
-function FixedMonitor() {
-  const { camera } = useThree();
-  return (
-    <primitive object={camera}>
-      <group scale={1}>
-        <AntiHeroMonitor />
-      </group>
-    </primitive>
-  );
-}
+/* --------------------------------------------------------------------------
+   Fixed monitor – parented to the camera so it stays in the same corner
+--------------------------------------------------------------------------- */
+// function FixedMonitor() {
+//   const { camera } = useThree();
+//   const monitorRef = useRef<THREE.Group>(null);
+
+//   useFrame(() => {
+//     if (monitorRef.current) {
+//       // Get the camera's world quaternion
+//       const cameraWorldQuaternion = new THREE.Quaternion();
+//       camera.getWorldQuaternion(cameraWorldQuaternion);
+      
+//       // Invert it to counteract the camera rotation
+//       const invertedQuaternion = cameraWorldQuaternion.clone().invert();
+      
+//       // Apply the inverted rotation to the monitor
+//       monitorRef.current.setRotationFromQuaternion(invertedQuaternion);
+//     }
+//   });
+
+//   return (
+//     <primitive object={camera}>
+//       <group 
+//         ref={monitorRef}
+//         position={[4, -3, -10]} // Adjust position as needed for bottom-right corner
+//         scale={1}
+//       >
+//         <AntiHeroMonitor />
+//       </group>
+//     </primitive>
+//   );
+// }

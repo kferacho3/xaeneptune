@@ -1,4 +1,5 @@
-// src/components/scene/BeatAudioVisualizerScene.tsx
+
+// src/components/scene/BeatAudioVisualizerScene.tsx (continued)
 "use client";
 
 import {
@@ -15,27 +16,47 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 
+// Import VisualizerOne types
+import {
+  getRandomPointMode,
+  getRandomShape
+} from "@/components/visualizers/VisualizerOneHelpers/geometryHelpers";
+import {
+  ColorMode,
+  PointMode,
+  RenderingMode,
+  ShapeMode
+} from "@/components/visualizers/VisualizerOneHelpers/types";
+
+// Import VisualizerTwo types
+import {
+  FractalType,
+  ColorMode as V2ColorMode,
+  RenderingMode as V2RenderingMode
+} from "@/components/visualizers/VisualizerTwoHelpers/types";
+
+// Import the controls component
+import { BeatsVisualizerControls } from "./BeatsVisualizerControls";
+
 /* ---------- lazy-loaded visualizers ---------- */
-const VisualizerOne   = dynamic(() => import("@/components/visualizers/VisualizerOne"),   { ssr: false });
-const VisualizerTwo   = dynamic(() => import("@/components/visualizers/VisualizerTwo"),   { ssr: false });
+const VisualizerOne = dynamic(() => import("@/components/visualizers/VisualizerOne"), { ssr: false });
+const VisualizerTwo = dynamic(() => import("@/components/visualizers/VisualizerTwo"), { ssr: false });
 const VisualizerThree = dynamic(() => import("@/components/visualizers/VisualizerThree"), { ssr: false });
-const VisualizerFour  = dynamic(() => import("@/components/visualizers/VisualizerFour"),  { ssr: false });
-const SupershapeVis   = dynamic(() => import("@/components/visualizers/SupershapeVisualizer"), { ssr: false });
+const VisualizerFour = dynamic(() => import("@/components/visualizers/VisualizerFour"), { ssr: false });
+const SupershapeVis = dynamic(() => import("@/components/visualizers/SupershapeVisualizer"), { ssr: false });
 
 /* ---------- props & types ---------- */
 export type VisualizerType = "one" | "two" | "three" | "four" | "supershape";
 
 export interface BeatAudioVisualizerSceneProps {
-  audioUrl : string;
-  onGoBack : () => void;
+  audioUrl: string;
+  onGoBack: () => void;
   onShuffle: () => void;
 }
 
 /* ---------- random cover helper ---------- */
 const randomCover = () =>
-  `https://xaeneptune.s3.us-east-2.amazonaws.com/beats/Beat+Album+Covers/xaeneptuneBeats${
-    Math.floor(Math.random() * 100) + 1
-  }.png`;
+  `https://xaeneptune.s3.us-east-2.amazonaws.com/beats/Beat+Album+Covers/xaeneptuneBeats${Math.floor(Math.random() * 100) + 1}.png`;
 
 /* ---------------------------------------------------------------- */
 export default function BeatAudioVisualizerScene({
@@ -43,16 +64,27 @@ export default function BeatAudioVisualizerScene({
   onGoBack,
   onShuffle,
 }: BeatAudioVisualizerSceneProps) {
-  const [type,      setType    ] = useState<VisualizerType>("one");
-  const [visKey,    setVisKey  ] = useState(0);
-  const [audioUrl,  setAudioUrl] = useState(propAudioUrl);
-  const [paused,    setPaused  ] = useState(false);
-  const [uiHidden,  setUiHidden] = useState(false);
+  const [type, setType] = useState<VisualizerType>("one");
+  const [visKey, setVisKey] = useState(0);
+  const [audioUrl, setAudioUrl] = useState(propAudioUrl);
+  const [paused, setPaused] = useState(false);
+  const [uiHidden, setUiHidden] = useState(false);
 
   /* now-playing info */
-  const [title,  setTitle ] = useState<string>("Unknown Title");
+  const [title, setTitle] = useState<string>("Unknown Title");
   const [artist, setArtist] = useState<string>("Xaeneptune");
-  const [cover,  setCover ] = useState<string>(randomCover());
+  const [cover, setCover] = useState<string>(randomCover());
+
+  /* VisualizerOne controls state */
+  const [v1RenderingMode, setV1RenderingMode] = useState<RenderingMode>("wireframe");
+  const [v1ColorMode, setV1ColorMode] = useState<ColorMode>("default");
+  const [v1ShapeMode, setV1ShapeMode] = useState<ShapeMode>(getRandomShape());
+  const [v1PointMode, setV1PointMode] = useState<PointMode>(getRandomPointMode());
+
+  /* VisualizerTwo controls state */
+  const [v2RenderingMode, setV2RenderingMode] = useState<V2RenderingMode>("solid");
+  const [v2ColorMode, setV2ColorMode] = useState<V2ColorMode>("default");
+  const [v2FractalType, setV2FractalType] = useState<FractalType>("mandelbox");
 
   /* monitor texture swap */
   const setScreen = useMonitorStore(s => s.setScreenName);
@@ -65,44 +97,41 @@ export default function BeatAudioVisualizerScene({
   };
 
   /* ---------------- lifecycle ---------------- */
-/* ---------------- lifecycle ---------------- */
-/* ---------------- lifecycle ---------------- */
-useEffect(() => {
-  // 1) stop whatever is playing
-  pauseAllAudio();
+  useEffect(() => {
+    // 1) stop whatever is playing
+    pauseAllAudio();
 
-  // 2) show the UI in “playing” state
-  setPaused(false);
+    // 2) show the UI in "playing" state
+    setPaused(false);
 
-  // 3) push the new URL into state *and* force-remount the visualizer
-  setAudioUrl(propAudioUrl);
-  setVisKey(k => k + 1);          // <- key change triggers <audio>.play()
+    // 3) push the new URL into state *and* force-remount the visualizer
+    setAudioUrl(propAudioUrl);
+    setVisKey(k => k + 1);          // <- key change triggers <audio>.play()
 
-  // 4) derive meta for the “Now-Playing” card
-  const file = propAudioUrl.split("/").pop() ?? "unknown";
-  setTitle(prettify(decodeURIComponent(file)));   // <-- fix %20 etc.
-  setArtist("Xaeneptune");
-  setCover(randomCover());
+    // 4) derive meta for the "Now-Playing" card
+    const file = propAudioUrl.split("/").pop() ?? "unknown";
+    setTitle(prettify(decodeURIComponent(file)));   // <-- fix %20 etc.
+    setArtist("Xaeneptune");
+    setCover(randomCover());
 
-  // pause again whenever this scene un-mounts
-  return pauseAllAudio;
-}, [propAudioUrl]);
-
+    // pause again whenever this scene un-mounts
+    return pauseAllAudio;
+  }, [propAudioUrl]);
 
   /* ---------------- helpers ---------------- */
   const prettify = (name: string) =>
     name.replace(/[-_]/g, " ").replace(/\.[^/.]+$/, "");
 
-function loadNewAudio(url:string){
-  pauseAllAudio();
-  setPaused(false);        // ← force un-paused state
-  setAudioUrl(url);
-  setVisKey(k=>k+1);       // ← re-mount visualizer so .play() runs
-  const filename=url.split("/").pop()||"";
-  setTitle(prettify(filename));
-  setArtist("Xaeneptune");
-  setCover(randomCover());
-}
+  function loadNewAudio(url: string) {
+    pauseAllAudio();
+    setPaused(false); // ← force un-paused state
+    setAudioUrl(url);
+    setVisKey(k => k + 1); // ← re-mount visualizer so .play() runs
+    const filename = url.split("/").pop() || "";
+    setTitle(prettify(filename));
+    setArtist("Xaeneptune");
+    setCover(randomCover());
+  }
 
   const resetAudio = () =>
     loadNewAudio(`${audioUrl.split("?")[0]}?t=${Date.now()}`);
@@ -133,36 +162,78 @@ function loadNewAudio(url:string){
   }
 
   const VisComponent = {
-    one:   VisualizerOne,
-    two:   VisualizerTwo,
+    one: VisualizerOne,
+    two: VisualizerTwo,
     three: VisualizerThree,
-    four:  VisualizerFour,
+    four: VisualizerFour,
     supershape: SupershapeVis,
-  }[type] as React.ComponentType<{ audioUrl: string; isPaused: boolean }>;
+  }[type] as React.ComponentType<{
+    audioUrl: string;
+    isPaused: boolean;
+    renderingMode?: RenderingMode | V2RenderingMode;
+    colorMode?: ColorMode | V2ColorMode;
+    shapeMode?: ShapeMode;
+    pointMode?: PointMode;
+    fractalType?: FractalType;
+  }>;
 
   /* ---------------------------------------------------------------- render */
   return (
     <>
-      <VisComponent key={visKey} audioUrl={audioUrl} isPaused={paused} />
+      <VisComponent
+        key={visKey}
+        audioUrl={audioUrl}
+        isPaused={paused}
+        {...(type === "one" && {
+          renderingMode: v1RenderingMode,
+          colorMode: v1ColorMode,
+          shapeMode: v1ShapeMode,
+          pointMode: v1PointMode,
+        })}
+        {...(type === "two" && {
+          renderingMode: v2RenderingMode,
+          colorMode: v2ColorMode,
+          fractalType: v2FractalType,
+        })}
+      />
 
       <Html fullscreen style={{ pointerEvents: "auto", zIndex: 9999 }}>
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-end gap-6 select-none">
+          
+          {/* Visualizer Controls - Far left */}
+          <BeatsVisualizerControls
+            type={type}
+            uiHidden={uiHidden}
+            v1RenderingMode={v1RenderingMode}
+            setV1RenderingMode={setV1RenderingMode}
+            v1ColorMode={v1ColorMode}
+            setV1ColorMode={setV1ColorMode}
+            v1ShapeMode={v1ShapeMode}
+            setV1ShapeMode={setV1ShapeMode}
+            v1PointMode={v1PointMode}
+            setV1PointMode={setV1PointMode}
+            v2RenderingMode={v2RenderingMode}
+            setV2RenderingMode={setV2RenderingMode}
+            v2ColorMode={v2ColorMode}
+            setV2ColorMode={setV2ColorMode}
+            v2FractalType={v2FractalType}
+            setV2FractalType={setV2FractalType}
+          />
 
-{/* Now-playing card */}
-{!uiHidden && (
-  <div className="flex items-center min-w-72 gap-3 px-4 py-2 bg-neutral-900/70 backdrop-blur rounded-lg">
-    <img
-      src={cover}
-      alt="Album cover"
-      className="h-12 w-12 rounded object-cover"
-    />
-    <div className="flex flex-col">
-      <span className="text-sm font-semibold">{title}</span>
-      <span className="text-xs text-neutral-400">{artist}</span>
-    </div>
-  </div>
-)}
-
+          {/* Now-playing card */}
+          {!uiHidden && (
+            <div className="flex items-center min-w-72 gap-3 px-4 py-2 bg-neutral-900/70 backdrop-blur rounded-lg">
+              <img
+                src={cover}
+                alt="Album cover"
+                className="h-12 w-12 rounded object-cover"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">{title}</span>
+                <span className="text-xs text-neutral-400">{artist}</span>
+              </div>
+            </div>
+          )}
 
           {/* main UI cluster */}
           {!uiHidden && (
@@ -196,28 +267,28 @@ function loadNewAudio(url:string){
               {/* row 2 – icon buttons */}
               <div className="flex gap-4 bg-neutral-900/70 px-4 py-2 rounded-full backdrop-blur">
                 <button
-                  className={`btn-vis ${type === "one"        && "ring-2 ring-brand"}`}
+                                   className={`btn-vis ${type === "one" && "ring-2 ring-brand"}`}
                   onMouseEnter={() => setScreen(tex.one)}
                   onClick={() => switchVis("one")}
                 >
                   <PerlinSphereIcon size={28} />
                 </button>
                 <button
-                  className={`btn-vis ${type === "two"        && "ring-2 ring-brand"}`}
+                  className={`btn-vis ${type === "two" && "ring-2 ring-brand"}`}
                   onMouseEnter={() => setScreen(tex.two)}
                   onClick={() => switchVis("two")}
                 >
                   <FractalIcon size={28} />
                 </button>
                 <button
-                  className={`btn-vis ${type === "three"      && "ring-2 ring-brand"}`}
+                  className={`btn-vis ${type === "three" && "ring-2 ring-brand"}`}
                   onMouseEnter={() => setScreen(tex.three)}
                   onClick={() => switchVis("three")}
                 >
                   <GridPatternIcon size={28} />
                 </button>
                 <button
-                  className={`btn-vis ${type === "four"       && "ring-2 ring-brand"}`}
+                  className={`btn-vis ${type === "four" && "ring-2 ring-brand"}`}
                   onMouseEnter={() => setScreen(tex.four)}
                   onClick={() => switchVis("four")}
                 >
@@ -241,7 +312,7 @@ function loadNewAudio(url:string){
           <button
             onClick={() => setUiHidden(h => !h)}
             className="bg-neutral-800/70 backdrop-blur rounded-full p-2 text-neutral-200
-                       hover:bg-brand hover:scale-105 transition-all"
+                     hover:bg-brand hover:scale-105 transition-all"
           >
             {uiHidden
               ? <HiOutlineEye className="w-6 h-6" />
