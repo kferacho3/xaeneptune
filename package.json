@@ -19,6 +19,7 @@
     "framer-motion": "^12.6.2",
     "lamina": "^1.1.23",
     "leva": "^0.10.0",
+    "lucide-react": "^0.514.0",
     "mobile-device-detect": "^0.4.3",
     "next": "^15.2.4",
     "postprocessing": "^6.37.0",

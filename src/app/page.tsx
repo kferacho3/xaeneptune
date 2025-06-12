@@ -1,3 +1,4 @@
+
 /* --------------------------------------------------------------------------
    src/app/page.tsx – HomePage with single-click FluidTransition trigger
 --------------------------------------------------------------------------- */
@@ -8,6 +9,7 @@ import { Canvas } from "@react-three/fiber";
 import { Bloom, EffectComposer, SMAA, Vignette } from "@react-three/postprocessing";
 import Head from "next/head";
 import { Suspense, useEffect, useState } from "react";
+import { FaTimes } from "react-icons/fa";
 import { FiMoon, FiSun } from "react-icons/fi";
 import * as THREE from "three";
 
@@ -60,8 +62,17 @@ export default function HomePage() {
   const [environmentMode, setEnvironmentMode] =
     useState<"day" | "night">("night");
 
+  // Add state for Connect modal
+  const [showConnectModal, setShowConnectModal] = useState(false);
+
   /* ROUTE HANDLERS */
   const changeRoute = (r: Route) => {
+    // Special handling for connect route
+    if (r === "connect") {
+      setShowConnectModal(true);
+      return;
+    }
+    
     if (r === route) return;
     if (route === "beats-visualizer") pauseAllAudio();
     setPending(r);
@@ -111,8 +122,8 @@ export default function HomePage() {
       case "artist":     return <Artist />;
       case "beats":      return <BeatsAvailable />;
       case "albums":     return <Albums />;
-      case "connect":    return <Connect />;
       case "xaeneptune": return <XaeneptunesWorld />;
+      // Remove connect from here since it's now a modal
       default:           return null;
     }
   };
@@ -135,7 +146,14 @@ const showTopbar = phase === "none" && transitionDone && hasInteracted && route 
           <Sidebar
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
-            setActiveRoute={setActiveRoute}
+            setActiveRoute={(r: Route) => {
+              if (r === "connect") {
+                setShowConnectModal(true);
+                setSidebarOpen(false);
+              } else {
+                setActiveRoute(r);
+              }
+            }}
           />
         </div>
 
@@ -246,16 +264,14 @@ const showTopbar = phase === "none" && transitionDone && hasInteracted && route 
             </div>
           )}
 
-                      <div className="absolute top-0 w-full z-[99999]">
+          <div className="absolute top-0 w-full z-[99999]">
             {/* ---------- Top-bar Navbar (all routes) ---------- */}
-{showTopbar && <TopBarNavbar onHamburgerClick={() => setSidebarOpen(!sidebarOpen)} />}
-
-              </div>
+            {showTopbar && <TopBarNavbar onHamburgerClick={() => setSidebarOpen(!sidebarOpen)} />}
+          </div>
 
           {/* ---------- Nav + Env toggle ---------- */}
           {showNavOverlay && (
             <>
-  
               <NavigationOverlay handleRouteChange={changeRoute} />
 
               <button
@@ -273,7 +289,7 @@ const showTopbar = phase === "none" && transitionDone && hasInteracted && route 
                   </>
                 ) : (
                   <>
-                    <FiMoon className={mobile ? "h-3 w-3" : "h-6 w-6"} />
+                                      <FiMoon className={mobile ? "h-3 w-3" : "h-6 w-6"} />
                     <span className={mobile ? "mt-1 text-[8px]" : "mt-1 text-xs"}>Night</span>
                   </>
                 )}
@@ -281,6 +297,21 @@ const showTopbar = phase === "none" && transitionDone && hasInteracted && route 
             </>
           )}
         </div>
+
+        {/* ---------- Connect Modal ---------- */}
+        {showConnectModal && (
+          <div className="fixed inset-0 z-[100000]">
+            <Connect />
+            {/* Close button */}
+            <button
+              onClick={() => setShowConnectModal(false)}
+              className="fixed top-6 right-6 z-[100001] p-3 bg-gray-800/50 backdrop-blur-sm rounded-full hover:bg-gray-700/50 transition-colors group"
+              aria-label="Close connect modal"
+            >
+              <FaTimes className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+            </button>
+          </div>
+        )}
 
         <Loader />
       </>
