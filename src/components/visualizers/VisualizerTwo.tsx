@@ -1,20 +1,46 @@
 // src/components/visualizers/VisualizerTwo.tsx
 "use client";
+
 import { useFrame } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import useSharedAudio from "./useSharedAudio";
-import { createFractalGeometry } from "./VisualizerTwoHelpers/fractalGeometryFactory";
+import {
+  createFractalGeometry,
+  disposeFractalGeometry,
+} from "./VisualizerTwoHelpers/fractalGeometryFactory";
 import {
   ColorMode,
   FractalType,
   RenderingMode,
-  VisualizerTwoProps
+  VisualizerTwoProps,
 } from "./VisualizerTwoHelpers/types";
 
-/* ================================================================
-   FRACTAL SHADER COMPONENT
-   ================================================================= */
+/* ------------------------------------------------------------------ */
+/*  FRACTAL-SPECIFIC COLOR PALETTES                                   */
+/* ------------------------------------------------------------------ */
+const FRACTAL_COLORS: Record<
+  FractalType,
+  { base: THREE.Color; accent: THREE.Color; glow: THREE.Color }
+> = {
+  mandelbulb:        { base: new THREE.Color(0x4a90e2), accent: new THREE.Color(0xf39c12), glow: new THREE.Color(0xe74c3c) },
+  mandelbox:         { base: new THREE.Color(0x9b59b6), accent: new THREE.Color(0x3498db), glow: new THREE.Color(0xe67e22) },
+  mengerSponge:      { base: new THREE.Color(0x27ae60), accent: new THREE.Color(0xf1c40f), glow: new THREE.Color(0xe74c3c) },
+  cantorDust:        { base: new THREE.Color(0xecf0f1), accent: new THREE.Color(0x34495e), glow: new THREE.Color(0x9b59b6) },
+  sierpinskiCarpet:  { base: new THREE.Color(0xe74c3c), accent: new THREE.Color(0x3498db), glow: new THREE.Color(0xf39c12) },
+  juliaSet:          { base: new THREE.Color(0x8e44ad), accent: new THREE.Color(0x2ecc71), glow: new THREE.Color(0xf1c40f) },
+  pythagorasTree:    { base: new THREE.Color(0x27ae60), accent: new THREE.Color(0x8b6914), glow: new THREE.Color(0xf39c12) },
+  pythagorasTree3D:  { base: new THREE.Color(0x2ecc71), accent: new THREE.Color(0xd35400), glow: new THREE.Color(0xf1c40f) },
+  kochSnowflake:     { base: new THREE.Color(0x3498db), accent: new THREE.Color(0xecf0f1), glow: new THREE.Color(0x00d2ff) },
+  nFlake:            { base: new THREE.Color(0xe74c3c), accent: new THREE.Color(0xf39c12), glow: new THREE.Color(0xffeb3b) },
+  sierpinskiTetrahedron:{ base:new THREE.Color(0x9b59b6), accent:new THREE.Color(0xe91e63), glow:new THREE.Color(0x00bcd4) },
+  buddhabrot:        { base: new THREE.Color(0x1a237e), accent: new THREE.Color(0xff6f00), glow: new THREE.Color(0xffeb3b) },
+  apollonianGasket:  { base: new THREE.Color(0x00695c), accent: new THREE.Color(0xffd600), glow: new THREE.Color(0xff1744) },
+};
+
+/* ------------------------------------------------------------------ */
+/*  FRACTAL SHADER COMPONENT                                          */
+/* ------------------------------------------------------------------ */
 function FractalShader({
   audioData,
   renderingMode,
@@ -27,219 +53,189 @@ function FractalShader({
   fractalType: FractalType;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const meshRef  = useRef<THREE.Mesh | null>(null);
 
-  // Build the fractal geometry
-  const fractalGeometry = useMemo<THREE.BufferGeometry>(() => {
-    return createFractalGeometry(fractalType);
-  }, [fractalType]);
+  /* ---------- build geometry once per fractal type --------------- */
+  const fractalGeometry = useMemo(() => createFractalGeometry(fractalType), [
+    fractalType,
+  ]);
 
-  // Save original positions
-  const originalPositionsRef = useRef<Float32Array | null>(null);
+  /* ---------- cache original positions --------------------------- */
+  const originals = useRef<Float32Array | null>(null);
   useEffect(() => {
-    const posAttr = fractalGeometry.getAttribute("position");
-    if (posAttr) {
-      originalPositionsRef.current = new Float32Array(posAttr.array);
-    }
+    const p = fractalGeometry.getAttribute("position");
+    originals.current = p ? new Float32Array(p.array) : null;
   }, [fractalGeometry]);
 
-  // Materials
-  const wireframeMaterial = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: 0x00ff00,
+  /* ---------- material factory ----------------------------------- */
+  const createMaterial = useCallback(() => {
+    const pal = FRACTAL_COLORS[fractalType];
+
+    if (renderingMode === "transparent") {
+      /* diamond-like glass */
+      return new THREE.MeshPhysicalMaterial({
+        color: pal.base,
+        roughness: 0,
+        metalness: 0,
+        transmission: 1,          // full glass
+        ior: 2.4,                 // high index for sparkle
+        thickness: 0.6,
+        clearcoat: 1,
+        clearcoatRoughness: 0,
+        envMapIntensity: 1,
+        side: THREE.DoubleSide,
+      });
+    }
+
+    if (renderingMode === "wireframe") {
+      return new THREE.MeshBasicMaterial({
+        color: pal.glow,
         wireframe: true,
         side: THREE.DoubleSide,
-      }),
-    []
-  );
+      });
+    }
 
-  const solidMaterial = useMemo(
-    () =>
-      new THREE.MeshPhongMaterial({
-        color: 0xaaaaaa,
-        flatShading: true,
-        side: THREE.DoubleSide,
-      }),
-    []
-  );
-
-  const transparentMaterial = useMemo(
-    () =>
-      new THREE.MeshPhongMaterial({
-        color: 0xaaaaaa,
-        transparent: true,
-        opacity: 0.5,
-        side: THREE.DoubleSide,
-      }),
-    []
-  );
-
-  const getMaterial = useCallback(
-    (mode: RenderingMode, color: ColorMode): THREE.Material => {
-      if (mode === "wireframe") return wireframeMaterial;
-      if (mode === "transparent") return transparentMaterial;
-      if (color === "audioAmplitude") {
-        const amp =
-          audioData.length > 0
-            ? audioData.reduce((sum, val) => sum + val, 0) /
-              (audioData.length * 255)
-            : 0;
-        return new THREE.MeshPhongMaterial({
-          color: new THREE.Color(amp, amp, amp),
-          flatShading: true,
-          side: THREE.DoubleSide,
-        });
-      }
-      if (color === "frequencyBased") {
-        const avgFrequency =
-          audioData.length > 0
-            ? audioData.reduce((sum, val) => sum + val, 0) / audioData.length
-            : 128;
-        return new THREE.MeshPhongMaterial({
-          color: new THREE.Color(
-            avgFrequency / 255,
-            1 - avgFrequency / 255,
-            0.5,
-          ),
-          flatShading: true,
-          side: THREE.DoubleSide,
-        });
-      }
-      return solidMaterial;
-    },
-    [wireframeMaterial, transparentMaterial, solidMaterial, audioData]
-  );
-
-  const dynamicMaterial = useMemo(
-    () => getMaterial(renderingMode, colorMode),
-    [renderingMode, colorMode, getMaterial]
-  );
-
-  // Set up the fractal mesh
-  useEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-    
-    // Clear previous
-    group.children.forEach((child) => {
-      const mesh = child as THREE.Mesh;
-      if (mesh.geometry) mesh.geometry.dispose();
-      const mat = mesh.material;
-      if (Array.isArray(mat)) {
-        mat.forEach((m: THREE.Material) => {
-          if (typeof m.dispose === "function") m.dispose();
-        });
-      } else if (mat && typeof mat.dispose === "function") {
-        mat.dispose();
-      }
+    /* solid / default */
+    return new THREE.MeshPhongMaterial({
+      color: pal.base,
+      emissive: pal.accent,
+      emissiveIntensity: colorMode === "audioAmplitude" ? 0 : 0.1,
+      vertexColors: colorMode === "frequencyBased",
+      side: THREE.DoubleSide,
+      flatShading: true,
     });
-    group.clear();
+  }, [fractalType, renderingMode, colorMode]);
 
-    const mesh = new THREE.Mesh(fractalGeometry, dynamicMaterial);
-    group.add(mesh);
-    
+  /* ---------- mount mesh ----------------------------------------- */
+  useEffect(() => {
+    if (!groupRef.current) return;
+    const material = createMaterial();
+    const mesh     = new THREE.Mesh(fractalGeometry, material);
+    meshRef.current = mesh;
+    groupRef.current.add(mesh);
     return () => {
-      group.clear();
+      material.dispose();
+      mesh.geometry.dispose();
+      groupRef.current?.remove(mesh);
     };
-  }, [fractalGeometry, dynamicMaterial]);
+  }, [fractalGeometry, createMaterial]);
 
-  // Update vertices based on audio
+  /* ---------- animation loop ------------------------------------- */
   useFrame(() => {
     const posAttr = fractalGeometry.getAttribute("position");
-    if (
-      !groupRef.current ||
-      audioData.length === 0 ||
-      !posAttr ||
-      !originalPositionsRef.current
-    )
-      return;
-      
+    const basePos = originals.current;
+    if (!basePos || !posAttr) return;
+
     const positions = posAttr.array as Float32Array;
-    const originalPositions = originalPositionsRef.current;
-    const numVertices = positions.length / 3;
-    const time = performance.now() * 0.001;
+    const len       = positions.length / 3;
+    const time      = performance.now() * 0.001;
+
     const globalAmp =
-      audioData.reduce((sum, val) => sum + val, 0) / (audioData.length * 255);
-    
-    for (let i = 0; i < numVertices / 2; i++) {
-      const ox = originalPositions[i * 3];
-      const oy = originalPositions[i * 3 + 1];
-      const oz = originalPositions[i * 3 + 2];
-      const r = Math.sqrt(ox * ox + oy * oy + oz * oz) || 1;
+      audioData.reduce((s, v) => s + v, 0) / (audioData.length * 255 || 1);
+
+    for (let i = 0; i < len; i++) {
+      const ox = basePos[i * 3];
+      const oy = basePos[i * 3 + 1];
+      const oz = basePos[i * 3 + 2];
+
+      const r     = Math.hypot(ox, oy, oz) || 1;
       const theta = Math.acos(oz / r);
-      let phi = Math.atan2(oy, ox);
+      let   phi   = Math.atan2(oy, ox);
       if (phi < 0) phi += 2 * Math.PI;
-      
-      const indexPhi = Math.floor((phi / (2 * Math.PI)) * audioData.length);
-      const ampPhi = audioData[indexPhi] / 255;
-      const indexTheta = Math.floor((theta / Math.PI) * audioData.length);
-      const ampTheta = audioData[indexTheta] / 255;
-      
-      const radialDisplacement = ampPhi * 0.2 + globalAmp * 0.05;
-      const flowDisplacement = Math.sin(time + 2 * phi) * ampTheta * 0.1;
-      const totalDisplacement = radialDisplacement + flowDisplacement;
-      
-      const newX = ox + (ox / r) * totalDisplacement;
-      const newY = oy + (oy / r) * totalDisplacement;
-      const newZ = oz + (oz / r) * totalDisplacement;
-      
-      positions[i * 3] = newX;
-      positions[i * 3 + 1] = newY;
-      positions[i * 3 + 2] = newZ;
-      
-      const j = numVertices - i - 1;
-      positions[j * 3] = -newX;
-      positions[j * 3 + 1] = -newY;
-      positions[j * 3 + 2] = -newZ;
+
+      const idxPhi   = Math.floor((phi   / (2 * Math.PI)) * audioData.length);
+      const idxTheta = Math.floor((theta / Math.PI)       * audioData.length);
+
+      const ampPhi   = (audioData[idxPhi]   || 0) / 255;
+      const ampTheta = (audioData[idxTheta] || 0) / 255;
+
+      const displacement =
+        ampPhi * 0.15 +
+        Math.sin(time * 2 + phi * 2) * ampTheta * 0.08 +
+        globalAmp * 0.05;
+
+      const scale = 1 + displacement;
+
+      positions[i * 3    ] = ox * scale;
+      positions[i * 3 + 1] = oy * scale;
+      positions[i * 3 + 2] = oz * scale;
     }
-    
     posAttr.needsUpdate = true;
-    
-    const scale = 1 + globalAmp * 0.1;
-    groupRef.current.scale.set(scale, scale, scale);
-    groupRef.current.rotation.y += 0.001;
+
+    /* group-level transforms */
+    if (groupRef.current) {
+      const s = 1 + globalAmp * 0.1;
+      groupRef.current.scale.set(s, s, s);
+      groupRef.current.rotation.y += 0.002 + globalAmp * 0.001;
+      groupRef.current.rotation.x  = Math.sin(time * 0.5) * 0.1;
+    }
+
+    /* live emissive boost / colour shift */
+    if (meshRef.current) {
+      const mat = meshRef.current.material as THREE.MeshPhongMaterial;
+      if ("emissiveIntensity" in mat) {
+        mat.emissiveIntensity = 0.1 + globalAmp * 0.4;
+      }
+      if (colorMode === "audioAmplitude" && "color" in mat) {
+        mat.color.lerpColors(
+          FRACTAL_COLORS[fractalType].base,
+          FRACTAL_COLORS[fractalType].glow,
+          globalAmp
+        );
+      }
+    }
   });
 
+  /* ---------- tidy on unmount ------------------------------------ */
+  useEffect(() => () => disposeFractalGeometry(), []);
+
+  /* ---------- lights & group wrapper ----------------------------- */
   return (
     <group ref={groupRef}>
-      {/* Add lights for better visualization */}
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={0.5} />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} />
+      <ambientLight intensity={0.4} />
+      <pointLight
+        position={[10, 10, 10]}
+        intensity={0.8}
+        color={FRACTAL_COLORS[fractalType].accent}
+      />
+      <pointLight
+        position={[-10, -10, -10]}
+        intensity={0.6}
+        color={FRACTAL_COLORS[fractalType].glow}
+      />
+      <directionalLight position={[0, 5, 5]} intensity={0.5} />
     </group>
   );
 }
 
-/* ================================================================
-   Exported VisualizerTwo Component
-   ================================================================= */
+/* ------------------------------------------------------------------ */
+/*  VISUALIZER TWO WRAPPER                                           */
+/* ------------------------------------------------------------------ */
 export default function VisualizerTwo({
   audioUrl,
   isPaused,
-  renderingMode: propRenderingMode,
-  colorMode: propColorMode,
-  fractalType: propFractalType,
+  /* default to colour+wireframe combo */
+  renderingMode = "wireframe",
+  colorMode   = "frequencyBased",
+  fractalType = "mengerSponge",
 }: VisualizerTwoProps) {
-  // Use props with defaults
-  const renderingMode = propRenderingMode || "solid";
-  const colorMode = propColorMode || "default";
-  const fractalType = propFractalType || "mandelbox";
-
-  // Shared audio
   const analyserRef = useSharedAudio(audioUrl, isPaused);
-  const audioDataRef = useRef<Uint8Array>(new Uint8Array(0));
+  const audioBins   = useRef<Uint8Array>(new Uint8Array(0));
 
-  // Update audio data
   useFrame(() => {
     if (!analyserRef.current) return;
-    const buffer = new Uint8Array(analyserRef.current.frequencyBinCount);
-    analyserRef.current.getByteFrequencyData(buffer);
-    audioDataRef.current = buffer;
+    if (audioBins.current.length !== analyserRef.current.frequencyBinCount) {
+      audioBins.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+    }
+    analyserRef.current.getByteFrequencyData(audioBins.current);
   });
+
+  useEffect(() => () => disposeFractalGeometry(), []);
 
   return (
     <FractalShader
-      audioData={audioDataRef.current}
+      key={fractalType}               /* full remount on change */
+      audioData={audioBins.current}
       renderingMode={renderingMode}
       colorMode={colorMode}
       fractalType={fractalType}

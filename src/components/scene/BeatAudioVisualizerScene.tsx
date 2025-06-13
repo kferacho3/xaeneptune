@@ -1,5 +1,3 @@
-
-// src/components/scene/BeatAudioVisualizerScene.tsx (continued)
 "use client";
 
 import {
@@ -34,6 +32,20 @@ import {
   ColorMode as V2ColorMode,
   RenderingMode as V2RenderingMode
 } from "@/components/visualizers/VisualizerTwoHelpers/types";
+
+// Import VisualizerThree types
+import {
+  ColorPaletteName,
+  EnvironmentMode,
+  RenderingMode as V3RenderingMode
+} from "@/components/visualizers/VisualizerThreeHelpers/types";
+
+// ---------- Visualizer-Four types ----------
+import {
+  ColorMode as V4ColorMode,
+  RenderingMode as V4RenderingMode,
+} from "@/components/visualizers/VisualizerFourHelpers/types";
+
 
 // Import the controls component
 import { BeatsVisualizerControls } from "./BeatsVisualizerControls";
@@ -85,6 +97,19 @@ export default function BeatAudioVisualizerScene({
   const [v2RenderingMode, setV2RenderingMode] = useState<V2RenderingMode>("solid");
   const [v2ColorMode, setV2ColorMode] = useState<V2ColorMode>("default");
   const [v2FractalType, setV2FractalType] = useState<FractalType>("mandelbox");
+
+  /* VisualizerThree controls state */
+  const [v3EnvironmentMode, setV3EnvironmentMode] = useState<EnvironmentMode>("phantom");
+  const [v3RenderingMode, setV3RenderingMode] = useState<V3RenderingMode>("solid");
+  const [v3ColorPalette, setV3ColorPalette] = useState<ColorPaletteName>("default");
+  const [v3FftIntensity, setV3FftIntensity] = useState(0.2);
+
+  /* Visualizer-Four controls state */
+  const [v4RenderingMode, setV4RenderingMode] = useState<V4RenderingMode>("solid");
+  const [v4ColorMode,     setV4ColorMode]     = useState<V4ColorMode>("default");
+  const [v4FftIntensity,  setV4FftIntensity]  = useState(1.0);
+  const v4RandomPalette   = () => setVisKey(k => k + 1);   // force re-mount to shuffle palette
+
 
   /* monitor texture swap */
   const setScreen = useMonitorStore(s => s.setScreenName);
@@ -160,26 +185,31 @@ export default function BeatAudioVisualizerScene({
     pauseAllAudio();
     requestAnimationFrame(onGoBack);
   }
-
-  const VisComponent = {
-    one: VisualizerOne,
-    two: VisualizerTwo,
-    three: VisualizerThree,
-    four: VisualizerFour,
-    supershape: SupershapeVis,
-  }[type] as React.ComponentType<{
-    audioUrl: string;
-    isPaused: boolean;
-    renderingMode?: RenderingMode | V2RenderingMode;
-    colorMode?: ColorMode | V2ColorMode;
-    shapeMode?: ShapeMode;
-    pointMode?: PointMode;
-    fractalType?: FractalType;
-  }>;
+type AnyRenderingMode = RenderingMode | V2RenderingMode | V3RenderingMode | V4RenderingMode;
+type AnyColorMode     = ColorMode     | V2ColorMode     | V4ColorMode;
+const VisComponent = {
+  one: VisualizerOne,
+  two: VisualizerTwo,
+  three: VisualizerThree,
+  four: VisualizerFour,
+  supershape: SupershapeVis,
+}[type] as React.ComponentType<{
+  audioUrl: string;
+  isPaused: boolean;
+  renderingMode?: AnyRenderingMode;
+  colorMode?: AnyColorMode;
+  shapeMode?: ShapeMode;
+  pointMode?: PointMode;
+  fractalType?: FractalType;
+  environmentMode?: EnvironmentMode;
+  colorPalette?: ColorPaletteName; // still needed by V3
+  fftIntensity?: number;
+}>;
 
   /* ---------------------------------------------------------------- render */
   return (
     <>
+    
       <VisComponent
         key={visKey}
         audioUrl={audioUrl}
@@ -195,6 +225,18 @@ export default function BeatAudioVisualizerScene({
           colorMode: v2ColorMode,
           fractalType: v2FractalType,
         })}
+        {...(type === "three" && {
+          environmentMode: v3EnvironmentMode,
+          renderingMode: v3RenderingMode,
+          colorPalette: v3ColorPalette,
+          fftIntensity: v3FftIntensity,
+        })}
+        {...(type === "four" && {
+          renderingMode: v4RenderingMode,
+          colorMode:     v4ColorMode,      // <- this was missing
+          fftIntensity:  v4FftIntensity,
+        })}
+
       />
 
       <Html fullscreen style={{ pointerEvents: "auto", zIndex: 9999 }}>
@@ -218,6 +260,21 @@ export default function BeatAudioVisualizerScene({
             setV2ColorMode={setV2ColorMode}
             v2FractalType={v2FractalType}
             setV2FractalType={setV2FractalType}
+            v3EnvironmentMode={v3EnvironmentMode}
+            setV3EnvironmentMode={setV3EnvironmentMode}
+            v3RenderingMode={v3RenderingMode}
+            setV3RenderingMode={setV3RenderingMode}
+            v3ColorPalette={v3ColorPalette}
+            setV3ColorPalette={setV3ColorPalette}
+            v3FftIntensity={v3FftIntensity}
+            setV3FftIntensity={setV3FftIntensity}
+            v4RenderingMode={v4RenderingMode}
+            setV4RenderingMode={setV4RenderingMode}
+            v4ColorMode={v4ColorMode}
+            setV4ColorMode={setV4ColorMode}
+            v4FftIntensity={v4FftIntensity}
+            setV4FftIntensity={setV4FftIntensity}
+            v4RandomPalette={v4RandomPalette}
           />
 
           {/* Now-playing card */}
@@ -240,7 +297,7 @@ export default function BeatAudioVisualizerScene({
             <div className="flex flex-col gap-3">
 
               {/* row 1 – text buttons */}
-              <div className="flex gap-3 bg-neutral-900/70 px-4 py-2 rounded-full backdrop-blur">
+                           <div className="flex gap-3 bg-neutral-900/70 px-4 py-2 rounded-full backdrop-blur">
                 <button onClick={handleGoBack} className="btn-main">
                   Go Back
                 </button>
@@ -267,7 +324,7 @@ export default function BeatAudioVisualizerScene({
               {/* row 2 – icon buttons */}
               <div className="flex gap-4 bg-neutral-900/70 px-4 py-2 rounded-full backdrop-blur">
                 <button
-                                   className={`btn-vis ${type === "one" && "ring-2 ring-brand"}`}
+                  className={`btn-vis ${type === "one" && "ring-2 ring-brand"}`}
                   onMouseEnter={() => setScreen(tex.one)}
                   onClick={() => switchVis("one")}
                 >

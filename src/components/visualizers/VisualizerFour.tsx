@@ -5,7 +5,6 @@
 
 "use client";
 
-import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -17,38 +16,8 @@ import useSharedAudio from "./useSharedAudio"; // your shared‐audio hook
 /* ────────────────────────────
  *  Color‑palettes (28 total)
  * ──────────────────────────── */
-const colorPalettes = [
-  ["#0077B6", "#00B4D8", "#90E0EF", "#CAF0F8"],
-  ["#264653", "#2A9D8F", "#E9C46A", "#F4A261", "#E76F51"],
-  ["#4506CB", "#7A0BC0", "#A20BD1", "#C700B9", "#F900BF"],
-  ["#0B666A", "#5CB85C", "#FDE74C", "#FFC857", "#E9724C"],
-  ["#1A535C", "#4ECDC4", "#F7FFF7", "#FF6B6B", "#FFE66D"],
-  ["#283618", "#606C38", "#B8B8B8", "#DDA15E", "#BC6C25"],
-  ["#03045E", "#0077B6", "#00A6FB", "#B4D2E7", "#F1FAEE"],
-  ["#6A040F", "#9D0208", "#D7263D", "#F48C06", "#FFBA08"],
-  // 20 brand‑new palettes
-  ["#2B2D42", "#3A86FF", "#FF006E", "#FB5607", "#FFBE0B"],
-  ["#FAF3DD", "#C8D5B9", "#8FC0A9", "#68B0AB", "#4A7C59"],
-  ["#0A0908", "#22333B", "#EAE0D5", "#C6AC8F", "#5E503F"],
-  ["#DCE8C0", "#F5634A", "#DF2935", "#86BA90", "#CCFF66"],
-  ["#7C4FFF", "#651FFF", "#6200EA", "#B385FF", "#4E148C"],
-  ["#665191", "#F28482", "#F6BD60", "#F5CAC3", "#84A59D"],
-  ["#8AAAE5", "#FFC2CE", "#FFA384", "#FFBF81", "#FFEE93"],
-  ["#E7EFC5", "#C4DFAA", "#90C290", "#4F6C50", "#2C3639"],
-  ["#BCE6EB", "#FDFA66", "#FFB5C2", "#FF94CC", "#FA5882"],
-  ["#3F72AF", "#D3E9FF", "#F3F7FA", "#364F6B", "#FC5185"],
-  ["#DFE7FD", "#C2BBF0", "#7E78D2", "#5952C1", "#27296D"],
-  ["#34344A", "#883677", "#F7E5F1", "#CFC4E9", "#5E4352"],
-  ["#F0EFF4", "#D3CCE3", "#E9E4F0", "#BBA0CA", "#C7B8E1"],
-  ["#FAD5A5", "#FFB385", "#FFAAA6", "#DEA2A2", "#F6EAC2"],
-  ["#4F000B", "#720026", "#CE4257", "#FF7F51", "#FFB7C3"],
-  ["#B8FEF1", "#BAFFB4", "#FFD9DA", "#FFA6C9", "#FF74B1"],
-  ["#C6F1D6", "#F3FFBD", "#FFDA9A", "#FFA5A5", "#FF6767"],
-  ["#F72585", "#7209B7", "#560BAD", "#480CA8", "#3A0CA3"],
-  ["#6D6875", "#B5838D", "#E5989B", "#FFB4A2", "#FFCDB2"],
-  ["#110B11", "#2C2A4A", "#801BF2", "#B726FF", "#F5B8FF"],
-];
 
+import { colorPalettes } from "./VisualizerFourHelpers/types";
 /* ────────────────────────────
  *  CA helper utilities
  * ──────────────────────────── */
@@ -166,12 +135,12 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
   const [ruleSet] = useState(() => setRules(INITIAL_RULE));
   const [generation, setGeneration] = useState(0);
 
-  const [currentPalette, setCurrentPalette] = useState<THREE.Color[]>(
+  const [currentPalette, ] = useState<THREE.Color[]>(
     colorPalettes[0].map((c) => new THREE.Color(c)),
   );
-  const [renderingMode, setRenderingMode] = useState<"solid"|"wireframe"|"rainbow"|"transparent">("solid");
-  const [colorMode,    setColorMode   ] = useState<"default"|"audioAmplitude"|"frequencyBased"|"rainbow">("default");
-  const [fftIntensity, setFftIntensity] = useState(0.5);
+  //const [renderingMode, setRenderingMode] = useState<"solid"|"wireframe"|"rainbow"|"transparent">("solid");
+  const [colorMode,       ] = useState<"default"|"audioAmplitude"|"frequencyBased"|"rainbow">("default");
+  const [fftIntensity, ] = useState(0.5);
 
   /* ─────────── shared‐audio analyser ─────────── */
   const analyserRef = useSharedAudio(audioUrl, isPaused);
@@ -237,11 +206,7 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
     setGeneration(g => g+1);
   };
 
-  /* ─────────── random palette ─────────── */
-  const randomPalette = () => {
-    const p = colorPalettes[Math.floor(Math.random()*colorPalettes.length)];
-    setCurrentPalette(p.map(c => new THREE.Color(c)));
-  };
+
 
   /* ─────────── FFT buffer ─────────── */
   const fftRef = useRef<Uint8Array|null>(null);
@@ -289,68 +254,6 @@ export default function VisualizerFour({ audioUrl, isPaused }: VisualizerFourPro
     <>
       {cells.map((c,i) => <Cell key={i} data={c} />)}
 
-<Html>
-        <div style={{
-          position:   "fixed",
-          top:        20,
-          left:       20,
-          background: "rgba(0,0,0,0.6)",
-          padding:    "12px",
-          borderRadius:"8px",
-          color:      "white",
-          zIndex:     10,
-          userSelect: "none",
-        }}>
-          <div>
-            <label>Rendering:&nbsp;</label>
-            <select
-              value={renderingMode}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setRenderingMode(e.target.value as "solid"|"wireframe"|"rainbow"|"transparent")
-              }
-            >
-              <option value="solid">Solid</option>
-              <option value="wireframe">Wireframe</option>
-              <option value="rainbow">Rainbow</option>
-              <option value="transparent">Transparent</option>
-            </select>
-          </div>
-
-          <div style={{ marginTop: 6 }}>
-            <label>Color Mode:&nbsp;</label>
-            <select
-              value={colorMode}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setColorMode(e.target.value as "default"|"audioAmplitude"|"frequencyBased"|"rainbow")
-              }
-            >
-              <option value="default">Default</option>
-              <option value="audioAmplitude">Audio Amplitude</option>
-              <option value="frequencyBased">Frequency Based</option>
-              <option value="rainbow">Rainbow</option>
-            </select>
-          </div>
-
-          <button style={{ marginTop: 8 }} onClick={randomPalette}>
-            Random Palette
-          </button>
-
-          <div style={{ marginTop: 10 }}>
-            <label>FFT Intensity:&nbsp;</label>
-            <input
-              type="range"
-              min={0}
-              max={5}
-              step={0.1}
-              value={fftIntensity}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFftIntensity(parseFloat(e.target.value))
-              }
-            />
-            <span style={{ marginLeft: 6 }}>{fftIntensity.toFixed(1)}</span>
-          </div>
-        </div>
-      </Html>
     </>
   );
 }

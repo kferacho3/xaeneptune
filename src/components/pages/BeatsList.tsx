@@ -705,26 +705,31 @@ ${inquiryMessage}
 
         {/* Content */}
         <main ref={mainContentRef} className="flex-1 overflow-y-auto px-4 pb-72 md:px-8 py-6 pb-56">
-          {viewMode === "list" && (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="sticky top-0 bg-black/95 backdrop-blur-sm z-10">
-                  <tr className="text-left text-sm text-gray-400 border-b border-gray-800">
-                    <th className="py-3 pl-4 md:pl-6"></th>
-                    <th className="py-3 px-4">Title</th>
-                    <th className="py-3 px-4 hidden md:table-cell">Producer</th>
-                    <th className="py-3 px-4 hidden lg:table-cell">Key</th>
-                    <th className="py-3 px-4 hidden lg:table-cell">BPM</th>
-                    <th className="py-3 px-4 hidden xl:table-cell">Date</th>
-                    <th className="py-3 pr-4 md:pr-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentBeats.map((beat, index) => BeatRow(beat, index))}
-                </tbody>
-              </table>
-            </div>
-          )}
+{viewMode === "list" && (
+    <div /* allow horizontal scroll on very small screens            */
+         className="overflow-x-auto">
+      <table className="w-full">
+        {/* sticky header so column titles stay in view               */}
+        <thead className="sticky top-0 z-10 bg-black/95 backdrop-blur-sm">
+          <tr className="border-b border-gray-800 text-left text-sm text-gray-400">
+            <th className="py-3 pl-4 md:pl-6"></th>
+            <th className="py-3 px-4">Title</th>
+            <th className="py-3 px-4 hidden md:table-cell">Producer</th>
+            <th className="py-3 px-4 hidden lg:table-cell">Key</th>
+            <th className="py-3 px-4 hidden lg:table-cell">BPM</th>
+            <th className="py-3 px-4 hidden xl:table-cell">Date</th>
+            <th className="py-3 pr-4 md:pr-6 text-right">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {currentBeats.map((beat, idx) => BeatRow(beat, idx))}
+        </tbody>
+      </table>
+      {/* extra margin so *all* rows can scroll fully into view       */}
+      <div className="h-16 md:hidden" />
+    </div>
+  )}
 
           {viewMode === "grid" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">

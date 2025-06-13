@@ -34,28 +34,8 @@ export function VisualizerOneControls({
   };
 
   return (
-   
-      <div
-        style={{
-          position: "absolute",
-          bottom: "20px",
-          right: "20px",
-          left: "0%",
-          width: "40vw",
-          display: "flex",
-          zIndex: 99999,
-          flexDirection: "column",
-          gap: "12px",
-          color: "white",
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
-          padding: "20px",
-          borderRadius: "12px",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
-          pointerEvents: 'auto',
-        }}
-      >
+   <div className="flex flex-col gap-3 bg-neutral-900/70 px-4 py-3 rounded-lg backdrop-blur
+                  border border-neutral-800/50 shadow-lg min-w-[400px]">
         <h3 style={{ 
           margin: "0 0 10px 0", 
           fontSize: "16px", 

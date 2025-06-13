@@ -18,6 +18,7 @@ import {
   FaUser,
 } from "react-icons/fa";
 
+/* ─────────────────────── Types ─────────────────────── */
 interface FormData {
   name: string;
   email: string;
@@ -37,7 +38,9 @@ const inquiryTypes = [
   { value: "general", label: "General Inquiry", icon: FaQuestionCircle },
 ];
 
+/* ─────────────────────── Component ─────────────────────── */
 export default function Connect() {
+  /* State */
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -46,14 +49,11 @@ export default function Connect() {
     subject: "",
     message: "",
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData>>({});
 
-  /* ------------------------------------------------------------------ */
-  /*  Disable body scroll while modal is open                           */
-  /* ------------------------------------------------------------------ */
+  /* Disable body scroll while modal is open */
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -61,9 +61,7 @@ export default function Connect() {
     };
   }, []);
 
-  /* ------------------------------------------------------------------ */
-  /*  Helpers                                                           */
-  /* ------------------------------------------------------------------ */
+  /* Handlers --------------------------------------------------------- */
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -71,15 +69,13 @@ export default function Connect() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     if (errors[name as keyof FormData]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = () => {
     const newErrors: Partial<FormData> = {};
-
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email))
@@ -98,7 +94,6 @@ export default function Connect() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-
     const inquiryLabel =
       inquiryTypes.find((t) => t.value === formData.inquiryType)?.label ||
       formData.inquiryType;
@@ -110,16 +105,14 @@ Phone: ${formData.phone || "Not provided"}
 Inquiry Type: ${inquiryLabel}
 
 Message:
-${formData.message}
-    `.trim();
+${formData.message}`.trim();
 
-    const mailtoLink = `mailto:contact@antiheroes.co?subject=${encodeURIComponent(
+    const mailto = `mailto:contact@antiheroes.co?subject=${encodeURIComponent(
       `[${inquiryLabel}] ${formData.subject}`
     )}&body=${encodeURIComponent(body)}`;
 
-    /* simulate latency for nicer UX */
     setTimeout(() => {
-      window.location.href = mailtoLink;
+      window.location.href = mailto;
       setIsSubmitting(false);
       setShowSuccess(true);
 
@@ -137,9 +130,7 @@ ${formData.message}
     }, 1000);
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  Render                                                            */
-  /* ------------------------------------------------------------------ */
+  /* Render ----------------------------------------------------------- */
   return (
     <AnimatePresence>
       <motion.div
@@ -155,19 +146,20 @@ ${formData.message}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 50 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative h-[90vh] w-[75vw] max-h-[90vh] max-w-[75vw] overflow-y-auto rounded-3xl border border-purple-500/20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 shadow-2xl"
+          /* 95 vw on mobile, 75 vw on ≥ md; hide horizontal overflow */
+          className="relative h-[90vh] w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 shadow-2xl md:w-[75vw]"
         >
-          {/* Decorative gradient orbs */}
+          {/* Decorative orbs (clipped by overflow-x-hidden) */}
           <div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-purple-600/20 blur-3xl" />
           <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-emerald-600/20 blur-3xl" />
 
           {/* Content */}
-          <div className="relative px-4 pb-8 pt-6 md:px-6 md:pb-10">
+          <div className="relative px-4 pb-8 pt-6 sm:px-6 sm:pb-10">
             {/* Header */}
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <motion.h1
-                  className="bg-gradient-to-r from-purple-300 to-emerald-300 bg-clip-text text-3xl font-black text-transparent md:text-4xl"
+                  className="bg-gradient-to-r from-purple-300 to-emerald-300 bg-clip-text text-3xl font-black text-transparent sm:text-4xl"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
@@ -205,7 +197,7 @@ ${formData.message}
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name & Email */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Name */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -223,7 +215,9 @@ ${formData.message}
                     onChange={handleChange}
                     placeholder="John Doe"
                     className={`w-full rounded-xl border px-4 py-2.5 text-white placeholder-gray-500 transition-colors focus:border-purple-500 focus:outline-none ${
-                      errors.name ? "border-red-500" : "border-gray-700 bg-gray-800/50"
+                      errors.name
+                        ? "border-red-500"
+                        : "border-gray-700 bg-gray-800/50"
                     }`}
                   />
                   {errors.name && (
@@ -248,7 +242,9 @@ ${formData.message}
                     onChange={handleChange}
                     placeholder="john@example.com"
                     className={`w-full rounded-xl border px-4 py-2.5 text-white placeholder-gray-500 transition-colors focus:border-purple-500 focus:outline-none ${
-                      errors.email ? "border-red-500" : "border-gray-700 bg-gray-800/50"
+                      errors.email
+                        ? "border-red-500"
+                        : "border-gray-700 bg-gray-800/50"
                     }`}
                   />
                   {errors.email && (
@@ -258,7 +254,7 @@ ${formData.message}
               </div>
 
               {/* Phone & Inquiry Type */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Phone */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}

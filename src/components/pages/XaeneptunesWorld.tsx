@@ -1,3 +1,4 @@
+// /src/components/pages/XaeneptunesWorld.tsx
 "use client";
 
 import {
@@ -9,8 +10,6 @@ import {
 } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-
-/* ── brand-logo icons from react-icons ──────────────────────────────── */
 import {
   FaGlobeAmericas,
   FaInstagram,
@@ -21,9 +20,10 @@ import {
 
 /**
  * XaeneptunesWorld (About / Bio page)
- * – Glassmorphic Fortune-500 aesthetic
- * – Immersive avatar (parallax, click to shuffle)
- * – Social cards now use react-icons only
+ * – Fortune-500 glassmorphic aesthetic
+ * – Immersive avatar (parallax, click-to-shuffle)
+ * – Accent bars stay inside their cards
+ * – Fixed overflow “bounce-gap” issue at page bottom
  */
 export default function XaeneptunesWorld() {
   /* ───────────────────────── State & refs ─────────────────────────── */
@@ -75,8 +75,8 @@ export default function XaeneptunesWorld() {
 
   /* ────────────────────────── Render ──────────────────────────────── */
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-black text-gray-300 selection:bg-purple-500/20">
-      {/* background layers */}
+    <div className="relative min-h-screen overscroll-y-none overflow-x-hidden bg-black text-gray-300 selection:bg-purple-500/20">
+      {/* ────── background layers ────── */}
       <motion.div
         className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-transparent to-transparent opacity-40"
         initial={{ opacity: 0.25, scale: 1 }}
@@ -90,16 +90,16 @@ export default function XaeneptunesWorld() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black" />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 pb-32 pt-24">
-        {/* HERO */}
-        <header className="mb-24 flex flex-col items-center text-center">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-32 pt-24 sm:px-6 lg:px-8">
+        {/* ─────────── HERO ─────────── */}
+        <header className="mb-20 flex flex-col items-center text-center sm:mb-24">
           <motion.h1
-            className="mb-8 bg-gradient-to-r from-white via-purple-200 to-teal-200 bg-clip-text text-6xl font-extrabold tracking-tight text-transparent md:text-8xl"
+            className="mb-8 bg-gradient-to-r from-white via-purple-200 to-teal-200 bg-clip-text text-5xl font-extrabold tracking-tighter text-transparent sm:text-6xl md:text-8xl"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
           >
-            XAE NEPTUNE
+            XAE&nbsp;NEPTUNE
           </motion.h1>
 
           {/* Avatar */}
@@ -112,13 +112,13 @@ export default function XaeneptunesWorld() {
               rotateY: tiltY,
               transformStyle: "preserve-3d",
             }}
-            className="relative h-48 w-48 cursor-pointer md:h-56 md:w-56"
+            className="relative h-40 w-40 cursor-pointer sm:h-48 sm:w-48 md:h-56 md:w-56"
             onClick={randomizeImg}
-            whileHover={{ scale: 1.2 }}
+            whileHover={{ scale: 1.15 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
           >
             <motion.div
-              className="absolute inset-0 rounded-full border-4 border-teal-300/50 shadow-[0_0_60px_-10px_theme(colors.teal.400/50)]"
+              className="absolute inset-0 rounded-full border-4 border-teal-300/50 shadow-[0_0_60px_-10px_rgba(45,212,191,0.5)]"
               whileHover={{
                 scale: 1.1,
                 borderColor: "rgba(147, 51, 234, 0.85)",
@@ -141,7 +141,7 @@ export default function XaeneptunesWorld() {
                   fill
                   priority
                   className="object-cover"
-                  sizes="220px"
+                  sizes="(max-width: 640px) 160px, 220px"
                 />
               </motion.div>
             </AnimatePresence>
@@ -151,19 +151,19 @@ export default function XaeneptunesWorld() {
           <AnimatePresence>
             {tooltip && (
               <motion.span
-                className="pointer-events-none absolute mt-48 text-sm font-medium text-purple-300"
+                className="pointer-events-none absolute mt-48 text-sm font-medium text-purple-300 sm:mt-56"
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 10, opacity: 0 }}
                 transition={{ duration: 0.4 }}
               >
-                Click me!
+                Tap to shuffle
               </motion.span>
             )}
           </AnimatePresence>
 
           <motion.p
-            className="mt-10 text-xl font-light md:text-2xl"
+            className="mt-8 text-lg font-light leading-relaxed sm:mt-10 sm:text-xl md:text-2xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
@@ -172,29 +172,35 @@ export default function XaeneptunesWorld() {
           </motion.p>
         </header>
 
-        {/* CONTENT SECTIONS */}
-        <main className="space-y-28">
+        {/* ──────── CONTENT SECTIONS ──────── */}
+        <main className="space-y-16 sm:space-y-20 lg:space-y-24">
           {sections.map(({ id, title, body, accent }) => (
             <motion.section
               key={id}
-              className="relative rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_10px_50px_-15px_rgba(0,0,0,0.6)] backdrop-blur"
+              className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_50px_-15px_rgba(0,0,0,0.6)] backdrop-blur sm:p-8 lg:p-10"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
               viewport={{ once: true, amount: 0.2 }}
             >
-              <div className={`absolute top-0 h-1 w-full rounded-t-3xl ${accent}`} />
-              <h2 className="mb-6 bg-gradient-to-r from-white via-purple-200 to-teal-200 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
+              {/* accent bar (stays inside via overflow-hidden) */}
+              <div
+                className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${accent}`}
+              />
+
+              <h2 className="mb-4 bg-gradient-to-r from-white via-purple-200 to-teal-200 bg-clip-text text-3xl font-bold text-transparent sm:text-4xl md:text-5xl">
                 {title}
               </h2>
-              <p className="leading-relaxed text-lg text-gray-300">{body}</p>
+              <p className="text-base leading-relaxed text-gray-300 sm:text-lg md:text-xl">
+                {body}
+              </p>
             </motion.section>
           ))}
         </main>
 
-        {/* SOCIAL LINKS */}
+        {/* ──────── SOCIAL LINKS ──────── */}
         <motion.section
-          className="mx-auto mt-32 grid max-w-4xl gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          className="mx-auto mt-28 grid max-w-4xl gap-6 sm:grid-cols-2 lg:grid-cols-3"
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
@@ -206,13 +212,13 @@ export default function XaeneptunesWorld() {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`group relative flex items-center justify-between gap-4 rounded-2xl p-6 ${gradient} backdrop-blur`}
+              className={`group relative flex items-center justify-between gap-4 rounded-2xl p-6 ${gradient} backdrop-blur transition-shadow duration-200`}
               whileHover={{ y: -6, scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 200 }}
             >
               <div>
-                <h3 className="font-bold text-white">{label}</h3>
+                <h3 className="font-semibold text-white">{label}</h3>
                 <p className="text-sm text-gray-300">{handle}</p>
               </div>
               <Icon className="h-6 w-6 text-white/80 transition-colors group-hover:text-white" />
@@ -220,9 +226,9 @@ export default function XaeneptunesWorld() {
           ))}
         </motion.section>
 
-        {/* FOOTER */}
+        {/* ──────── FOOTER ──────── */}
         <motion.footer
-          className="mt-32 text-center text-sm text-gray-500"
+          className="mt-28 text-center text-xs text-gray-500 sm:text-sm"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
@@ -233,7 +239,7 @@ export default function XaeneptunesWorld() {
             whileInView={{ scaleX: 1 }}
             transition={{ duration: 1.2 }}
           />
-          © 2024 Xae Neptune. All rights reserved.
+          © 2024&nbsp;Xae&nbsp;Neptune. All rights reserved.
         </motion.footer>
       </div>
     </div>
