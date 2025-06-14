@@ -46,7 +46,12 @@ import {
   RenderingMode as V4RenderingMode,
 } from "@/components/visualizers/VisualizerFourHelpers/types";
 
-
+import {
+  ColorMode as V5ColorMode,
+  ParamUnion as V5ParamUnion,
+  RenderingMode as V5RenderingMode,
+} from "@/components/visualizers/VisualizerFiveHelpers/types";
+import { allSupershapeConfigs } from "@/config/supershapeConfigs";
 // Import the controls component
 import { BeatsVisualizerControls } from "./BeatsVisualizerControls";
 
@@ -110,7 +115,14 @@ export default function BeatAudioVisualizerScene({
   const [v4FftIntensity,  setV4FftIntensity]  = useState(1.0);
   const v4RandomPalette   = () => setVisKey(k => k + 1);   // force re-mount to shuffle palette
 
-
+  /* -------- Visualizer-Five (Supershape) controls state ---------- */
+  const [v5ConfigIndex,     setV5ConfigIndex]     = useState(0);
+  const [v5RenderingMode,   setV5RenderingMode]   = useState<V5RenderingMode>("transparent");
+  const [v5ColorMode,       setV5ColorMode]       = useState<V5ColorMode>("default");
+  // keep a copy so the control panel can show the live JSON read-out
+const [v5Params, setV5Params] = useState<V5ParamUnion>(
+  () => allSupershapeConfigs[0].params,
+);
   /* monitor texture swap */
   const setScreen = useMonitorStore(s => s.setScreenName);
   const tex: Record<VisualizerType, TextureName> = {
@@ -122,7 +134,8 @@ export default function BeatAudioVisualizerScene({
   };
 
   /* ---------------- lifecycle ---------------- */
-  useEffect(() => {
+useEffect(() => {
+  setV5Params(allSupershapeConfigs[v5ConfigIndex].params);
     // 1) stop whatever is playing
     pauseAllAudio();
 
@@ -141,7 +154,7 @@ export default function BeatAudioVisualizerScene({
 
     // pause again whenever this scene un-mounts
     return pauseAllAudio;
-  }, [propAudioUrl]);
+  }, [propAudioUrl, v5ConfigIndex]);
 
   /* ---------------- helpers ---------------- */
   const prettify = (name: string) =>
@@ -236,6 +249,11 @@ const VisComponent = {
           colorMode:     v4ColorMode,      // <- this was missing
           fftIntensity:  v4FftIntensity,
         })}
+   {...(type === "supershape" && {
+          configIndex:   v5ConfigIndex,
+          renderingMode: v5RenderingMode,
+          colorMode:     v5ColorMode,
+        })}
 
       />
 
@@ -275,6 +293,14 @@ const VisComponent = {
             v4FftIntensity={v4FftIntensity}
             setV4FftIntensity={setV4FftIntensity}
             v4RandomPalette={v4RandomPalette}
+                      /* ------- new Supershape props ------- */
+            v5ConfigIndex={v5ConfigIndex}
+            setV5ConfigIndex={setV5ConfigIndex}
+            v5RenderingMode={v5RenderingMode}
+            setV5RenderingMode={setV5RenderingMode}
+            v5ColorMode={v5ColorMode}
+            setV5ColorMode={setV5ColorMode}
+            v5Params={v5Params}
           />
 
           {/* Now-playing card */}

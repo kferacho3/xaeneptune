@@ -4,7 +4,13 @@
 import * as THREE from "three";
 
 /* ----- UI enums -------------------------------------------------------- */
-export type RenderingMode = "solid" | "wireframe" | "rainbow" | "transparent";
+export type RenderingMode =
+  | "solid"
+  | "wireframe"
+  | "grayscale"        // ← new (ex-rainbow)
+  | "metallicRainbow"  // ← new (ex-transparent)
+  | "nebula"           // ← brand-new
+  | "auroraCrystal";   // ← brand-new
 export type ColorMode    = "default" | "audioAmplitude" | "frequencyBased" | "rainbow";
 
 /* ----- FFT texture size (MUST be power-of-two for DataTexture) -------- */

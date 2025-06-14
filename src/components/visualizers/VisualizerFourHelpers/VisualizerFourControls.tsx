@@ -26,19 +26,7 @@ export function VisualizerFourControls({
 }: Props) {
   return (
     <>
-      <div
-        style={{
-          position: "fixed",
-          top: 20,
-          left: 20,
-          background: "rgba(0,0,0,0.6)",
-          padding: "12px",
-          borderRadius: "8px",
-          color: "white",
-          zIndex: 10,
-          userSelect: "none",
-        }}
-      >
+    <div className="bg-neutral-900/70 backdrop-blur rounded-lg p-4 max-w-xs">
         {/* --- Rendering ------------------------------------------------ */}
         <div>
           <label>Rendering:&nbsp;</label>
@@ -52,8 +40,10 @@ export function VisualizerFourControls({
           >
             <option value="solid">Solid</option>
             <option value="wireframe">Wire-frame</option>
-            <option value="rainbow">Rainbow</option>
-            <option value="transparent">Transparent</option>
+            <option value="grayscale">Gray-scale</option>
+            <option value="metallicRainbow">Metallic 🌈</option>
+            <option value="nebula">Nebula</option>
+            <option value="auroraCrystal">Aurora-Crystal</option>
           </select>
         </div>
 

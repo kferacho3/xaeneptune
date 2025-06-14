@@ -195,7 +195,7 @@ export default function HomePage() {
         </Head>
 
         {/* ---------- Main Layer ---------- */}
-        <div className="relative w-full h-full">
+          <div className="fixed inset-0 w-full h-full overflow-hidden">
           {/* ---------- Three Canvas ---------- */}
           <Canvas
             shadows

@@ -704,7 +704,11 @@ ${inquiryMessage}
         </AnimatePresence>
 
         {/* Content */}
-        <main ref={mainContentRef} className="flex-1 overflow-y-auto px-4 pb-72 md:px-8 py-6 pb-56">
+   <main
+  ref={mainContentRef}
+  className="flex-1 overflow-y-auto px-4 md:px-8 py-6"
+  style={{ paddingBottom: 'var(--footer-h,3.5rem)' }}   // 👈 new
+>
 {viewMode === "list" && (
     <div /* allow horizontal scroll on very small screens            */
          className="overflow-x-auto">
@@ -758,65 +762,86 @@ ${inquiryMessage}
         {/* Pagination */}
         <AnimatePresence>
           {beatsPerPage !== "all" && totalPages > 1 && (
-            <motion.footer
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-gray-800 py-4 z-20"
-            >
-              <div className="flex justify-center items-center gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg bg-gray-900/50 border border-gray-800 disabled:opacity-40 disabled:cursor-not-allowed hover:border-purple-500 transition-colors"
-                >
-                  <FaChevronLeft />
-                </motion.button>
-                
-                <div className="flex items-center gap-2">
-                  {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    
-                    return (
-                      <motion.button
-                        key={pageNum}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-200 ${
-                          currentPage === pageNum
-                            ? "bg-gradient-to-r from-purple-600 to-emerald-600 text-white"
-                            : "bg-gray-900/50 border border-gray-800 text-gray-400 hover:text-white hover:border-purple-500"
-                        }`}
-                      >
-                        {pageNum}
-                      </motion.button>
-                    );
-                  })}
-                </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg bg-gray-900/50 border border-gray-800 disabled:opacity-40 disabled:cursor-not-allowed hover:border-purple-500 transition-colors"
-                >
-                  <FaChevronRight />
-                </motion.button>
-              </div>
-            </motion.footer>
+  /* pagination footer – mobile-height fixed */
+<motion.footer
+  initial={{ opacity: 0, y: 50 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: 50 }}
+  /* ↓ expose the current height through a CSS var */
+  style={{ '--footer-h': '3.5rem' } as React.CSSProperties}
+  className="
+      fixed bottom-0 left-0 right-0 z-20
+      bg-black/90 backdrop-blur-md border-t border-gray-800
+      /* 60 % shorter bar on mobile            */
+      py-2 md:py-4      /* ⇐ was py-4 everywhere */
+  "
+>
+  <div className="flex items-center justify-center gap-2 md:gap-4 scale-90 md:scale-100">
+    {/* ◀ previous */}
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+      disabled={currentPage === 1}
+      className="
+        p-1.5 md:p-2 rounded-lg
+        bg-gray-900/50 border border-gray-800
+        disabled:opacity-40 disabled:cursor-not-allowed
+        hover:border-purple-500 transition-colors
+      "
+    >
+      <FaChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+    </motion.button>
+
+    {/* numeric buttons */}
+    <div className="flex items-center gap-1.5 md:gap-2">
+      {[...Array(Math.min(5, totalPages))].map((_, i) => {
+        let pageNum;
+        if (totalPages <= 5)            pageNum = i + 1;
+        else if (currentPage <= 3)      pageNum = i + 1;
+        else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+        else                            pageNum = currentPage - 2 + i;
+
+        return (
+          <motion.button
+            key={pageNum}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setCurrentPage(pageNum)}
+            className={`
+              w-8 h-8 md:w-10 md:h-10 rounded-lg font-medium
+              transition-all duration-200
+              ${
+                currentPage === pageNum
+                  ? "bg-gradient-to-r from-purple-600 to-emerald-600 text-white"
+                  : "bg-gray-900/50 border border-gray-800 text-gray-400 hover:text-white hover:border-purple-500"
+              }
+            `}
+          >
+            {pageNum}
+          </motion.button>
+        );
+      })}
+    </div>
+
+    {/* ▶ next */}
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+      disabled={currentPage === totalPages}
+      className="
+        p-1.5 md:p-2 rounded-lg
+        bg-gray-900/50 border border-gray-800
+        disabled:opacity-40 disabled:cursor-not-allowed
+        hover:border-purple-500 transition-colors
+      "
+    >
+      <FaChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+    </motion.button>
+  </div>
+</motion.footer>
+
           )}
         </AnimatePresence>
       </div>

@@ -31,6 +31,14 @@ import {
 } from "@/components/visualizers/VisualizerFourHelpers/types";
 import { VisualizerFourControls } from "@/components/visualizers/VisualizerFourHelpers/VisualizerFourControls";
 
+/***  NEW IMPORTS  ***/
+import {
+  ColorMode as V5ColorMode,
+  ParamUnion as V5ParamUnion,
+  RenderingMode as V5RenderingMode,
+} from "@/components/visualizers/VisualizerFiveHelpers/types";
+import { VisualizerFiveControls } from "@/components/visualizers/VisualizerFiveHelpers/VisualizerFiveControls";
+
 import { VisualizerType } from "./BeatAudioVisualizerScene";
 
 /* --------------------------------------------------------------------- */
@@ -76,6 +84,15 @@ interface BeatsVisualizerControlsProps {
   v4FftIntensity: number;
   setV4FftIntensity: (i: number) => void;
   v4RandomPalette: () => void;
+
+    /* -- Visualizer Five (Supershape) ---------------------------------- */
+  v5ConfigIndex: number;
+  setV5ConfigIndex: (i: number) => void;
+  v5RenderingMode: V5RenderingMode;
+  setV5RenderingMode: (m: V5RenderingMode) => void;
+  v5ColorMode: V5ColorMode;
+  setV5ColorMode: (m: V5ColorMode) => void;
+  v5Params: V5ParamUnion;
 }
 
 /* --------------------------------------------------------------------- */
@@ -121,6 +138,15 @@ export function BeatsVisualizerControls({
   v4FftIntensity,
   setV4FftIntensity,
   v4RandomPalette,
+
+    /* V5 */
+  v5ConfigIndex,
+  setV5ConfigIndex,
+  v5RenderingMode,
+  setV5RenderingMode,
+  v5ColorMode,
+  setV5ColorMode,
+  v5Params,
 }: BeatsVisualizerControlsProps) {
   if (uiHidden) return null;
 
@@ -176,6 +202,19 @@ export function BeatsVisualizerControls({
           fftIntensity={v4FftIntensity}
           setFftIntensity={setV4FftIntensity}
           randomPalette={v4RandomPalette}
+        />
+      )}
+
+     {/* ------------------------------------------------------------- */}
+       {type === "supershape" && (
+        <VisualizerFiveControls
+          configIndex={v5ConfigIndex}
+          setConfigIndex={setV5ConfigIndex}
+          renderingMode={v5RenderingMode}
+          setRenderingMode={setV5RenderingMode}
+          colorMode={v5ColorMode}
+          setColorMode={setV5ColorMode}
+          params={v5Params}
         />
       )}
     </>
