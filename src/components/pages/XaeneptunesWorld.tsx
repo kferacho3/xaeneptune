@@ -19,11 +19,7 @@ import {
 } from "react-icons/fa";
 
 /**
- * XaeneptunesWorld (About / Bio page)
- * – Fortune-500 glassmorphic aesthetic
- * – Immersive avatar (parallax, click-to-shuffle)
- * – Accent bars stay inside their cards
- * – Fixed overflow “bounce-gap” issue at page bottom
+ * XaeneptunesWorld (About / Bio page) – snap-back + blank-space fixed
  */
 export default function XaeneptunesWorld() {
   /* ───────────────────────── State & refs ─────────────────────────── */
@@ -37,10 +33,10 @@ export default function XaeneptunesWorld() {
   const dampX = useSpring(rawX, { stiffness: 50, damping: 10 });
   const dampY = useSpring(rawY, { stiffness: 50, damping: 10 });
 
-  const imgX = useTransform(dampX, [-150, 150], [-25, 25]);
-  const imgY = useTransform(dampY, [-150, 150], [-25, 25]);
-  const tiltX = useTransform(dampY, [-150, 150], [15, -15]);
-  const tiltY = useTransform(dampX, [-150, 150], [-15, 15]);
+  const imgX  = useTransform(dampX, [-150, 150], [-25, 25]);
+  const imgY  = useTransform(dampY, [-150, 150], [-25, 25]);
+  const tiltX = useTransform(dampY, [-150, 150], [ 15, -15]);
+  const tiltY = useTransform(dampX, [-150, 150], [-15,  15]);
 
   /* ────────────────── Cursor listener for avatar ──────────────────── */
   useEffect(() => {
@@ -48,21 +44,19 @@ export default function XaeneptunesWorld() {
       if (!avatarRef.current) return;
       const rect = avatarRef.current.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
+      const cy = rect.top  + rect.height / 2;
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
       const dist = Math.hypot(dx, dy);
 
       if (dist < 250) {
-        rawX.set(dx);
-        rawY.set(dy);
+        rawX.set(dx); rawY.set(dy);
         if (dist < 160 && !tooltip) {
           setTooltip(true);
           setTimeout(() => setTooltip(false), 1800);
         }
       } else {
-        rawX.set(0);
-        rawY.set(0);
+        rawX.set(0); rawY.set(0);
       }
     };
     window.addEventListener("mousemove", handle);
@@ -75,26 +69,33 @@ export default function XaeneptunesWorld() {
 
   /* ────────────────────────── Render ──────────────────────────────── */
   return (
-    <div className="relative min-h-screen overscroll-y-none overflow-x-hidden bg-black text-gray-300 selection:bg-purple-500/20">
+    <div
+      className=" overscroll-y-none 
+                 text-gray-300"
+    >
       {/* ────── background layers ────── */}
       <motion.div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-transparent to-transparent opacity-40"
+        className="pointer-events-none absolute inset-0  via-transparent to-transparent opacity-40"
         initial={{ opacity: 0.25, scale: 1 }}
-        animate={{ opacity: 0.4, scale: 1.15 }}
+        animate={{ opacity: 0.4,  scale: 1.15 }}
         transition={{ duration: 35, repeat: Infinity, repeatType: "reverse" }}
       />
       <motion.div
-        className="pointer-events-none absolute inset-0 bg-[url('/stars.svg')] bg-[length:450px] opacity-10"
+        className="pointer-events-none absolute inset-0 bg-[url('/stars.svg')]
+                   bg-[length:450px] opacity-10"
         animate={{ backgroundPositionX: ["0%", "100%"] }}
         transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black" />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-32 pt-24 sm:px-6 lg:px-8">
+
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-32 pt-24
+                      sm:px-6 lg:px-8">
         {/* ─────────── HERO ─────────── */}
         <header className="mb-20 flex flex-col items-center text-center sm:mb-24">
           <motion.h1
-            className="mb-8 bg-gradient-to-r from-white via-purple-200 to-teal-200 bg-clip-text text-5xl font-extrabold tracking-tighter text-transparent sm:text-6xl md:text-8xl"
+            className="mb-8 bg-gradient-to-r from-white via-purple-200 to-teal-200
+                       bg-clip-text text-5xl font-extrabold tracking-tighter
+                       text-transparent sm:text-6xl md:text-8xl"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
@@ -118,7 +119,8 @@ export default function XaeneptunesWorld() {
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
           >
             <motion.div
-              className="absolute inset-0 rounded-full border-4 border-teal-300/50 shadow-[0_0_60px_-10px_rgba(45,212,191,0.5)]"
+              className="absolute inset-0 rounded-full border-4
+                         border-teal-300/50 shadow-[0_0_60px_-10px_rgba(45,212,191,0.5)]"
               whileHover={{
                 scale: 1.1,
                 borderColor: "rgba(147, 51, 234, 0.85)",
@@ -151,10 +153,11 @@ export default function XaeneptunesWorld() {
           <AnimatePresence>
             {tooltip && (
               <motion.span
-                className="pointer-events-none absolute mt-48 text-sm font-medium text-purple-300 sm:mt-56"
+                className="pointer-events-none absolute mt-48 text-sm font-medium
+                           text-purple-300 sm:mt-56"
                 initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 10, opacity: 0 }}
+                animate={{ y: 0,  opacity: 1 }}
+                exit={{   y: 10, opacity: 0 }}
                 transition={{ duration: 0.4 }}
               >
                 Tap to shuffle
@@ -163,7 +166,8 @@ export default function XaeneptunesWorld() {
           </AnimatePresence>
 
           <motion.p
-            className="mt-8 text-lg font-light leading-relaxed sm:mt-10 sm:text-xl md:text-2xl"
+            className="mt-8 text-lg font-light leading-relaxed
+                       sm:mt-10 sm:text-xl md:text-2xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
@@ -177,21 +181,26 @@ export default function XaeneptunesWorld() {
           {sections.map(({ id, title, body, accent }) => (
             <motion.section
               key={id}
-              className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_50px_-15px_rgba(0,0,0,0.6)] backdrop-blur sm:p-8 lg:p-10"
+              className="relative overflow-hidden rounded-3xl border border-white/10
+                         bg-white/5 p-6 shadow-[0_10px_50px_-15px_rgba(0,0,0,0.6)]
+                         backdrop-blur sm:p-8 lg:p-10"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
               viewport={{ once: true, amount: 0.2 }}
             >
-              {/* accent bar (stays inside via overflow-hidden) */}
+              {/* accent bar */}
               <div
                 className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${accent}`}
               />
 
-              <h2 className="mb-4 bg-gradient-to-r from-white via-purple-200 to-teal-200 bg-clip-text text-3xl font-bold text-transparent sm:text-4xl md:text-5xl">
+              <h2 className="mb-4 bg-gradient-to-r from-white via-purple-200 to-teal-200
+                             bg-clip-text text-3xl font-bold text-transparent
+                             sm:text-4xl md:text-5xl">
                 {title}
               </h2>
-              <p className="text-base leading-relaxed text-gray-300 sm:text-lg md:text-xl">
+              <p className="text-base leading-relaxed text-gray-300
+                             sm:text-lg md:text-xl">
                 {body}
               </p>
             </motion.section>
@@ -200,7 +209,8 @@ export default function XaeneptunesWorld() {
 
         {/* ──────── SOCIAL LINKS ──────── */}
         <motion.section
-          className="mx-auto mt-28 grid max-w-4xl gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          className="mx-auto mt-28 grid max-w-4xl gap-6
+                     sm:grid-cols-2 lg:grid-cols-3"
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
@@ -212,7 +222,9 @@ export default function XaeneptunesWorld() {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`group relative flex items-center justify-between gap-4 rounded-2xl p-6 ${gradient} backdrop-blur transition-shadow duration-200`}
+              className={`group relative flex items-center justify-between gap-4
+                          rounded-2xl p-6 ${gradient} backdrop-blur
+                          transition-shadow duration-200`}
               whileHover={{ y: -6, scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 200 }}
@@ -221,7 +233,8 @@ export default function XaeneptunesWorld() {
                 <h3 className="font-semibold text-white">{label}</h3>
                 <p className="text-sm text-gray-300">{handle}</p>
               </div>
-              <Icon className="h-6 w-6 text-white/80 transition-colors group-hover:text-white" />
+              <Icon className="h-6 w-6 text-white/80
+                               transition-colors group-hover:text-white" />
             </motion.a>
           ))}
         </motion.section>
@@ -234,12 +247,13 @@ export default function XaeneptunesWorld() {
           transition={{ duration: 0.8 }}
         >
           <motion.hr
-            className="mx-auto mb-6 h-px w-2/3 bg-gradient-to-r from-transparent via-purple-500 to-transparent"
+            className="mx-auto mb-6 h-px w-2/3
+                       bg-gradient-to-r from-transparent via-purple-500 to-transparent"
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
             transition={{ duration: 1.2 }}
           />
-          © 2024&nbsp;Xae&nbsp;Neptune. All rights reserved.
+          © {new Date().getFullYear()}&nbsp;Xae&nbsp;Neptune. All rights reserved.
         </motion.footer>
       </div>
     </div>

@@ -90,13 +90,22 @@ export default function NavigationOverlay({
   /*  MARK-UP                                                           */
   /* ------------------------------------------------------------------ */
   return (
-    <motion.div
-      className="pointer-events-auto absolute z-[9999] flex w-full flex-col items-center"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      style={{ bottom: isMobile ? "2.5%" : "10px" }}
-    >
+  <motion.div
+    /* fixed so it isn’t pushed by scrolling & respects the visual viewport */
+    className="
+      pointer-events-auto fixed z-[9999] flex w-full flex-col items-center
+      px-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]
+    "
+    initial="hidden"
+    animate="visible"
+    variants={containerVariants}
+    /* safe-area aware bottom margin on phones; 10 px on larger screens */
+    style={{
+      bottom: isMobile
+        ? "calc(env(safe-area-inset-bottom,0px) + 12px)"
+        : "10px",
+    }}
+  >
       {isMobile ? (
         /* ─────────── MOBILE GRID ─────────── */
         <div className="grid grid-cols-4 grid-rows-2 gap-1 rounded-md bg-white/10 p-1 backdrop-blur-md">
