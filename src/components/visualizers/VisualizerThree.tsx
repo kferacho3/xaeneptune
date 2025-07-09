@@ -8,9 +8,9 @@ import useSharedAudio from "./useSharedAudio";
 import { colorPalettes } from "./VisualizerThreeHelpers/colorPalettess";
 import { FFTVisualizerMaterial } from "./VisualizerThreeHelpers/shaderMaterials";
 import {
-  ColorPaletteName,
-  EnvironmentMode,
-  RenderingMode,
+    ColorPaletteName,
+    EnvironmentMode,
+    RenderingMode,
 } from "./VisualizerThreeHelpers/types";
 
 /* ───── Environment lookup (16 modes) ──── */

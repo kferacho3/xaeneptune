@@ -1,16 +1,43 @@
 // .eslintrc.js
+/** @type {import('eslint').Linter.Config} */
 module.exports = {
-  // Specify files or directories to ignore during linting
-  ignorePatterns: [".next/", "node_modules/"],
+  root: true,                         // makes sure ESLint stops at this folder
+  ignorePatterns: ['.next/', 'node_modules/'],
+
+  /* ------------------------------------------------------------------ *
+   * 1. Base configs
+   * ------------------------------------------------------------------ */
+  extends: [
+    'next/core-web-vitals',           // Next-specific + react-hooks rules
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/recommended',
+    'plugin:prettier/recommended',    // ✨ must be last – turns Prettier into an ESLint rule
+  ],
+
+  /* ------------------------------------------------------------------ *
+   * 2. Parser & settings
+   * ------------------------------------------------------------------ */
+  parser: '@typescript-eslint/parser',
+  parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+  plugins: ['@typescript-eslint', 'import', 'prettier'],
+
+  /* ------------------------------------------------------------------ *
+   * 3. Rules – only the deltas you care about
+   * ------------------------------------------------------------------ */
   rules: {
-    // Change missing dependency warnings to warnings instead of errors
-    "react-hooks/exhaustive-deps": "warn",
-    // Adjust unused variable warnings if you use patterns like _ for intentional unused variables
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      { argsIgnorePattern: "^_", varsIgnorePattern: "^__" },
+    /* React Hooks */
+    'react-hooks/exhaustive-deps': 'warn', // default is error
+
+    /* Unused vars (keep underscore conventions) */
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^__' },
     ],
-    // Disable no-unused-expressions if you have intentional expressions that are safe
-    "@typescript-eslint/no-unused-expressions": "off",
+
+    /* Expressions you intentionally leave dangling (e.g. short-circuit) */
+    '@typescript-eslint/no-unused-expressions': 'off',
+
+    /* Let Prettier handle formatting – any Prettier diff is an ESLint error. */
+    'prettier/prettier': 'error',
   },
-};
+}

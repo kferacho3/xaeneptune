@@ -233,31 +233,108 @@ vec4 renderCycube(vec2 fc){
 }
 
 /* ============================================================== */
-/* 05 - DISCO GLAZE                                              */
+/* 05 - DISCO GLAZE  (deep FFT coupling – bass/mid/treble isolated)*/
 /* ============================================================== */
 vec4 renderDiscoGlaze(vec2 fc){
-  float S=15.,t=iTime/60.,pi2=6.2832;
-  vec2 R=iResolution.xy;
-  vec2 m=(iMouse.xy-R/2.)/R.y*S;
-  if(iMouse.z<1.)m=2.*vec2(sin(t*pi2)*2.,sin(t*pi2*2.));
-  vec2 u=(fc-R/2.)/R.y*S;
-  float fL=getFFT(.1),fM=getFFT(.5),fH=getFFT(.9);
-  u/=1.-dot(u,u)/S; u-=m;
-  vec2 g=abs(mod(u,1.)-.5)*1.5;
-  float p=.7*min(1.,length(fwidth(u))/length(u-round(u)));
-  vec3 c=H(pow(length(round(u)),2.)*t);
-  c*=min(g.x,g.y); c+=p*p+p*c;
-  c/=max(1.,pow(length(u+m),2.)/30.);
-  c*=1.+vec3(fL,fM,fH)*fftIntensity;
-  vec3 blur=c; float L=50.,j=1./L;
-  for(float i=j;i<=1.;i+=j){
-    float k=sqrt(i);
-    vec2 bc=mix(fc/R,vec2(.5),1.-sqrt(i));
-    blur+=H(pow(length(round(bc*S)),2.)*t)*k*j;
-  }
-  c=mix(c,blur*.1,.3);
-  return vec4(clamp(c,0.,1.),1.);
+    /* ───────────── constants & helpers ───────────── */
+    const float S   = 15.0;                      // virtual stage size
+    const float PI2 = 6.28318530718;
+    float  t        = iTime / 60.0;              // slow-motion clock
+
+    vec2  R = iResolution.xy;
+    vec2  m = (iMouse.xy - R * 0.5) / R.y * S;   // live mouse pan
+    if(iMouse.z < 1.0){                          // auto-orbit if no click
+        m = 2.0 * vec2(sin(t*PI2)*2.0,
+                       sin(t*PI2*2.0));
+    }
+
+    /* ───────────── core UV in virtual space ───────────── */
+    vec2  u = (fc - R * 0.5) / R.y * S;
+
+    /* ───────────── FFT bands (0-1) ───────────── */
+    float fL = getFFT(0.08);   // deep bass
+    float fM = getFFT(0.48);   // vocal / mids
+    float fH = getFFT(0.90);   // hi-hat / treble
+
+    /* ───────────── 1. bass-warped “fisheye” ───────────── */
+    float bassWarp = 1.0 + fL * 0.35 * fftIntensity;    //  up to +35 %
+    float distort  = 1.0 - dot(u,u) / (S * bassWarp);
+    u /= distort;                                       // lens
+    u -= m;
+
+    /* ───────────── 2. mid-driven grid geometry ───────────── */
+    float gridScale = 1.0 + fM * 0.30 * fftIntensity;   // up to +30 %
+    float gridSpin  = fM * 2.5 * fftIntensity;          // gentle rotation
+    u *= rot2D(gridSpin);
+    vec2 cellPos = u * gridScale;
+
+    /* signed-distance to inner square border (for tile pulse) */
+    vec2  g      = abs(mod(cellPos, 1.0) - 0.5) * 1.5;
+    float tileMask= min(g.x, g.y);                      // 0..1 inwards
+
+    /* ───────────── 3. per-cell FFT amplitude (fine grain) ───────────── */
+    vec2  cellId = floor(cellPos);
+    /* hash: spread (x,y) onto the 0-1 FFT domain (≈512 bins) */
+    float fineIdx  = fract( (cellId.x*13.37 + cellId.y*3.11) / 89.0 );
+    float fineAmp  = getFFT(fineIdx);                   // tiny variations
+
+    /* ───────────── 4. point highlights – treble jitter ───────────── */
+    float pointId   = dot(cellId, vec2(1.0, 57.0));     // fast hash
+    vec2  jitter    = vec2(sin(pointId*1.7 + t*PI2),
+                           cos(pointId*1.3 - t*PI2*0.5))
+                      * (0.18 + fH*0.35) * fftIntensity;
+    vec2  pCoord    = u + jitter;
+    float pGlow     = min(1.0,
+                    length(fwidth(pCoord)) /
+                    length(pCoord - round(pCoord)));
+          pGlow     = pow(pGlow, 0.7);                  // sharper core
+
+    /* ───────────── 5. colour engine ───────────── */
+    /* base hue sweeps with time; saturation breathes with mids */
+    float hueBase   = t * 4.0 + fineAmp * 3.0;
+    vec3  colHue    = H(hueBase);
+    /* tile tone: emphasise bass by remapping mask (bass compress) */
+    float tileTone  = pow(tileMask, 1.0 + fL*2.0);
+    vec3  colTiles  = colHue * tileTone;
+
+    /* point tone: sparkle brighter on treble peaks */
+    vec3  colPoint  = H(hueBase + fH*0.3);
+          colPoint *= (1.0 + fH*4.0) * pGlow;           // huge treble flash
+
+    /* mix tiles + points + cell tint */
+    vec3  col = colTiles
+              + colPoint
+              + colHue * fineAmp * 0.8;
+
+    /* global gain curve – louder mix ⇒ brighter screen */
+    float globalGain = (0.4 + fL*0.6 + fM*0.5 + fH*0.3) * fftIntensity;
+    col *= 0.8 + globalGain;
+
+    /* subtle colour shift with cumulative FFT */
+    float rainbowShift = (fL*0.20 + fH*0.65) * fftIntensity;
+    col  = hueRotate(col, rainbowShift);
+
+    /* ───────────── 6. vignette / centre spotlight ───────────── */
+    float vig = pow(length(u + m) / S, 2.0);
+    col      /= 1.0 + vig * (0.8 + fM*0.6);
+
+    /* ───────────── 7. radial after-glow (treble = longer streak) ───────────── */
+    vec3  blur   = col;
+    const float L = 42.0;
+    float invL   = 1.0 / L;
+    float blurLen= mix(0.10, 0.35, fH);                 // treble length
+    for(float i = invL; i <= 1.0; i += invL){
+        float k   = sqrt(i);
+        vec2  bc  = mix(fc/R, vec2(0.5), 1.0 - sqrt(i));
+        vec3  tap = H(pow(length(round(bc*S)), 2.0)*t + fineAmp*5.0);
+        blur     += tap * k * invL * blurLen;
+    }
+    col = mix(col, blur, 0.25 + fL*0.10);               // bass thickens smear
+
+    return vec4(clamp(col, 0.0, 1.0), 1.0);
 }
+
+
 
 /* ============================================================== */
 /* 06 - GOLDEN HELL                                              */

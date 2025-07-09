@@ -1,7 +1,5 @@
 /* --------------------------------------------------------------------------
    src/components/scene/BeatsVisualizerControls.tsx
-   ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
-   Adds full support for the new “Harmonic Orrery” (Visualizer Four)
 --------------------------------------------------------------------------- */
 import {
   PointMode,
@@ -31,7 +29,7 @@ import {
 } from "@/components/visualizers/VisualizerFourHelpers/types";
 import { VisualizerFourControls } from "@/components/visualizers/VisualizerFourHelpers/VisualizerFourControls";
 
-/***  NEW IMPORTS  ***/
+/* ---------- Supershape (V5) ------------------------------------------- */
 import {
   ColorMode as V5ColorMode,
   ParamUnion as V5ParamUnion,
@@ -39,6 +37,15 @@ import {
 } from "@/components/visualizers/VisualizerFiveHelpers/types";
 import { VisualizerFiveControls } from "@/components/visualizers/VisualizerFiveHelpers/VisualizerFiveControls";
 
+/* ---------- Physics Visualizer Six ----------------------------------- */
+import {
+  ColorMode6 as V6ColorMode,
+  RenderingMode6 as V6RenderingMode,
+  ShapeMode6 as V6ShapeMode,
+} from "@/components/visualizers/VisualizerSix";
+
+/*  ⬇️  NOTE: same path, now **named** import  */
+import VisualizerSixControls from "../visualizers/VisualizerSixHelpers/VisualizerSixControls";
 import { VisualizerType } from "./BeatAudioVisualizerScene";
 
 /* --------------------------------------------------------------------- */
@@ -48,7 +55,7 @@ interface BeatsVisualizerControlsProps {
   type: VisualizerType;
   uiHidden: boolean;
 
-  /* Visualizer One */
+  /* V1 */
   v1RenderingMode: V1RenderingMode;
   setV1RenderingMode: (m: V1RenderingMode) => void;
   v1ColorMode: V1ColorMode;
@@ -58,7 +65,7 @@ interface BeatsVisualizerControlsProps {
   v1PointMode: PointMode;
   setV1PointMode: (m: PointMode) => void;
 
-  /* Visualizer Two */
+  /* V2 */
   v2RenderingMode: V2RenderingMode;
   setV2RenderingMode: (m: V2RenderingMode) => void;
   v2ColorMode: V2ColorMode;
@@ -66,7 +73,7 @@ interface BeatsVisualizerControlsProps {
   v2FractalType: FractalType;
   setV2FractalType: (t: FractalType) => void;
 
-  /* Visualizer Three */
+  /* V3 */
   v3EnvironmentMode: EnvironmentMode;
   setV3EnvironmentMode: (m: EnvironmentMode) => void;
   v3RenderingMode: V3RenderingMode;
@@ -76,7 +83,7 @@ interface BeatsVisualizerControlsProps {
   v3FftIntensity: number;
   setV3FftIntensity: (i: number) => void;
 
-  /* Visualizer Four */
+  /* V4 */
   v4RenderingMode: V4RenderingMode;
   setV4RenderingMode: (m: V4RenderingMode) => void;
   v4ColorMode: V4ColorMode;
@@ -85,7 +92,7 @@ interface BeatsVisualizerControlsProps {
   setV4FftIntensity: (i: number) => void;
   v4RandomPalette: () => void;
 
-    /* -- Visualizer Five (Supershape) ---------------------------------- */
+  /* V5 (Supershape) */
   v5ConfigIndex: number;
   setV5ConfigIndex: (i: number) => void;
   v5RenderingMode: V5RenderingMode;
@@ -93,6 +100,27 @@ interface BeatsVisualizerControlsProps {
   v5ColorMode: V5ColorMode;
   setV5ColorMode: (m: V5ColorMode) => void;
   v5Params: V5ParamUnion;
+
+  /* V6 (Physics) */
+  v6RenderingMode: V6RenderingMode;
+  setV6RenderingMode: (m: V6RenderingMode) => void;
+  v6ColorMode: V6ColorMode;
+  setV6ColorMode: (m: V6ColorMode) => void;
+  v6ShapeMode: V6ShapeMode;
+  setV6ShapeMode: (m: V6ShapeMode) => void;
+  v6PaletteIndex: number;
+  setV6PaletteIndex: (i: number) => void;
+
+  v6TotalInst: number;
+  v6ShapeCount: number;
+  v6Bass: number;
+  v6Mid: number;
+  v6Treble: number;
+  v6IsPaused: boolean;
+
+  v6RandShape: () => void;
+  v6RandAll: () => void;
+  v6Palettes: readonly string[][];
 }
 
 /* --------------------------------------------------------------------- */
@@ -139,7 +167,7 @@ export function BeatsVisualizerControls({
   setV4FftIntensity,
   v4RandomPalette,
 
-    /* V5 */
+  /* V5 */
   v5ConfigIndex,
   setV5ConfigIndex,
   v5RenderingMode,
@@ -147,12 +175,30 @@ export function BeatsVisualizerControls({
   v5ColorMode,
   setV5ColorMode,
   v5Params,
+
+  /* V6 */
+  v6RenderingMode,
+  setV6RenderingMode,
+  v6ColorMode,
+  setV6ColorMode,
+  v6ShapeMode,
+  setV6ShapeMode,
+  v6PaletteIndex,
+  setV6PaletteIndex,
+  v6TotalInst,
+  v6ShapeCount,
+  v6Bass,
+  v6Mid,
+  v6Treble,
+  v6IsPaused,
+  v6RandShape,
+  v6RandAll,
+  v6Palettes,
 }: BeatsVisualizerControlsProps) {
   if (uiHidden) return null;
 
   return (
     <>
-      {/* ------------------------------------------------------------- */}
       {type === "one" && (
         <VisualizerOneControls
           renderingMode={v1RenderingMode}
@@ -166,7 +212,6 @@ export function BeatsVisualizerControls({
         />
       )}
 
-      {/* ------------------------------------------------------------- */}
       {type === "two" && (
         <VisualizerTwoControls
           fractalType={v2FractalType}
@@ -178,7 +223,6 @@ export function BeatsVisualizerControls({
         />
       )}
 
-      {/* ------------------------------------------------------------- */}
       {type === "three" && (
         <VisualizerThreeControls
           environmentMode={v3EnvironmentMode}
@@ -192,7 +236,6 @@ export function BeatsVisualizerControls({
         />
       )}
 
-      {/* ------------------------------------------------------------- */}
       {type === "four" && (
         <VisualizerFourControls
           renderingMode={v4RenderingMode}
@@ -205,8 +248,7 @@ export function BeatsVisualizerControls({
         />
       )}
 
-     {/* ------------------------------------------------------------- */}
-       {type === "supershape" && (
+      {type === "supershape" && (
         <VisualizerFiveControls
           configIndex={v5ConfigIndex}
           setConfigIndex={setV5ConfigIndex}
@@ -215,6 +257,31 @@ export function BeatsVisualizerControls({
           colorMode={v5ColorMode}
           setColorMode={setV5ColorMode}
           params={v5Params}
+        />
+      )}
+
+      {type === "six" && (
+        <VisualizerSixControls
+          /* live state */
+          shapeMode={v6ShapeMode}
+          renderingMode={v6RenderingMode}
+          colorMode={v6ColorMode}
+          paletteIndex={v6PaletteIndex}
+          totalInst={v6TotalInst}
+          shapeCount={v6ShapeCount}
+          bass={v6Bass}
+          mid={v6Mid}
+          treble={v6Treble}
+          isPaused={v6IsPaused}
+          /* setters */
+          setShapeMode={setV6ShapeMode}
+          setRenderingMode={setV6RenderingMode}
+          setColorMode={setV6ColorMode}
+          setPaletteIdx={setV6PaletteIndex}
+          /* helpers */
+          randShape={v6RandShape}
+          randAll={v6RandAll}
+          palettes={v6Palettes}
         />
       )}
     </>
