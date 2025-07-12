@@ -105,6 +105,11 @@ export default function HomePage() {
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, []);
+useEffect(() => {
+  const isMobile = window.innerWidth < 768;
+  setMobile(isMobile);
+  setDpr(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
+}, []);
 
   /* lock / unlock scrolling on mobile while on home route */
   useEffect(() => {
@@ -242,7 +247,8 @@ export default function HomePage() {
             {/* Scene */}
             {showScene && (
               <>
-                <Suspense fallback={null}>
+            {!mobile && (
+        <Suspense fallback={null}>
                   <EffectComposer multisampling={0}>
                     <Vignette />
                     <Bloom
@@ -256,6 +262,7 @@ export default function HomePage() {
                   </EffectComposer>
                 </Suspense>
 
+    )}
                 <LensFlare enabled />
 
                 <Scene
