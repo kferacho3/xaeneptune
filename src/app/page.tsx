@@ -202,24 +202,33 @@ useEffect(() => {
         {/* ---------- Main Layer ---------- */}
           <div className="fixed inset-0 w-full h-full overflow-hidden">
           {/* ---------- Three Canvas ---------- */}
-          <Canvas
-            shadows
-            className="absolute inset-0 z-[1100]"
-            camera={{ position: [0, 75, 200], fov: 75 }}
-            dpr={dpr}
-            onPointerDown={() => {
-              if (progressComplete) setHasInteracted(true);
-            }}
-            gl={{
-              alpha: true,
-              powerPreference: "high-performance",
-              antialias: false,
-              stencil: false,
-              depth: true,
-              toneMapping: THREE.ACESFilmicToneMapping,
-              toneMappingExposure: 1.1,
-            }}
-          >
+ <Canvas
+  shadows={!mobile}
+  dpr={dpr}
+  frameloop={mobile ? "demand" : "always"}
+  camera={{ position: [0, 75, 200], fov: 75 }}
+  onCreated={({ gl, invalidate }) => {
+    gl.getContext().canvas.addEventListener("webglcontextlost", (e) => {
+      e.preventDefault();
+      console.warn("Context lost");
+    });
+    gl.getContext().canvas.addEventListener("webglcontextrestored", () => {
+      console.info("Context restored");
+      invalidate();
+    });
+  }}
+  gl={{
+    alpha: true,
+    antialias: false,
+    depth: !mobile,           // keep depth only on desktop for post-FX
+    stencil: false,
+    powerPreference: "high-performance",
+    preserveDrawingBuffer: false,
+    toneMapping: mobile ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+    toneMappingExposure: mobile ? 1 : 1.1,
+  }}
+>
+
             {/* Loader & Progress Prompt */}
             {!progressComplete && (
               <CombinedProgressPrompt
@@ -247,8 +256,7 @@ useEffect(() => {
             {/* Scene */}
             {showScene && (
               <>
-            {!mobile && (
-        <Suspense fallback={null}>
+                <Suspense fallback={null}>
                   <EffectComposer multisampling={0}>
                     <Vignette />
                     <Bloom
@@ -262,7 +270,6 @@ useEffect(() => {
                   </EffectComposer>
                 </Suspense>
 
-    )}
                 <LensFlare enabled />
 
                 <Scene
