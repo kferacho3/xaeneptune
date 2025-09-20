@@ -4,12 +4,7 @@
    import { create } from "zustand";
 
    /* --------------------------- public API --------------------------- */
-   export type TextureName =
-     | "antiheroesPerlinNoise"
-     | "antiheroesFractals"
-     | "antiheroesSand"
-     | "antiheroesCellular"
-     | "antiheroesSuperShape";
+  export type TextureName = "antiheroesPerlinNoise";
    
    interface MonitorState {
      screenName: TextureName;

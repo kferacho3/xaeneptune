@@ -10,8 +10,8 @@
 
 "use client";
 
-import { TextureName, useMonitorStore } from "@/store/useMonitorStore";
-import { a, SpringValue, useSpring } from "@react-spring/three";
+import { TextureName } from "@/store/useMonitorStore";
+import { useSpring } from "@react-spring/three";
 import { useGLTF } from "@react-three/drei";
 import {
   ThreeElements,
@@ -87,32 +87,24 @@ export function AntiHeroMonitor(props: ThreeElements["group"]) {
   }, [layout, hovered]);
 
   /* ------------------ live texture swap ------------------------------- */
-  const screenName = useMonitorStore((s) => s.screenName);
 
-  /* cache each texture once */
-  const textures = useMemo(() => {
+  /* cache texture once */
+  const texture = useMemo(() => {
     const loader = new THREE.TextureLoader();
-    return {
-      antiheroesPerlinNoise : loader.load(texUrl("antiheroesPerlinNoise")),
-      antiheroesFractals    : loader.load(texUrl("antiheroesFractals")),
-      antiheroesSand        : loader.load(texUrl("antiheroesSand")),
-      antiheroesCellular    : loader.load(texUrl("antiheroesCellular")),
-      antiheroesSuperShape  : loader.load(texUrl("antiheroesSuperShape")),
-    };
+    return loader.load(texUrl("antiheroesPerlinNoise"));
   }, []);
 
   /* set emissiveMap on every material that already had one -------------- */
   useEffect(() => {
-    const tex = textures[screenName];
     Object.values(materials).forEach((mat) => {
       // swap only if that material originally *had* an emissive map
       if ((mat as THREE.MeshStandardMaterial).emissiveMap !== null) {
-        mat.emissiveMap = tex;
+        mat.emissiveMap = texture;
         mat.emissive = new THREE.Color(0xffffff);
         mat.needsUpdate = true;
       }
     });
-  }, [screenName, textures, materials]);
+  }, [texture, materials]);
 
   /* subtle look‑at‑cursor ---------------------------------------------- */
   useFrame(() => {
@@ -125,12 +117,12 @@ export function AntiHeroMonitor(props: ThreeElements["group"]) {
   /* ----------------------------- render ------------------------------- */
   return (
     <Suspense fallback={null}>
-      <a.group
+      <group
         ref={group}
         {...props}
-        position={position}
-        rotation-z={rotationZ as unknown as SpringValue<number>}
-        scale={scale}
+        position={position.get()}
+        rotation-z={rotationZ.get()}
+        scale={scale.get()}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         dispose={null}
@@ -140,7 +132,7 @@ export function AntiHeroMonitor(props: ThreeElements["group"]) {
             <primitive key={key} object={mesh} />
           ))}
         </group>
-      </a.group>
+      </group>
     </Suspense>
   );
 }

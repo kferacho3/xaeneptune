@@ -1,6 +1,6 @@
 "use client";
 
-import { a, useSpring } from "@react-spring/three";
+import { useSpring } from "@react-spring/three";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { extend, ThreeElements, useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
@@ -341,9 +341,9 @@ export default function AntiheroScene({
           GROUP A - Xaeneptune
           ================
         */}
-        <a.group
+        <group
           name="Xaeneptune"
-          scale={xaeneptuneSpring.scale.to((s) => [s, s, s])}
+          scale={[xaeneptuneSpring.scale.get(), xaeneptuneSpring.scale.get(), xaeneptuneSpring.scale.get()]}
         >
 
 <group name="XaeNeptuneWorld" position={[0.474, 2.712, 0]} scale={0.35}>
@@ -368,7 +368,7 @@ export default function AntiheroScene({
           </group>
         </group>
 
-        </a.group>
+        </group>
 
 
 
@@ -377,9 +377,9 @@ export default function AntiheroScene({
           GROUP B - Contact
           ================
         */}
-        <a.group
+        <group
           name="Contact"
-          scale={contactSpring.scale.to((s) => [s, s, s])}
+          scale={[contactSpring.scale.get(), contactSpring.scale.get(), contactSpring.scale.get()]}
           position={[-0.5,0,0]}
         >
         <group name="GLTF_SceneRootNode010" position={[0.474, 1.496, 0]} rotation={[1.28, 0, 0]} scale={1.223}>
@@ -398,7 +398,7 @@ export default function AntiheroScene({
             <mesh name="Object_4010" geometry={nodes.Object_4010.geometry} material={materials['cell_phone.001']} position={[0.029, -0.198, 0.51]} scale={1.242} />
           </group>
         </group>
-        </a.group>
+        </group>
 
 
 
@@ -407,10 +407,10 @@ export default function AntiheroScene({
           GROUP C - Artist
           ================
         */}
-        <a.group
+        <group
           name="Artist"
           position={[-0.35, -1, -0.75]} 
-          scale={artistSpring.scale.to((s) => [s, s, s])}
+          scale={[artistSpring.scale.get(), artistSpring.scale.get(), artistSpring.scale.get()]}
         >
 
         <group name="RootNode001" position={[0.474, 0, 0]} scale={0.004}>
@@ -438,7 +438,7 @@ export default function AntiheroScene({
         <mesh name="Pie-Der_palette001_0" geometry={nodes['Pie-Der_palette001_0'].geometry} material={materials['palette.001']} position={[-0.115, 0.792, 0.304]} rotation={[1.653, 0, 0]} scale={0.004} />
         <mesh name="Teclado-Piano_Material002_0" geometry={nodes['Teclado-Piano_Material002_0'].geometry} material={materials['Material.061']} position={[0.474, 0, 2.755]} rotation={[Math.PI / 2, 0, 0]} scale={0.008} />
         <mesh name="Teclado-Piano_palette003_0" geometry={nodes['Teclado-Piano_palette003_0'].geometry} material={materials['palette.003']} position={[0.474, 0, 2.755]} rotation={[Math.PI / 2, 0, 0]} scale={0.008} />
-        </a.group>
+        </group>
 
 
 
@@ -451,9 +451,9 @@ export default function AntiheroScene({
           GROUP D - Music
           ================
         */}
-        <a.group
+        <group
           name="Music"
-          scale={musicSpring.scale.to((s) => [s, s, s])}
+          scale={[musicSpring.scale.get(), musicSpring.scale.get(), musicSpring.scale.get()]}
           position={[0, -0.7, 0]}
         >
         <group name="RootNode002" position={[1.45, 3.249, 0.151]} rotation={[1.396, 0, 0]} scale={0.012}>
@@ -471,7 +471,7 @@ export default function AntiheroScene({
         <mesh name="UpperCaseL_Glass_0" geometry={nodes.UpperCaseL_Glass_0.geometry} material={materials.Glass} position={[1.496, 3.357, 0.549]} rotation={[-0.174, 0, 0]} scale={1.229} />
         <mesh name="UpperCaseL_UpperCase_0" geometry={nodes.UpperCaseL_UpperCase_0.geometry} material={materials.UpperCase} position={[1.496, 3.357, 0.549]} rotation={[-0.174, 0, 0]} scale={1.229} />
        
-        </a.group>
+        </group>
 
 
 
@@ -488,9 +488,9 @@ export default function AntiheroScene({
           GROUP E - Beats
           ================
         */}
-        <a.group
+        <group
           name="Beats"
-          scale={beatsSpring.scale.to((s) => [s, s, s])}
+          scale={[beatsSpring.scale.get(), beatsSpring.scale.get(), beatsSpring.scale.get()]}
           position={[0, -0.5,0]}
           rotation={[0, -Math.PI / 2, 0]}
         
@@ -636,7 +636,7 @@ export default function AntiheroScene({
 
         <mesh name="Object_26001" geometry={nodes.Object_26001.geometry} material={materials['outline.001']} position={[1.465, -0.128, 2.33]} rotation={[0, 0, Math.PI / 2]} />
           <mesh name="Object_40001" geometry={nodes.Object_40001.geometry} material={materials['speaker_body.001']} position={[0.474, 0.873, -2.07]} scale={[1, 1.6, 0.737]} />
-        </a.group>
+        </group>
 
 
 
@@ -657,9 +657,9 @@ export default function AntiheroScene({
           GROUP I - Albums
           ================
         */}
-        <a.group
+        <group
           name="Albums"
-          scale={albumsSpring.scale.to((s) => [s, s, s])}
+          scale={[albumsSpring.scale.get(), albumsSpring.scale.get(), albumsSpring.scale.get()]}
         >
         <group name="Object_4013" position={[0.4, 2.386, 0.123]} rotation={[1.261, 0, 0]} scale={[1.294, 2.514, 1.265]}>
           <mesh name="Object_0020" geometry={nodes.Object_0020.geometry} material={materials.I_AM_MUSIC_COVER} />
@@ -668,7 +668,7 @@ export default function AntiheroScene({
           <mesh name="Object_0020_3" geometry={nodes.Object_0020_3.geometry} material={materials['I_AM_MUSIC_DISK.001']} />
           <mesh name="Object_0020_4" geometry={nodes.Object_0020_4.geometry} material={materials['Material.063']} />
         </group>
-        </a.group>
+        </group>
 
  
    
@@ -686,15 +686,15 @@ export default function AntiheroScene({
         </group>
 
 
-        <a.group
+        <group
           name="AntiheroLogo"
-          scale={antiheroLogoSpring.scale.to((s) => [s, s, s])}
+          scale={[antiheroLogoSpring.scale.get(), antiheroLogoSpring.scale.get(), antiheroLogoSpring.scale.get()]}
         >
         <group name="ANTIHERO" position={[-0.5, 3.076, -0.289]} rotation={[1.457, 0, 0]} scale={[25.024, 5.166, 25.024]}>
           <mesh name="ANTIHERO_1" geometry={nodes.ANTIHERO_1.geometry} material={materials.PaletteMaterial001} />
           <mesh name="ANTIHERO_2" geometry={nodes.ANTIHERO_2.geometry} material={nodes.ANTIHERO_2.material} />
         </group>
-        </a.group>
+        </group>
      {/*
           ================
           COMBINED FLOATING MONITORS 

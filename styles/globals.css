@@ -49,6 +49,48 @@
     --accent: var(--accent-day);
   }
 }
+
+/* Mobile-specific styles for better touch experience */
+@media (max-width: 768px) {
+  .btn-main {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+  }
+  
+  .btn-vis {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+  }
+  
+  /* Improve touch targets for mobile */
+  button, select, input {
+    @apply touch-manipulation;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* Custom select styling for visualizer controls */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  padding-right: 32px;
+}
+
+select:focus {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%0006b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+/* Custom scrollbar for select dropdowns */
+select option {
+  background-color: #0a0a0a;
+  color: #06b6d4;
+  padding: 8px 12px;
+}
 @font-face {
   font-family: "Devil1";
   src: url("/fonts/Devil1.ttf") format("truetype");

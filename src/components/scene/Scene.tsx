@@ -118,12 +118,12 @@ export default function Scene({
   const showVisualizer = activeRoute === "beats-visualizer";
   const showHomeScene  = !showVisualizer && activeRoute === "home";
   /* base distances */
-  const baseMax = isMobile ? 12 : 20;
-  const baseMin = isMobile ?  5 : 10;
+  const baseMax = isMobile ? 18 : 20;
+  const baseMin = isMobile ?  8 : 10;
 
   /* bump factors when the visualizer is active */
-  const maxDistance = showVisualizer ? baseMax * 5 : baseMax;
-  const minDistance = showVisualizer ? baseMin / 3 : baseMin;
+  const maxDistance = showVisualizer ? (isMobile ? baseMax * 10 : baseMax * 5) : baseMax;
+  const minDistance = showVisualizer ? (isMobile ? baseMin / 1.5 : baseMin / 3) : baseMin;
   const zoomSpeed   = showVisualizer ? 2 * 3 : 2;    // original 2  →  6
 
   /* ---------------- Camera intro pan ---------------- */

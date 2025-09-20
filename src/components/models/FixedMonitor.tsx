@@ -8,7 +8,7 @@
 "use client";
 
 import { AntiHeroMonitor } from "@/components/models/AntiheroMonitor";
-import { a, useSpring } from "@react-spring/three";
+import { useSpring } from "@react-spring/three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { Group, Quaternion, Vector3 } from "three";
@@ -75,11 +75,11 @@ export default function FixedMonitor() {
   /* ---------------------------------------------------------------- render */
   return (
     <primitive object={camera /* parent to camera for simple positioning */}>
-      <a.group
+      <group
         ref={rootRef}
-        position={springs.position}
-        rotation={springs.rotation}
-        scale={springs.scale}
+        position={springs.position.get() as [number, number, number]}
+        rotation={springs.rotation.get() as [number, number, number]}
+        scale={springs.scale.get() as [number, number, number]}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
@@ -87,7 +87,7 @@ export default function FixedMonitor() {
         <group ref={orientRef}>
           <AntiHeroMonitor />
         </group>
-      </a.group>
+      </group>
     </primitive>
   );
 }
