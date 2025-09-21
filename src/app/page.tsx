@@ -199,6 +199,13 @@ useEffect(() => {
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
+        {/* ---------- Go back (outside main layer) ---------- */}
+        {route !== "home" && (
+          <div className="fixed bottom-[1.5%] left-2 md:left-[0.5%] z-[999999] pointer-events-auto">
+            <GoBackButton onClick={() => changeRoute("home")} />
+          </div>
+        )}
+
         {/* ---------- Main Layer ---------- */}
           <div className="fixed inset-0 w-full h-full overflow-hidden">
           {/* ---------- Three Canvas ---------- */}
@@ -302,12 +309,6 @@ useEffect(() => {
             </div>
           )}
 
-          {/* ---------- Go back ---------- */}
-          {route !== "home" && (
-            <div className="fixed bottom-[1.5%] left-2 md:left-[0.5%] z-[9999]">
-              <GoBackButton onClick={() => changeRoute("home")} />
-            </div>
-          )}
 
           {/* ---------- Top-bar ---------- */}
           <div className="absolute top-0 w-full z-[99999]">

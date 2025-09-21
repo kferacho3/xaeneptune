@@ -12,7 +12,7 @@ export default function GoBackButton({ onClick }: GoBackButtonProps) {
     <motion.button
       onClick={onClick}
       whileHover={{ scale: 1.1, backgroundColor: "var(--secondary-color)" }}
-      className="flex z-[9999] items-center px-4 py-2 bg-white border border-white text-black font-futuristic rounded-full shadow-lg"
+      className="flex z-[999999] items-center px-4 py-2 bg-white border border-white text-black font-futuristic rounded-full shadow-lg pointer-events-auto"
     >
       <IoMdArrowBack className="mr-2" />
       <span>HOME</span>
